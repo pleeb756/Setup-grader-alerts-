@@ -121,9 +121,34 @@ def fmt(p):
     if p is None: return "–"
     return f"{p:,.2f}" if p >= 1 else f"{p:.5f}"
 
+def backtest(bars=180):
+    """List every Sniper signal in the last `bars` closed 4H candles (no alerts sent)."""
+    for coin, pair in WATCHLIST.items():
+        try:
+            h4, m5 = candles(pair, 240), candles(pair, 5)
+            time.sleep(1)
+        except Exception as e:
+            print(f"skip {coin}: {e}"); continue
+        found = 0
+        for i in range(len(h4) - bars, len(h4)):
+            sub = h4.iloc[:i + 1].reset_index(drop=True)
+            close_t = sub.t.iloc[-1] + 4 * 3600
+            m = m5[m5.t + 300 <= close_t]
+            sn = sniper(sub, m if len(m) > 30 else sub)
+            if sn and sn["score"] >= SN_MIN:
+                found += 1
+                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
+                note = "" if len(m) > 30 else " (5m RSI est.)"
+                print(f"{coin} {when} UTC  {sn['side'].upper():5} {sn['score']}/7  "
+                      f"entry {fmt(sn['entry'])}  TP1 {fmt(sn['tps'][0])}{note}")
+        if not found:
+            print(f"{coin}: no signals")
+
 def main():
     if "--test" in sys.argv:
         send("✅ Grader alerts are connected."); return
+    if "--backtest" in sys.argv:
+        backtest(); return
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     now, changed, log = time.time(), False, []
 
