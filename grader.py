@@ -13,10 +13,16 @@ import pandas as pd
 WATCHLIST = {  # display name -> Kraken pair
     "BTC": "XBTUSD", "ETH": "ETHUSD", "SOL": "SOLUSD", "XRP": "XRPUSD",
     "ZEC": "ZECUSD", "LINK": "LINKUSD", "UNI": "UNIUSD", "XLM": "XLMUSD",
-    "HBAR": "HBARUSD",
+    "HBAR": "HBARUSD", "NEAR": "NEARUSD",
 }
 NEAR_MET = 5            # checks met for "setup forming"
 MIN_RR = 2.0            # minimum reward:risk
+BO_LOOKBACK = 20        # 4H bars for the breakout range
+BO_VOL_MULT = 1.5       # breakout bar volume vs 20-bar average
+BO_COOLDOWN_HRS = 12
+# Viprasol Sniper Confluence settings (matching your chart: 9 21 4 1.5 14, 5m RSI)
+SN_FAST, SN_SLOW, SN_MIN, SN_ATR_MULT, SN_ATR_LEN = 9, 21, 4, 1.5, 14
+SN_VOL_LEN = 20
 COOLDOWN_HRS = 4        # don't repeat the same tier for a coin within this window
 STATE_FILE = Path("state.json")
 LOG_FILE = Path("alerts_log.csv")
@@ -108,6 +114,67 @@ def grade(d, h4, h1, side):
             "entry": entry, "stop": stop, "target": target, "rr": rr,
             "rsi4h": r4.iloc[-1], "rsid": rd}
 
+# ---------- breakout scanner (momentum moves the pullback grader misses) ----------
+def breakout(d, h4):
+    last = h4.iloc[-1]
+    prior = h4.iloc[-BO_LOOKBACK-1:-1]
+    vol_ok = last.v > BO_VOL_MULT * prior.v.mean()
+    r = rsi(h4.c).iloc[-1]
+    e50d = ema(d.c, 50).iloc[-1]
+    if last.c > prior.h.max() and vol_ok and last.c > e50d and 55 <= r <= 75:
+        return "long", prior.h.max(), r, last.v / prior.v.mean()
+    if last.c < prior.l.min() and vol_ok and last.c < e50d and 25 <= r <= 45:
+        return "short", prior.l.min(), r, last.v / prior.v.mean()
+    return None
+
+# ---------- Viprasol Sniper Confluence port (4H) ----------
+def vwap_daily(df):
+    day = pd.to_datetime(df.t, unit="s", utc=True).dt.date
+    tp = (df.h + df.l + df.c) / 3
+    return (tp * df.v).groupby(day).cumsum() / df.v.groupby(day).cumsum()
+
+def adx_di(df, n=14):
+    up, dn = df.h.diff(), -df.l.diff()
+    plus = ((up > dn) & (up > 0)) * up
+    minus = ((dn > up) & (dn > 0)) * dn
+    tr = atr(df, n)
+    pdi = 100 * plus.ewm(alpha=1/n, adjust=False).mean() / tr
+    mdi = 100 * minus.ewm(alpha=1/n, adjust=False).mean() / tr
+    dx = 100 * (pdi - mdi).abs() / (pdi + mdi)
+    return dx.ewm(alpha=1/n, adjust=False).mean(), pdi, mdi
+
+def sniper(h4, m5):
+    fe, se = ema(h4.c, SN_FAST), ema(h4.c, SN_SLOW)
+    if fe.iloc[-2] <= se.iloc[-2] and fe.iloc[-1] > se.iloc[-1]:
+        L = True
+    elif fe.iloc[-2] >= se.iloc[-2] and fe.iloc[-1] < se.iloc[-1]:
+        L = False
+    else:
+        return None
+    last = h4.iloc[-1]
+    macd = ema(h4.c, 12) - ema(h4.c, 26)
+    sig = ema(macd, 9)
+    adx, pdi, mdi = adx_di(h4)
+    vw = vwap_daily(h4).iloc[-1]
+    r, r5 = rsi(h4.c).iloc[-1], rsi(m5.c).iloc[-1]
+    volsma = h4.v.rolling(SN_VOL_LEN).mean().iloc[-1]
+    f = {
+        "VWAP": last.c > vw if L else last.c < vw,
+        "RSI": r > 50 if L else r < 50,
+        "MACD": macd.iloc[-1] > sig.iloc[-1] if L else macd.iloc[-1] < sig.iloc[-1],
+        "EMA": fe.iloc[-1] > se.iloc[-1] if L else fe.iloc[-1] < se.iloc[-1],
+        "ADX": adx.iloc[-1] > 25 and (pdi.iloc[-1] > mdi.iloc[-1] if L else mdi.iloc[-1] > pdi.iloc[-1]),
+        "Volume": last.v > volsma and (last.c > last.o if L else last.c < last.o),
+        "5m RSI": r5 > 50 if L else r5 < 50,
+    }
+    score = sum(f.values())
+    risk = SN_ATR_MULT * atr(h4, SN_ATR_LEN).iloc[-1]
+    entry = last.c
+    stop = entry - risk if L else entry + risk
+    tps = [entry + k * risk if L else entry - k * risk for k in (1, 2, 3)]
+    return {"side": "long" if L else "short", "score": score, "factors": f,
+            "entry": entry, "stop": stop, "tps": tps, "bar": int(last.t)}
+
 # ---------- alerts ----------
 def send(msg, urgent=False):
     if not NTFY_TOPIC:
@@ -155,6 +222,8 @@ def main():
     for coin, pair in WATCHLIST.items():
         try:
             d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
+            m5 = candles(pair, 5)
+            time.sleep(1)   # stay under Kraken's public rate limit
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
         best = max((grade(d, h4, h1, s) for s in ("long", "short")), key=lambda g: g["met"])
@@ -177,6 +246,33 @@ def main():
             sent[str(tier)] = now
         if tier != prev["tier"] or sent != prev.get("sent", {}):
             state[coin] = {"tier": tier, "sent": sent}; changed = True
+
+        bo = breakout(d, h4)
+        if bo:
+            side, lvl, r, vx = bo
+            key = f"{coin}_bo"
+            last_bo = state.get(key, 0)
+            if now - last_bo > BO_COOLDOWN_HRS * 3600:
+                send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
+                     f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
+                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}", urgent=True)
+                log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
+                state[key] = now; changed = True
+            print(f"{coin}: breakout {side}")
+
+        sn = sniper(h4, m5)
+        if sn:
+            print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7")
+            key = f"{coin}_sn"
+            if sn["score"] >= SN_MIN and state.get(key) != sn["bar"]:
+                missing = [k for k, v in sn["factors"].items() if not v]
+                tp = " / ".join(fmt(x) for x in sn["tps"])
+                send(f"🎯 SNIPER {sn['side'].upper()}: {coin} {sn['score']}/7 (4H)\n"
+                     f"Entry {fmt(sn['entry'])} | SL {fmt(sn['stop'])}\n"
+                     f"TP1-3 {tp}"
+                     + (f"\nMissing: {', '.join(missing)}" if missing else ""), urgent=True)
+                log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},sniper-{sn['side']},{sn['score']},{sn['entry']}")
+                state[key] = sn["bar"]; changed = True
 
     if changed:
         STATE_FILE.write_text(json.dumps(state, indent=1))
