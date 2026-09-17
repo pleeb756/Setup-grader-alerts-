@@ -76,3 +76,213 @@ def grade(d, h4, h1, side):
     checks = {}
 
     # 1. Daily trend
+    checks["trend"] = (dc > e50d and e20d > e50d) if L else (dc < e50d and e20d < e50d)
+    # 2. Daily structure (higher low / lower high intact)
+    if L:
+        checks["structure"] = len(lows) >= 2 and lows[-1] > lows[-2] and dc > lows[-1]
+        level = lows[-1] if lows else None
+    else:
+        checks["structure"] = len(highs) >= 2 and highs[-1] < highs[-2] and dc < highs[-1]
+        level = highs[-1] if highs else None
+    # 3. 4H pullback into the 21 EMA (below 50 EMA allowed if daily level holds)
+    if L:
+        checks["pullback"] = h4.l.tail(6).min() <= e21_4h and level is not None and h4.c.iloc[-1] > level
+    else:
+        checks["pullback"] = h4.h.tail(6).max() >= e21_4h and level is not None and h4.c.iloc[-1] < level
+    # 4. RSI re-entry: 4H near 30 (70 for shorts) recently, daily near 50
+    checks["rsi"] = ((r4.tail(6).min() <= 35) if L else (r4.tail(6).max() >= 65)) and 42 <= rd <= 58
+    # 5. Reward:risk — stop beyond the daily level, target at next daily level
+    rr, stop, target = None, None, None
+    if level is not None:
+        stop = level - 0.25 * a4 if L else level + 0.25 * a4
+        tgts = [x for x in highs if x > entry] if L else [x for x in lows if x < entry]
+        if tgts:
+            target = min(tgts) if L else max(tgts)
+            risk = abs(entry - stop)
+            if risk > 0 and ((L and stop < entry) or (not L and stop > entry)):
+                rr = abs(target - entry) / risk
+    if rr is None:
+        stop, target = None, None
+    checks["rr"] = rr is not None and rr >= MIN_RR
+    # 6. 1H trigger: 9/21 EMA cross in the last 3 closed bars, price on the right side
+    e9, e21 = ema(h1.c, 9), ema(h1.c, 21)
+    diff = (e9 - e21) if L else (e21 - e9)
+    crossed = any(diff.iloc[i] > 0 >= diff.iloc[i-1] for i in range(-3, 0))
+    checks["trigger"] = crossed and ((entry > e9.iloc[-1]) if L else (entry < e9.iloc[-1]))
+
+    return {"side": side, "met": sum(checks.values()), "checks": checks,
+            "entry": entry, "stop": stop, "target": target, "rr": rr,
+            "rsi4h": r4.iloc[-1], "rsid": rd}
+
+# ---------- breakout scanner (momentum moves the pullback grader misses) ----------
+def breakout(d, h4):
+    last = h4.iloc[-1]
+    prior = h4.iloc[-BO_LOOKBACK-1:-1]
+    vol_ok = last.v > BO_VOL_MULT * prior.v.mean()
+    r = rsi(h4.c).iloc[-1]
+    e50d = ema(d.c, 50).iloc[-1]
+    if last.c > prior.h.max() and vol_ok and last.c > e50d and 55 <= r <= 75:
+        return "long", prior.h.max(), r, last.v / prior.v.mean()
+    if last.c < prior.l.min() and vol_ok and last.c < e50d and 25 <= r <= 45:
+        return "short", prior.l.min(), r, last.v / prior.v.mean()
+    return None
+
+# ---------- Viprasol Sniper Confluence port (4H) ----------
+def vwap_daily(df):
+    day = pd.to_datetime(df.t, unit="s", utc=True).dt.date
+    tp = (df.h + df.l + df.c) / 3
+    return (tp * df.v).groupby(day).cumsum() / df.v.groupby(day).cumsum()
+
+def adx_di(df, n=14):
+    up, dn = df.h.diff(), -df.l.diff()
+    plus = ((up > dn) & (up > 0)) * up
+    minus = ((dn > up) & (dn > 0)) * dn
+    tr = atr(df, n)
+    pdi = 100 * plus.ewm(alpha=1/n, adjust=False).mean() / tr
+    mdi = 100 * minus.ewm(alpha=1/n, adjust=False).mean() / tr
+    dx = 100 * (pdi - mdi).abs() / (pdi + mdi)
+    return dx.ewm(alpha=1/n, adjust=False).mean(), pdi, mdi
+
+def sniper(h4, m5):
+    fe, se = ema(h4.c, SN_FAST), ema(h4.c, SN_SLOW)
+    if fe.iloc[-2] <= se.iloc[-2] and fe.iloc[-1] > se.iloc[-1]:
+        L = True
+    elif fe.iloc[-2] >= se.iloc[-2] and fe.iloc[-1] < se.iloc[-1]:
+        L = False
+    else:
+        return None
+    last = h4.iloc[-1]
+    macd = ema(h4.c, 12) - ema(h4.c, 26)
+    sig = ema(macd, 9)
+    adx, pdi, mdi = adx_di(h4)
+    vw = vwap_daily(h4).iloc[-1]
+    r, r5 = rsi(h4.c).iloc[-1], rsi(m5.c).iloc[-1]
+    volsma = h4.v.rolling(SN_VOL_LEN).mean().iloc[-1]
+    f = {
+        "VWAP": last.c > vw if L else last.c < vw,
+        "RSI": r > 50 if L else r < 50,
+        "MACD": macd.iloc[-1] > sig.iloc[-1] if L else macd.iloc[-1] < sig.iloc[-1],
+        "EMA": fe.iloc[-1] > se.iloc[-1] if L else fe.iloc[-1] < se.iloc[-1],
+        "ADX": adx.iloc[-1] > 25 and (pdi.iloc[-1] > mdi.iloc[-1] if L else mdi.iloc[-1] > pdi.iloc[-1]),
+        "Volume": last.v > volsma and (last.c > last.o if L else last.c < last.o),
+        "5m RSI": r5 > 50 if L else r5 < 50,
+    }
+    score = sum(f.values())
+    risk = SN_ATR_MULT * atr(h4, SN_ATR_LEN).iloc[-1]
+    entry = last.c
+    stop = entry - risk if L else entry + risk
+    tps = [entry + k * risk if L else entry - k * risk for k in (1, 2, 3)]
+    return {"side": "long" if L else "short", "score": score, "factors": f,
+            "entry": entry, "stop": stop, "tps": tps, "bar": int(last.t)}
+
+# ---------- alerts ----------
+def send(msg, urgent=False):
+    if not NTFY_TOPIC:
+        print("[no NTFY_TOPIC set]\n" + msg); return
+    requests.post(f"https://ntfy.sh/{NTFY_TOPIC}", data=msg.encode("utf-8"),
+                  headers={"Title": "Setup Grader",
+                           "Priority": "high" if urgent else "default"},
+                  timeout=20)
+
+def fmt(p):
+    if p is None: return "–"
+    return f"{p:,.2f}" if p >= 1 else f"{p:.5f}"
+
+def backtest(bars=180):
+    """List every Sniper signal in the last `bars` closed 4H candles (no alerts sent)."""
+    for coin, pair in WATCHLIST.items():
+        try:
+            h4, m5 = candles(pair, 240), candles(pair, 5)
+            time.sleep(1)
+        except Exception as e:
+            print(f"skip {coin}: {e}"); continue
+        found, last_side = 0, None
+        for i in range(len(h4) - bars, len(h4)):
+            sub = h4.iloc[:i + 1].reset_index(drop=True)
+            close_t = sub.t.iloc[-1] + 4 * 3600
+            m = m5[m5.t + 300 <= close_t]
+            sn = sniper(sub, m if len(m) > 30 else sub)
+            if sn and sn["score"] >= SN_MIN and sn["side"] != last_side:
+                found += 1
+                last_side = sn["side"]
+                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
+                note = "" if len(m) > 30 else " (5m RSI est.)"
+                print(f"{coin} {when} UTC  {sn['side'].upper():5} {sn['score']}/7  "
+                      f"entry {fmt(sn['entry'])}  TP1 {fmt(sn['tps'][0])}{note}")
+        if not found:
+            print(f"{coin}: no signals")
+
+def main():
+    if "--test" in sys.argv:
+        send("✅ Grader alerts are connected."); return
+    if "--backtest" in sys.argv:
+        backtest(); return
+    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    now, changed, log = time.time(), False, []
+
+    for coin, pair in WATCHLIST.items():
+        try:
+            d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
+            m5 = candles(pair, 5)
+            time.sleep(1)   # stay under Kraken's public rate limit
+        except Exception as e:
+            print(f"skip {coin}: {e}"); continue
+        best = max((grade(d, h4, h1, s) for s in ("long", "short")), key=lambda g: g["met"])
+        tier = 2 if best["met"] == 6 else 1 if best["met"] >= NEAR_MET else 0
+        prev = state.get(coin, {"tier": 0, "sent": {}})
+        sent = prev.get("sent", {})
+        print(f"{coin}: {best['side']} {best['met']}/6 tier {tier}")
+
+        # alert on a move up into a tier, unless that tier already alerted within the cooldown
+        if tier > prev["tier"] and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
+            label = "🚨 A+ SETUP" if tier == 2 else "👀 Setup forming"
+            missing = [k for k, v in best["checks"].items() if not v]
+            rr = f" ({best['rr']:.1f}R)" if best["rr"] else ""
+            msg = (f"{label}: {coin} {best['side'].upper()} {best['met']}/6\n"
+                   f"Price {fmt(best['entry'])} | Stop {fmt(best['stop'])} | Target {fmt(best['target'])}{rr}\n"
+                   f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f}"
+                   + (f"\nMissing: {', '.join(missing)}" if missing else ""))
+            send(msg, urgent=(tier == 2))
+            log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},{best['side']},{best['met']},{best['entry']}")
+            sent[str(tier)] = now
+        if tier != prev["tier"] or sent != prev.get("sent", {}):
+            state[coin] = {"tier": tier, "sent": sent}; changed = True
+
+        bo = breakout(d, h4)
+        if bo:
+            side, lvl, r, vx = bo
+            key = f"{coin}_bo"
+            last_bo = state.get(key, 0)
+            if now - last_bo > BO_COOLDOWN_HRS * 3600:
+                send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
+                     f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
+                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}", urgent=True)
+                log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
+                state[key] = now; changed = True
+            print(f"{coin}: breakout {side}")
+
+        sn = sniper(h4, m5)
+        if sn:
+            print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7")
+            key = f"{coin}_sn"
+            side_key = f"{coin}_side"
+            if sn["score"] >= SN_MIN and state.get(key) != sn["bar"] and state.get(side_key) != sn["side"]:
+                missing = [k for k, v in sn["factors"].items() if not v]
+                tp = " / ".join(fmt(x) for x in sn["tps"])
+                send(f"🎯 SNIPER {sn['side'].upper()}: {coin} {sn['score']}/7 (4H)\n"
+                     f"Entry {fmt(sn['entry'])} | SL {fmt(sn['stop'])}\n"
+                     f"TP1-3 {tp}"
+                     + (f"\nMissing: {', '.join(missing)}" if missing else ""), urgent=True)
+                log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},sniper-{sn['side']},{sn['score']},{sn['entry']}")
+                state[key] = sn["bar"]; state[side_key] = sn["side"]; changed = True
+
+    if changed:
+        STATE_FILE.write_text(json.dumps(state, indent=1))
+    if log:
+        new = not LOG_FILE.exists()
+        with LOG_FILE.open("a") as f:
+            if new: f.write("utc,coin,side,met,price\n")
+            f.write("\n".join(log) + "\n")
+
+if __name__ == "__main__":
+    main()
