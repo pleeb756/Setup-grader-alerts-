@@ -56,7 +56,7 @@ jobs:
           SC_LOOK: "36"
           SC_BURST_ATR: "4"
           SC_BURST_VOL: "1.8"
-          SC_COOLDOWN_MIN: "45"
+          SC_COOLDOWN_MIN: "90"
         run: |
           python grader.py \
             ${{ inputs.test && '--test' || '' }} \
