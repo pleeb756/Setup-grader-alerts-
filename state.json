@@ -36,5 +36,9 @@
  "LINK_sn": 1789689600,
  "LINK_side": "long",
  "HBAR_sn": 1789689600,
- "HBAR_side": "long"
+ "HBAR_side": "long",
+ "SOL_sc": {
+  "bar": 1789713300,
+  "sent": 1789713648.583919
+ }
 }
