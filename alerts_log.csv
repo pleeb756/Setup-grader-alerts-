@@ -23,3 +23,6 @@ utc,coin,side,met,price
 2026-09-18 16:08,ETH,breakout-long,-,2582.73
 2026-09-18 16:08,XRP,sniper-long,6,1.38386
 2026-09-18 16:08,LINK,breakout-long,-,12.13888
+2026-09-18 18:35,BTC,scalp-pullback-long,85,80989.9
+2026-09-18 18:35,ETH,scalp-breakout-long,94,2620.49
+2026-09-18 18:35,ZEC,scalp-pullback-short,85,1446.39
