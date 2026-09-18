@@ -3,6 +3,7 @@ A+ Setup Grader — alert runner for GitHub Actions.
 Grades each coin on six checks (daily trend, 4H setup, 1H trigger) using
 closed candles from Kraken, then sends a phone push alert (ntfy) when a coin
 crosses into "setup forming" (5/6) or "A+ actionable" (6/6).
+Also scans 5m candles for scalp setups (breakout, pullback, momentum burst).
 """
 import json, os, time, sys
 from pathlib import Path
@@ -26,6 +27,15 @@ SN_VOL_LEN = 20
 COOLDOWN_HRS = 4        # don't repeat the same tier for a coin within this window
 STATE_FILE = Path("state.json")
 LOG_FILE = Path("alerts_log.csv")
+
+# scalp module (5m entries, 15m trend) — mirrors the Pine settings 36 / 2.5 / 4 / 1.8 / 80
+SC_LOOK = int(os.environ.get("SC_LOOK", "36"))            # 5m bars for the breakout range
+SC_VOL_MULT = float(os.environ.get("SC_VOL_MULT", "2.5")) # breakout bar volume vs 20-bar average
+SC_BURST_ATR = float(os.environ.get("SC_BURST_ATR", "4")) # burst size in ATR over 12 bars
+SC_BURST_VOL = float(os.environ.get("SC_BURST_VOL", "1.8"))
+SC_MIN_SCORE = int(os.environ.get("SC_MIN_SCORE", "80"))
+SC_COOLDOWN_MIN = int(os.environ.get("SC_COOLDOWN_MIN", "45"))
+SC_COINS = [c.strip() for c in os.environ.get("SC_COINS", "").split(",") if c.strip()]  # empty = all
 
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 
@@ -175,6 +185,86 @@ def sniper(h4, m5):
     return {"side": "long" if L else "short", "score": score, "factors": f,
             "entry": entry, "stop": stop, "tps": tps, "bar": int(last.t)}
 
+# ---------- scalp scanner (5m entries, 15m trend) ----------
+def scalp(m5, m15):
+    """Breakout / trend pullback / momentum burst on 5m, scored 0-100."""
+    if len(m5) < 80 or len(m15) < 60:
+        return None
+    e20_15 = ema(m15.c, 20)
+    e50_15 = ema(m15.c, 50).iloc[-1]
+    c15 = m15.c.iloc[-1]
+    slope = (e20_15.iloc[-1] / e20_15.iloc[-4] - 1) * 100
+    tdir = 1 if c15 > e20_15.iloc[-1] > e50_15 else -1 if c15 < e20_15.iloc[-1] < e50_15 else 0
+
+    last, prev = m5.iloc[-1], m5.iloc[-2]
+    a = atr(m5).iloc[-1]
+    vavg = m5.v.iloc[-21:-1].mean()
+    vr = last.v / vavg if vavg > 0 else 0.0
+    r = rsi(m5.c).iloc[-1]
+    e9, e21 = ema(m5.c, 9), ema(m5.c, 21)
+    rng = (last.h - last.l) or 1e-12
+    body = abs(last.c - last.o) / rng
+    pos = (last.c - last.l) / rng
+    win = m5.iloc[-SC_LOOK-1:-1]
+    hi, lo = win.h.max(), win.l.min()
+    burst_v = m5.v.iloc[-12:].mean()
+    base_v = m5.v.iloc[-72:-12].mean()
+    br = burst_v / base_v if base_v > 0 else 0.0
+    move = last.c - m5.c.iloc[-13]
+
+    out = []
+    def push(name, d, score, stop, note):
+        risk = abs(last.c - stop)
+        if risk <= 0:
+            return
+        out.append({"setup": name, "side": "long" if d == 1 else "short",
+                    "score": int(round(max(0, min(100, score)))),
+                    "entry": last.c, "stop": stop, "target": last.c + 2 * risk * d,
+                    "rsi": r, "volx": vr, "note": note, "bar": int(last.t)})
+
+    # 1. range breakout / breakdown
+    for d in (1, -1):
+        level = hi if d == 1 else lo
+        broke = last.c > level if d == 1 else last.c < level
+        if broke and vr >= SC_VOL_MULT and body >= 0.5:
+            s = 50 + min(20, (vr - SC_VOL_MULT) * 8 + 8)
+            s += 15 if tdir == d else (-15 if tdir == -d else 0)
+            s += 10 if (pos if d == 1 else 1 - pos) >= 0.75 else 0
+            s += -10 if (r > 80 if d == 1 else r < 20) else 5
+            stop = max(last.l, level - 0.5 * a) if d == 1 else min(last.h, level + 0.5 * a)
+            push("breakout" if d == 1 else "breakdown", d, s, stop,
+                 f"{SC_LOOK}-bar level {fmt(level)} on {vr:.1f}x vol")
+
+    # 2. trend pullback to the 5m EMA21
+    if tdir != 0:
+        d = tdir
+        if d == 1:
+            ok = (e9.iloc[-1] > e21.iloc[-1]
+                  and (last.l <= e21.iloc[-1] * 1.001 or prev.l <= e21.iloc[-2] * 1.001)
+                  and last.c > e9.iloc[-1] and last.c > last.o
+                  and min(last.l, prev.l) > e21.iloc[-1] - 0.75 * a)
+            stop = min(last.l, prev.l) - 0.1 * a
+            rsi_ok = 40 <= r <= 65
+        else:
+            ok = (e9.iloc[-1] < e21.iloc[-1]
+                  and (last.h >= e21.iloc[-1] * 0.999 or prev.h >= e21.iloc[-2] * 0.999)
+                  and last.c < e9.iloc[-1] and last.c < last.o
+                  and max(last.h, prev.h) < e21.iloc[-1] + 0.75 * a)
+            stop = max(last.h, prev.h) + 0.1 * a
+            rsi_ok = 35 <= r <= 60
+        if ok:
+            s = 55 + (10 if slope * d >= 0.15 else 0) + (10 if vr >= 1.3 else 0) + (10 if rsi_ok else 0)
+            push("pullback", d, s, stop, f"15m trend {'up' if d == 1 else 'down'}, 5m EMA21 reclaimed")
+
+    # 3. momentum burst — the move-already-running catcher
+    if abs(move) >= SC_BURST_ATR * a and br >= SC_BURST_VOL:
+        d = 1 if move > 0 else -1
+        s = 60 + min(25, (br - SC_BURST_VOL) * 10) + (10 if tdir == d else 0)
+        push("burst", d, s, last.c - d * 1.5 * a,
+             f"{move / m5.c.iloc[-13] * 100:+.1f}% in 1h on {br:.1f}x vol — wait for the first pullback")
+
+    return max(out, key=lambda x: x["score"]) if out else None
+
 # ---------- alerts ----------
 def send(msg, urgent=False):
     if not NTFY_TOPIC:
@@ -187,6 +277,9 @@ def send(msg, urgent=False):
 def fmt(p):
     if p is None: return "–"
     return f"{p:,.2f}" if p >= 1 else f"{p:.5f}"
+
+def stamp(now):
+    return time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))
 
 def backtest(bars=180):
     """List every Sniper signal in the last `bars` closed 4H candles (no alerts sent)."""
@@ -212,69 +305,122 @@ def backtest(bars=180):
         if not found:
             print(f"{coin}: no signals")
 
-def main():
-    if "--test" in sys.argv:
-        send("✅ Grader alerts are connected."); return
-    if "--backtest" in sys.argv:
-        backtest(); return
-    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
-    now, changed, log = time.time(), False, []
-
-    for coin, pair in WATCHLIST.items():
+def scalp_backtest(bars=300):
+    """List scalp signals over the last `bars` closed 5m candles (no alerts sent)."""
+    coins = SC_COINS or list(WATCHLIST)
+    for coin in coins:
+        pair = WATCHLIST.get(coin)
+        if not pair:
+            continue
         try:
-            d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
-            m5 = candles(pair, 5)
-            time.sleep(1)   # stay under Kraken's public rate limit
+            m5, m15 = candles(pair, 5), candles(pair, 15)
+            time.sleep(1)
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
-        best = max((grade(d, h4, h1, s) for s in ("long", "short")), key=lambda g: g["met"])
-        tier = 2 if best["met"] == 6 else 1 if best["met"] >= NEAR_MET else 0
-        prev = state.get(coin, {"tier": 0, "sent": {}})
-        sent = prev.get("sent", {})
-        print(f"{coin}: {best['side']} {best['met']}/6 tier {tier}")
+        found = 0
+        for i in range(max(80, len(m5) - bars), len(m5)):
+            sub = m5.iloc[:i + 1].reset_index(drop=True)
+            close_t = sub.t.iloc[-1] + 300
+            ctx = m15[m15.t + 900 <= close_t].reset_index(drop=True)
+            if len(ctx) < 60:
+                continue
+            sc = scalp(sub, ctx)
+            if sc and sc["score"] >= SC_MIN_SCORE:
+                found += 1
+                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
+                print(f"{coin} {when} UTC  {sc['side'].upper():5} {sc['setup']:9} "
+                      f"{sc['score']}/100  entry {fmt(sc['entry'])}  stop {fmt(sc['stop'])}")
+        if not found:
+            print(f"{coin}: no scalp signals")
 
-        # alert on a move up into a tier, unless that tier already alerted within the cooldown
-        if tier > prev["tier"] and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
-            label = "🚨 A+ SETUP" if tier == 2 else "👀 Setup forming"
-            missing = [k for k, v in best["checks"].items() if not v]
-            rr = f" ({best['rr']:.1f}R)" if best["rr"] else ""
-            msg = (f"{label}: {coin} {best['side'].upper()} {best['met']}/6\n"
-                   f"Price {fmt(best['entry'])} | Stop {fmt(best['stop'])} | Target {fmt(best['target'])}{rr}\n"
-                   f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f}"
-                   + (f"\nMissing: {', '.join(missing)}" if missing else ""))
-            send(msg, urgent=(tier == 2))
-            log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},{best['side']},{best['met']},{best['entry']}")
-            sent[str(tier)] = now
-        if tier != prev["tier"] or sent != prev.get("sent", {}):
-            state[coin] = {"tier": tier, "sent": sent}; changed = True
+# ---------- one pass ----------
+def run_once(scalp_only=False):
+    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    now, changed, log = time.time(), False, []
+    sc_coins = SC_COINS or list(WATCHLIST)
 
-        bo = breakout(d, h4)
-        if bo:
-            side, lvl, r, vx = bo
-            key = f"{coin}_bo"
-            last_bo = state.get(key, 0)
-            if now - last_bo > BO_COOLDOWN_HRS * 3600:
-                send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
-                     f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
-                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}", urgent=True)
-                log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
-                state[key] = now; changed = True
-            print(f"{coin}: breakout {side}")
+    for coin, pair in WATCHLIST.items():
+        if scalp_only and coin not in sc_coins:
+            continue
 
-        sn = sniper(h4, m5)
-        if sn:
-            print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7")
-            key = f"{coin}_sn"
-            side_key = f"{coin}_side"
-            if sn["score"] >= SN_MIN and state.get(key) != sn["bar"] and state.get(side_key) != sn["side"]:
-                missing = [k for k, v in sn["factors"].items() if not v]
-                tp = " / ".join(fmt(x) for x in sn["tps"])
-                send(f"🎯 SNIPER {sn['side'].upper()}: {coin} {sn['score']}/7 (4H)\n"
-                     f"Entry {fmt(sn['entry'])} | SL {fmt(sn['stop'])}\n"
-                     f"TP1-3 {tp}"
-                     + (f"\nMissing: {', '.join(missing)}" if missing else ""), urgent=True)
-                log.append(f"{time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))},{coin},sniper-{sn['side']},{sn['score']},{sn['entry']}")
-                state[key] = sn["bar"]; state[side_key] = sn["side"]; changed = True
+        if not scalp_only:
+            try:
+                d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
+                m5 = candles(pair, 5)
+                time.sleep(1)   # stay under Kraken's public rate limit
+            except Exception as e:
+                print(f"skip {coin}: {e}"); continue
+            best = max((grade(d, h4, h1, s) for s in ("long", "short")), key=lambda g: g["met"])
+            tier = 2 if best["met"] == 6 else 1 if best["met"] >= NEAR_MET else 0
+            prev = state.get(coin, {"tier": 0, "sent": {}})
+            sent = prev.get("sent", {})
+            print(f"{coin}: {best['side']} {best['met']}/6 tier {tier}")
+
+            # alert on a move up into a tier, unless that tier already alerted within the cooldown
+            if tier > prev["tier"] and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
+                label = "🚨 A+ SETUP" if tier == 2 else "👀 Setup forming"
+                missing = [k for k, v in best["checks"].items() if not v]
+                rr = f" ({best['rr']:.1f}R)" if best["rr"] else ""
+                msg = (f"{label}: {coin} {best['side'].upper()} {best['met']}/6\n"
+                       f"Price {fmt(best['entry'])} | Stop {fmt(best['stop'])} | Target {fmt(best['target'])}{rr}\n"
+                       f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f}"
+                       + (f"\nMissing: {', '.join(missing)}" if missing else ""))
+                send(msg, urgent=(tier == 2))
+                log.append(f"{stamp(now)},{coin},{best['side']},{best['met']},{best['entry']}")
+                sent[str(tier)] = now
+            if tier != prev["tier"] or sent != prev.get("sent", {}):
+                state[coin] = {"tier": tier, "sent": sent}; changed = True
+
+            bo = breakout(d, h4)
+            if bo:
+                side, lvl, r, vx = bo
+                key = f"{coin}_bo"
+                last_bo = state.get(key, 0)
+                if now - last_bo > BO_COOLDOWN_HRS * 3600:
+                    send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
+                         f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
+                         f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}", urgent=True)
+                    log.append(f"{stamp(now)},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
+                    state[key] = now; changed = True
+                print(f"{coin}: breakout {side}")
+
+            sn = sniper(h4, m5)
+            if sn:
+                print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7")
+                key = f"{coin}_sn"
+                side_key = f"{coin}_side"
+                if sn["score"] >= SN_MIN and state.get(key) != sn["bar"] and state.get(side_key) != sn["side"]:
+                    missing = [k for k, v in sn["factors"].items() if not v]
+                    tp = " / ".join(fmt(x) for x in sn["tps"])
+                    send(f"🎯 SNIPER {sn['side'].upper()}: {coin} {sn['score']}/7 (4H)\n"
+                         f"Entry {fmt(sn['entry'])} | SL {fmt(sn['stop'])}\n"
+                         f"TP1-3 {tp}"
+                         + (f"\nMissing: {', '.join(missing)}" if missing else ""), urgent=True)
+                    log.append(f"{stamp(now)},{coin},sniper-{sn['side']},{sn['score']},{sn['entry']}")
+                    state[key] = sn["bar"]; state[side_key] = sn["side"]; changed = True
+
+        # ----- scalp scan -----
+        if coin in sc_coins:
+            try:
+                m5s, m15 = candles(pair, 5), candles(pair, 15)
+                time.sleep(1)
+                sc = scalp(m5s, m15)
+            except Exception as e:
+                print(f"{coin}: scalp skip: {e}"); sc = None
+            if sc:
+                print(f"{coin}: scalp {sc['setup']} {sc['side']} {sc['score']}/100")
+                key = f"{coin}_sc"
+                prev_sc = state.get(key, {})
+                if not isinstance(prev_sc, dict):
+                    prev_sc = {}
+                if (sc["score"] >= SC_MIN_SCORE and prev_sc.get("bar") != sc["bar"]
+                        and now - prev_sc.get("sent", 0) > SC_COOLDOWN_MIN * 60):
+                    send(f"⚡ SCALP {sc['side'].upper()}: {coin} {sc['setup']} {sc['score']}/100 (5m)\n"
+                         f"Entry {fmt(sc['entry'])} | Stop {fmt(sc['stop'])} | 2R {fmt(sc['target'])}\n"
+                         f"RSI {sc['rsi']:.0f} | Vol {sc['volx']:.1f}x\n{sc['note']}",
+                         urgent=(sc["score"] >= 90))
+                    log.append(f"{stamp(now)},{coin},scalp-{sc['setup']}-{sc['side']},{sc['score']},{sc['entry']}")
+                    state[key] = {"bar": sc["bar"], "sent": now}; changed = True
 
     if changed:
         STATE_FILE.write_text(json.dumps(state, indent=1))
@@ -283,6 +429,29 @@ def main():
         with LOG_FILE.open("a") as f:
             if new: f.write("utc,coin,side,met,price\n")
             f.write("\n".join(log) + "\n")
+
+def main():
+    if "--test" in sys.argv:
+        send("✅ Grader alerts are connected."); return
+    if "--backtest" in sys.argv:
+        backtest(); return
+    if "--scalp-backtest" in sys.argv:
+        scalp_backtest(); return
+
+    loop_min = int(os.environ.get("LOOP_MINUTES", "0"))
+    if loop_min <= 0:
+        run_once(scalp_only="--scalp-only" in sys.argv)
+        return
+
+    # loop mode: full pass first, then scalp-only passes every minute
+    end = time.time() + loop_min * 60
+    run_once()
+    while time.time() + 75 < end:
+        time.sleep(60)
+        try:
+            run_once(scalp_only=True)
+        except Exception as e:
+            print(f"pass failed: {e}")
 
 if __name__ == "__main__":
     main()
