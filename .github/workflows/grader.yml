@@ -1,14 +1,74 @@
-{"name": "Setup grader alerts",
-"on": {"schedule": [{"cron": "7,22,37,52 * * * *"}],
-"workflow_dispatch": {"inputs": {
-"test": {"description": "Send a test notification only", "type": "boolean", "default": false},
-"backtest": {"description": "List past Sniper signals (no alerts)", "type": "boolean", "default": false}}}},
-"permissions": {"contents": "write"},
-"concurrency": {"group": "grader", "cancel-in-progress": false},
-"jobs": {"grade": {"runs-on": "ubuntu-latest", "timeout-minutes": 10, "steps": [
-{"uses": "actions/checkout@v5"},
-{"uses": "actions/setup-python@v6", "with": {"python-version": "3.12", "cache": "pip"}},
-{"run": "pip install -r requirements.txt"},
-{"name": "Run grader", "env": {"NTFY_TOPIC": "${{ secrets.NTFY_TOPIC }}"}, "run": "python grader.py ${{ inputs.test && '--test' || '' }} ${{ inputs.backtest && '--backtest' || '' }}"},
-{"name": "Save alert state", "if": "${{ !inputs.backtest }}", "run": "git config user.name grader-bot\ngit config user.email grader-bot@users.noreply.github.com\nfor f in state.json alerts_log.csv; do [ -f \"$f\" ] && git add \"$f\"; done\ngit diff --cached --quiet || (git commit -m 'Update alert state' && git push)"}
-]}}}
+name: Setup grader alerts
+
+on:
+  schedule:
+    # Hourly. The job then rescans the 5m scalp setups every minute for ~55 min,
+    # so scalp latency is about a minute instead of the 5-15 that cron alone gives.
+    - cron: "2 * * * *"
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Send a test notification only"
+        type: boolean
+        default: false
+      backtest:
+        description: "List past Sniper signals (no alerts)"
+        type: boolean
+        default: false
+      scalp_backtest:
+        description: "List past scalp signals (no alerts)"
+        type: boolean
+        default: false
+      once:
+        description: "Single pass, no loop"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: grader
+  cancel-in-progress: false
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
+
+      - name: Run grader
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          # loop only on the schedule; manual runs stay single-pass
+          LOOP_MINUTES: ${{ (github.event_name == 'schedule' && !inputs.once) && '55' || '0' }}
+          SC_COINS: "ZEC,BTC,ETH,SOL"
+          SC_MIN_SCORE: "80"
+          SC_VOL_MULT: "2.5"
+          SC_LOOK: "36"
+          SC_BURST_ATR: "4"
+          SC_BURST_VOL: "1.8"
+          SC_COOLDOWN_MIN: "45"
+        run: |
+          python grader.py \
+            ${{ inputs.test && '--test' || '' }} \
+            ${{ inputs.backtest && '--backtest' || '' }} \
+            ${{ inputs.scalp_backtest && '--scalp-backtest' || '' }}
+
+      - name: Save alert state
+        if: ${{ always() && !inputs.backtest && !inputs.scalp_backtest && !inputs.test }}
+        run: |
+          git config user.name grader-bot
+          git config user.email grader-bot@users.noreply.github.com
+          git add state.json alerts_log.csv
+          git diff --staged --quiet || git commit -m "Update alert state"
+          git pull --rebase --autostash || true
+          git push || true
