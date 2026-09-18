@@ -32,5 +32,9 @@
  "SOL_sn": 1789660800,
  "SOL_side": "long",
  "XLM_sn": 1789660800,
- "XLM_side": "long"
+ "XLM_side": "long",
+ "LINK_sn": 1789689600,
+ "LINK_side": "long",
+ "HBAR_sn": 1789689600,
+ "HBAR_side": "long"
 }
