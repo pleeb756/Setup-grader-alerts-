@@ -35,3 +35,6 @@ utc,coin,side,met,price
 2026-09-19 11:00,ZEC,scalp-breakdown-short,85,1531.13
 2026-09-19 14:20,BTC,scalp-breakout-long,100,81447.4
 2026-09-19 14:35,ZEC,scalp-pullback-short,85,1526.83
+2026-09-19 16:08,ZEC,scalp-breakdown-short,90,1512.81
+2026-09-19 16:08,XLM,breakout-long,-,0.198298
+2026-09-19 16:08,HBAR,breakout-long,-,0.08107
