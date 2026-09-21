@@ -76,3 +76,5 @@ utc,coin,side,met,price
 2026-09-21 16:20,ETH,scalp-pullback-long,85,2763.5
 2026-09-21 17:40,BTC,scalp-pullback-long,85,85903.3
 2026-09-21 19:20,BTC,scalp-breakout-long,96,86300.0
+2026-09-21 20:20,ETH,scalp-breakout-long,92,2794.27
+2026-09-21 20:20,SOL,scalp-breakout-long,86,118.91
