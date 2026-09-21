@@ -67,3 +67,7 @@ utc,coin,side,met,price
 2026-09-21 09:01,ZEC,scalp-breakout-long,90,1523.18
 2026-09-21 11:10,ETH,scalp-pullback-long,85,2720.3
 2026-09-21 11:30,ZEC,scalp-pullback-long,85,1543.82
+2026-09-21 12:10,LINK,breakout-long,-,13.04532
+2026-09-21 12:10,XLM,breakout-long,-,0.210428
+2026-09-21 13:00,ETH,scalp-pullback-long,85,2734.33
+2026-09-21 13:05,SOL,scalp-pullback-long,85,116.89
