@@ -289,15 +289,18 @@ def backtest(bars=180):
             time.sleep(1)
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
-        found, last_side = 0, None
+        found = 0
         for i in range(len(h4) - bars, len(h4)):
             sub = h4.iloc[:i + 1].reset_index(drop=True)
             close_t = sub.t.iloc[-1] + 4 * 3600
             m = m5[m5.t + 300 <= close_t]
             sn = sniper(sub, m if len(m) > 30 else sub)
-            if sn and sn["score"] >= SN_MIN and sn["side"] != last_side:
+            if sn:
+                if sn["score"] < SN_MIN:
+                    when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
+                    print(f"{coin} {when} UTC  {sn['side'].upper():5} {sn['score']}/7  (below {SN_MIN}, no alert)")
+                    continue
                 found += 1
-                last_side = sn["side"]
                 when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
                 note = "" if len(m) > 30 else " (5m RSI est.)"
                 print(f"{coin} {when} UTC  {sn['side'].upper():5} {sn['score']}/7  "
@@ -386,10 +389,14 @@ def run_once(scalp_only=False):
 
             sn = sniper(h4, m5)
             if sn:
-                print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7")
+                miss = [k for k, v in sn["factors"].items() if not v]
+                print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7"
+                      + (f" (missing: {', '.join(miss)})" if miss else ""))
                 key = f"{coin}_sn"
                 side_key = f"{coin}_side"
-                if sn["score"] >= SN_MIN and state.get(key) != sn["bar"] and state.get(side_key) != sn["side"]:
+                # Dedupe by bar only. The old side lock blocked every new long cross until a
+                # qualifying SHORT alert fired (and vice versa), which in a trend never happens.
+                if sn["score"] >= SN_MIN and state.get(key) != sn["bar"]:
                     missing = [k for k, v in sn["factors"].items() if not v]
                     tp = " / ".join(fmt(x) for x in sn["tps"])
                     send(f"🎯 SNIPER {sn['side'].upper()}: {coin} {sn['score']}/7 (4H)\n"
