@@ -3,7 +3,8 @@ A+ Setup Grader — alert runner for GitHub Actions.
 Grades each coin on six checks (daily trend, 4H setup, 1H trigger) using
 closed candles from Kraken, then sends a phone push alert (ntfy) when a coin
 crosses into "setup forming" (5/6) or "A+ actionable" (6/6).
-Also scans 5m candles for scalp setups (breakout, pullback, momentum burst).
+Also scans 5m candles for scalp setups, and flags momentum shifts where the
+5m/15m flip against the 4H trend with divergence and money-flow confluence.
 """
 import json, os, time, sys
 from pathlib import Path
@@ -21,9 +22,11 @@ MIN_RR = 2.0            # minimum reward:risk
 BO_LOOKBACK = 20        # 4H bars for the breakout range
 BO_VOL_MULT = 1.5       # breakout bar volume vs 20-bar average
 BO_COOLDOWN_HRS = 12
-# Viprasol Sniper Confluence settings (matching your chart: 9 21 4 1.5 14, 5m RSI)
-SN_FAST, SN_SLOW, SN_MIN, SN_ATR_MULT, SN_ATR_LEN = 9, 21, 4, 1.5, 14
-SN_VOL_LEN = 20
+# Momentum shift settings — lower timeframes flip first, 4H confirmed as about to follow
+MS_MIN = int(os.environ.get("MS_MIN", "5"))              # confluence factors needed (of 7)
+MS_MAX_BARS = float(os.environ.get("MS_MAX_BARS", "6"))  # projected 4H bars until the EMA cross
+MS_ATR_MULT = float(os.environ.get("MS_ATR_MULT", "1.5"))
+MS_COOLDOWN_HRS = int(os.environ.get("MS_COOLDOWN_HRS", "8"))
 COOLDOWN_HRS = 4        # don't repeat the same tier for a coin within this window
 STATE_FILE = Path("state.json")
 LOG_FILE = Path("alerts_log.csv")
@@ -137,53 +140,110 @@ def breakout(d, h4):
         return "short", prior.l.min(), r, last.v / prior.v.mean()
     return None
 
-# ---------- Viprasol Sniper Confluence port (4H) ----------
-def vwap_daily(df):
-    day = pd.to_datetime(df.t, unit="s", utc=True).dt.date
+# ---------- money flow + divergence helpers ----------
+def mfi(df, n=14):
+    """Money Flow Index — volume-weighted RSI."""
     tp = (df.h + df.l + df.c) / 3
-    return (tp * df.v).groupby(day).cumsum() / df.v.groupby(day).cumsum()
+    raw = tp * df.v
+    pos = raw.where(tp > tp.shift(), 0.0)
+    neg = raw.where(tp < tp.shift(), 0.0)
+    return 100 - 100 / (1 + pos.rolling(n).sum() / neg.rolling(n).sum().replace(0, 1e-9))
 
-def adx_di(df, n=14):
-    up, dn = df.h.diff(), -df.l.diff()
-    plus = ((up > dn) & (up > 0)) * up
-    minus = ((dn > up) & (dn > 0)) * dn
-    tr = atr(df, n)
-    pdi = 100 * plus.ewm(alpha=1/n, adjust=False).mean() / tr
-    mdi = 100 * minus.ewm(alpha=1/n, adjust=False).mean() / tr
-    dx = 100 * (pdi - mdi).abs() / (pdi + mdi)
-    return dx.ewm(alpha=1/n, adjust=False).mean(), pdi, mdi
+def cmf(df, n=20):
+    """Chaikin Money Flow — accumulation above zero, distribution below."""
+    rng = (df.h - df.l).replace(0, 1e-9)
+    mfm = ((df.c - df.l) - (df.h - df.c)) / rng
+    return (mfm * df.v).rolling(n).sum() / df.v.rolling(n).sum()
 
-def sniper(h4, m5):
-    fe, se = ema(h4.c, SN_FAST), ema(h4.c, SN_SLOW)
-    if fe.iloc[-2] <= se.iloc[-2] and fe.iloc[-1] > se.iloc[-1]:
-        L = True
-    elif fe.iloc[-2] >= se.iloc[-2] and fe.iloc[-1] < se.iloc[-1]:
-        L = False
-    else:
+def obv(df):
+    step = (df.c.diff() > 0).astype(int) - (df.c.diff() < 0).astype(int)
+    return (step * df.v).cumsum()
+
+def swing_idx(series, k=2):
+    """Indices of pivot lows and highs in a series."""
+    v = series.values
+    lows, highs = [], []
+    for i in range(k, len(v) - k):
+        w = v[i-k:i+k+1]
+        if v[i] == w.min(): lows.append(i)
+        if v[i] == w.max(): highs.append(i)
+    return lows, highs
+
+def divergence(df, look=60, k=2):
+    """Regular RSI divergence across the last two swings. Returns (bullish, bearish)."""
+    sub = df.iloc[-look:].reset_index(drop=True)
+    if len(sub) < 20:
+        return False, False
+    r = rsi(sub.c)
+    lows = swing_idx(sub.l, k)[0]
+    highs = swing_idx(sub.h, k)[1]
+    bull = bear = False
+    if len(lows) >= 2:
+        a, b = lows[-2], lows[-1]
+        bull = sub.l[b] < sub.l[a] and r[b] > r[a]      # lower low in price, higher low in RSI
+    if len(highs) >= 2:
+        a, b = highs[-2], highs[-1]
+        bear = sub.h[b] > sub.h[a] and r[b] < r[a]      # higher high in price, lower high in RSI
+    return bull, bear
+
+# ---------- momentum shift (lower timeframes lead, 4H about to follow) ----------
+def ltf_dir(df):
+    """Momentum direction on a lower timeframe: EMA9/21 plus RSI either side of 50."""
+    e9, e21 = ema(df.c, 9), ema(df.c, 21)
+    r = rsi(df.c).iloc[-1]
+    if e9.iloc[-1] > e21.iloc[-1] and r > 50: return 1
+    if e9.iloc[-1] < e21.iloc[-1] and r < 50: return -1
+    return 0
+
+def bars_to_cross(h4):
+    """Extrapolate how many 4H bars until the 9/21 EMA spread crosses zero."""
+    spread = ema(h4.c, 9) - ema(h4.c, 21)
+    now, step = spread.iloc[-1], spread.iloc[-1] - spread.iloc[-2]
+    if step == 0:
         return None
-    last = h4.iloc[-1]
+    if (now > 0) == (step > 0):
+        return None                 # spread is widening, no cross coming
+    return abs(now / step)
+
+def momentum_shift(h4, m15, m5):
+    """Fires when 5m and 15m have flipped against the 4H trend and the 4H is about to follow."""
+    d15, d5 = ltf_dir(m15), ltf_dir(m5)
+    if d15 == 0 or d15 != d5:
+        return None                 # both lower timeframes must agree
+    d = d15
+    e9, e21 = ema(h4.c, 9), ema(h4.c, 21)
+    if (1 if e9.iloc[-1] > e21.iloc[-1] else -1) == d:
+        return None                 # 4H already points this way, so there is no shift to catch
+
+    eta = bars_to_cross(h4)
     macd = ema(h4.c, 12) - ema(h4.c, 26)
-    sig = ema(macd, 9)
-    adx, pdi, mdi = adx_di(h4)
-    vw = vwap_daily(h4).iloc[-1]
-    r, r5 = rsi(h4.c).iloc[-1], rsi(m5.c).iloc[-1]
-    volsma = h4.v.rolling(SN_VOL_LEN).mean().iloc[-1]
+    hist = macd - ema(macd, 9)
+    bull_div, bear_div = divergence(h4)
+    mf = mfi(h4)
+    cf = cmf(h4).iloc[-1]
+    ob, ob_ema = obv(h4), ema(obv(h4), 21)
+    r4 = rsi(h4.c).iloc[-1]
+    a = atr(h4).iloc[-1]
+    last = h4.iloc[-1]
+
     f = {
-        "VWAP": last.c > vw if L else last.c < vw,
-        "RSI": r > 50 if L else r < 50,
-        "MACD": macd.iloc[-1] > sig.iloc[-1] if L else macd.iloc[-1] < sig.iloc[-1],
-        "EMA": fe.iloc[-1] > se.iloc[-1] if L else fe.iloc[-1] < se.iloc[-1],
-        "ADX": adx.iloc[-1] > 25 and (pdi.iloc[-1] > mdi.iloc[-1] if L else mdi.iloc[-1] > pdi.iloc[-1]),
-        "Volume": last.v > volsma and (last.c > last.o if L else last.c < last.o),
-        "5m RSI": r5 > 50 if L else r5 < 50,
+        "5m+15m flip": True,
+        "4H cross due": eta is not None and eta <= MS_MAX_BARS,
+        "Histogram turning": (hist.iloc[-1] > hist.iloc[-2] > hist.iloc[-3]) if d == 1
+                             else (hist.iloc[-1] < hist.iloc[-2] < hist.iloc[-3]),
+        "Divergence": bull_div if d == 1 else bear_div,
+        "MFI": (mf.iloc[-1] > mf.iloc[-4] and mf.iloc[-1] > 40) if d == 1
+               else (mf.iloc[-1] < mf.iloc[-4] and mf.iloc[-1] < 60),
+        "CMF": cf > 0 if d == 1 else cf < 0,
+        "OBV": ob.iloc[-1] > ob_ema.iloc[-1] if d == 1 else ob.iloc[-1] < ob_ema.iloc[-1],
     }
-    score = sum(f.values())
-    risk = SN_ATR_MULT * atr(h4, SN_ATR_LEN).iloc[-1]
     entry = last.c
-    stop = entry - risk if L else entry + risk
-    tps = [entry + k * risk if L else entry - k * risk for k in (1, 2, 3)]
-    return {"side": "long" if L else "short", "score": score, "factors": f,
-            "entry": entry, "stop": stop, "tps": tps, "bar": int(last.t)}
+    stop = entry - MS_ATR_MULT * a * d
+    return {"side": "long" if d == 1 else "short", "score": sum(f.values()), "factors": f,
+            "entry": entry, "stop": stop,
+            "tps": [entry + k * MS_ATR_MULT * a * d for k in (1, 2, 3)],
+            "eta": eta, "rsi4h": r4, "mfi": mf.iloc[-1], "cmf": cf,
+            "div": bull_div if d == 1 else bear_div, "bar": int(last.t)}
 
 # ---------- scalp scanner (5m entries, 15m trend) ----------
 def scalp(m5, m15):
@@ -282,31 +342,33 @@ def stamp(now):
     return time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))
 
 def backtest(bars=180):
-    """List every Sniper signal in the last `bars` closed 4H candles (no alerts sent)."""
+    """List every momentum shift in the last `bars` closed 4H candles (no alerts sent)."""
     for coin, pair in WATCHLIST.items():
         try:
-            h4, m5 = candles(pair, 240), candles(pair, 5)
+            h4, m15, m5 = candles(pair, 240), candles(pair, 15), candles(pair, 5)
             time.sleep(1)
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
-        found = 0
-        for i in range(len(h4) - bars, len(h4)):
+        found, last_side = 0, None
+        for i in range(max(60, len(h4) - bars), len(h4)):
             sub = h4.iloc[:i + 1].reset_index(drop=True)
             close_t = sub.t.iloc[-1] + 4 * 3600
-            m = m5[m5.t + 300 <= close_t]
-            sn = sniper(sub, m if len(m) > 30 else sub)
-            if sn:
-                if sn["score"] < SN_MIN:
-                    when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
-                    print(f"{coin} {when} UTC  {sn['side'].upper():5} {sn['score']}/7  (below {SN_MIN}, no alert)")
-                    continue
+            c15 = m15[m15.t + 900 <= close_t].reset_index(drop=True)
+            c5 = m5[m5.t + 300 <= close_t].reset_index(drop=True)
+            if len(c15) < 30 or len(c5) < 30:
+                continue                      # 5m/15m history does not reach that far back
+            ms = momentum_shift(sub, c15, c5)
+            if ms and ms["score"] >= MS_MIN and ms["side"] != last_side:
                 found += 1
+                last_side = ms["side"]
                 when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
-                note = "" if len(m) > 30 else " (5m RSI est.)"
-                print(f"{coin} {when} UTC  {sn['side'].upper():5} {sn['score']}/7  "
-                      f"entry {fmt(sn['entry'])}  TP1 {fmt(sn['tps'][0])}{note}")
+                eta = f"{ms['eta']:.1f}" if ms["eta"] is not None else "-"
+                print(f"{coin} {when} UTC  {ms['side'].upper():5} {ms['score']}/7  "
+                      f"entry {fmt(ms['entry'])}  4H cross in ~{eta} bars  "
+                      f"MFI {ms['mfi']:.0f}  CMF {ms['cmf']:+.2f}"
+                      + ("  DIV" if ms["div"] else ""))
         if not found:
-            print(f"{coin}: no signals")
+            print(f"{coin}: no momentum shifts (5m/15m history only reaches back ~2 days)")
 
 def scalp_backtest(bars=300):
     """List scalp signals over the last `bars` closed 5m candles (no alerts sent)."""
@@ -387,24 +449,34 @@ def run_once(scalp_only=False):
                     state[key] = now; changed = True
                 print(f"{coin}: breakout {side}")
 
-            sn = sniper(h4, m5)
-            if sn:
-                miss = [k for k, v in sn["factors"].items() if not v]
-                print(f"{coin}: sniper {sn['side']} cross, score {sn['score']}/7"
-                      + (f" (missing: {', '.join(miss)})" if miss else ""))
-                key = f"{coin}_sn"
-                side_key = f"{coin}_side"
-                # Dedupe by bar only. The old side lock blocked every new long cross until a
-                # qualifying SHORT alert fired (and vice versa), which in a trend never happens.
-                if sn["score"] >= SN_MIN and state.get(key) != sn["bar"]:
-                    missing = [k for k, v in sn["factors"].items() if not v]
-                    tp = " / ".join(fmt(x) for x in sn["tps"])
-                    send(f"🎯 SNIPER {sn['side'].upper()}: {coin} {sn['score']}/7 (4H)\n"
-                         f"Entry {fmt(sn['entry'])} | SL {fmt(sn['stop'])}\n"
-                         f"TP1-3 {tp}"
-                         + (f"\nMissing: {', '.join(missing)}" if missing else ""), urgent=True)
-                    log.append(f"{stamp(now)},{coin},sniper-{sn['side']},{sn['score']},{sn['entry']}")
-                    state[key] = sn["bar"]; state[side_key] = sn["side"]; changed = True
+            try:
+                m15 = candles(pair, 15)
+                time.sleep(1)
+                ms = momentum_shift(h4, m15, m5)
+            except Exception as e:
+                print(f"{coin}: shift skip: {e}"); ms = None
+            if ms:
+                eta = f"{ms['eta']:.1f}" if ms["eta"] is not None else "-"
+                print(f"{coin}: shift {ms['side']} {ms['score']}/7, 4H cross in ~{eta} bars")
+                key = f"{coin}_ms"
+                prev_ms = state.get(key, {})
+                if not isinstance(prev_ms, dict):
+                    prev_ms = {}
+                if (ms["score"] >= MS_MIN and prev_ms.get("bar") != ms["bar"]
+                        and (prev_ms.get("side") != ms["side"]
+                             or now - prev_ms.get("sent", 0) > MS_COOLDOWN_HRS * 3600)):
+                    on = [k for k, v in ms["factors"].items() if v]
+                    tp = " / ".join(fmt(x) for x in ms["tps"])
+                    arrow = "🔼" if ms["side"] == "long" else "🔽"
+                    send(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
+                         f"5m+15m flipped, 4H cross in ~{eta} bars\n"
+                         f"Entry {fmt(ms['entry'])} | SL {fmt(ms['stop'])}\n"
+                         f"TP1-3 {tp}\n"
+                         f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f} | CMF {ms['cmf']:+.2f}"
+                         + ("\nDivergence confirmed" if ms["div"] else "")
+                         + f"\nHave: {', '.join(on)}", urgent=True)
+                    log.append(f"{stamp(now)},{coin},shift-{ms['side']},{ms['score']},{ms['entry']}")
+                    state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
 
         # ----- scalp scan -----
         if coin in sc_coins:
