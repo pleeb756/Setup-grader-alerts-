@@ -1,14 +1,17 @@
 """
-A+ Setup Grader — alert runner for GitHub Actions.
-Grades each coin on six checks (daily trend, 4H setup, 1H trigger) using
-closed candles from Kraken, then sends a phone push alert (ntfy) when a coin
-crosses into "setup forming" (5/6) or "A+ actionable" (6/6).
-Also flags momentum shifts, where 5m and 15m flip against the 4H trend with
-divergence and money-flow confluence pointing to a 4H cross.
+A+ Setup Grader - alert runner for GitHub Actions.
+Grades each coin with the same rules as the browser grader, using closed
+Kraken candles: five scored checks (level, confirmations, R:R, volume, clean
+price action), daily trend as context only, and the RSI re-entry gate deciding
+Actionable vs Wait. Sends a phone push (ntfy) when a coin grades B+ or better
+("setup graded, waiting on RSI") or turns Actionable (grade plus RSI gate).
+Also flags 4H breakouts and momentum shifts, where 5m and 15m flip against
+the 4H trend with divergence and money-flow confluence pointing to a 4H cross.
 """
-import json, os, time, sys
+import json, math, os, time, sys
 from pathlib import Path
 import requests
+import numpy as np
 import pandas as pd
 
 # ---------- settings ----------
@@ -17,7 +20,6 @@ WATCHLIST = {  # display name -> Kraken pair
     "ZEC": "ZECUSD", "LINK": "LINKUSD", "UNI": "UNIUSD", "XLM": "XLMUSD",
     "HBAR": "HBARUSD", "NEAR": "NEARUSD",
 }
-NEAR_MET = 5            # checks met for "setup forming"
 MIN_RR = 2.0            # minimum reward:risk
 BO_LOOKBACK = 20        # 4H bars for the breakout range
 BO_VOL_MULT = 1.5       # breakout bar volume vs 20-bar average
@@ -28,6 +30,7 @@ MS_MAX_BARS = float(os.environ.get("MS_MAX_BARS", "6"))  # projected 4H bars unt
 MS_ATR_MULT = float(os.environ.get("MS_ATR_MULT", "1.5"))
 MS_COOLDOWN_HRS = int(os.environ.get("MS_COOLDOWN_HRS", "8"))
 COOLDOWN_HRS = 4        # don't repeat the same tier for a coin within this window
+STATE_V = 2             # bump when grading rules change so old tiers reset
 STATE_FILE = Path("state.json")
 LOG_FILE = Path("alerts_log.csv")
 
@@ -60,63 +63,355 @@ def atr(df, n=14):
     tr = pd.concat([df.h - df.l, (df.h - pc).abs(), (df.l - pc).abs()], axis=1).max(axis=1)
     return tr.ewm(alpha=1/n, adjust=False).mean()
 
-def pivots(df, k=3):
-    lows, highs = [], []
-    for i in range(k, len(df) - k):
-        w = df.iloc[i-k:i+k+1]
-        if df.l[i] == w.l.min(): lows.append(df.l[i])
-        if df.h[i] == w.h.max(): highs.append(df.h[i])
-    return lows, highs
+# ---------- grading (same rules as the browser grader) ----------
+# Five scored checks: level, confirmations, R:R, volume, clean price action.
+# Daily trend is context only. 5/5 = A+, 4/5 = B+, 3/5 = C, else D.
+# Actionable only when the grade is B+ or better AND the RSI re-entry gate is live.
+PROX_PCT = 2.0          # entry must be within this % of the key level
+TOL_PCT = 0.8           # pivots within this % are the same level
+MIN_TOUCHES = 2
+WEAK_TOUCHES = 4        # this many tests or more = level weakening (caution only)
+STOP_ATR = 1.0          # ATR buffer beyond the level for the stop
+VOL_BREAKOUT = 1.5      # breakout bar volume vs 20-bar average
+VOL_BOUNCE = 1.2        # bounce bar volume vs 20-bar average
+MIN_CONFIRMS = 3
+CHOP_PASS = 50.0        # choppiness under this passes
+CHOP_MAX = 61.8         # over this is choppy; in between is neutral (no pass)
+RSI4H_TRIGGER = 32
+RSI4H_WATCH = 35
+RSI_D_LO, RSI_D_HI = 45, 55
+NAN = float("nan")
+fin = math.isfinite
 
-# ---------- grading ----------
-def grade(d, h4, h1, side):
+
+def _cols(df):
+    return {k: df[k].to_numpy(dtype=float) for k in ("t", "o", "h", "l", "c", "v")}
+
+
+def _ratio(a, b):
+    return a / b if b and fin(b) else NAN
+
+
+def sma_js(a, n):
+    return pd.Series(a).rolling(n).mean().to_numpy()
+
+
+def ema_js(a, n):
+    """SMA-seeded EMA, identical to the browser grader."""
+    out = np.full(len(a), NAN)
+    if len(a) < n:
+        return out
+    k = 2 / (n + 1)
+    prev = float(np.mean(a[:n]))
+    out[n - 1] = prev
+    for i in range(n, len(a)):
+        prev = a[i] * k + prev * (1 - k)
+        out[i] = prev
+    return out
+
+
+def rsi_js(c, n=14):
+    """Wilder RSI seeded with a simple average, identical to the browser grader."""
+    out = np.full(len(c), NAN)
+    if len(c) <= n:
+        return out
+    d = np.diff(c)
+    g = d[:n].clip(min=0).sum() / n
+    lo = (-d[:n]).clip(min=0).sum() / n
+    out[n] = 100.0 if lo == 0 else 100 - 100 / (1 + g / lo)
+    for i in range(n + 1, len(c)):
+        x = c[i] - c[i - 1]
+        g = (g * (n - 1) + max(x, 0)) / n
+        lo = (lo * (n - 1) + max(-x, 0)) / n
+        out[i] = 100.0 if lo == 0 else 100 - 100 / (1 + g / lo)
+    return out
+
+
+def macd_js(c):
+    m = ema_js(c, 12) - ema_js(c, 26)
+    signal = np.full(len(c), NAN)
+    if len(c) > 25:
+        signal[25:] = ema_js(m[25:], 9)
+    return m, signal, m - signal
+
+
+def true_range(X):
+    h, l, c = X["h"], X["l"], X["c"]
+    tr = h - l
+    pc = np.concatenate(([NAN], c[:-1]))
+    tr[1:] = np.maximum.reduce([(h - l)[1:], np.abs(h - pc)[1:], np.abs(l - pc)[1:]])
+    return tr
+
+
+def atr_js(X, n=14):
+    tr = true_range(X)
+    out = np.full(len(tr), NAN)
+    if len(tr) < n:
+        return out
+    prev = tr[:n].mean()
+    out[n - 1] = prev
+    for i in range(n, len(tr)):
+        prev = (prev * (n - 1) + tr[i]) / n
+        out[i] = prev
+    return out
+
+
+def chop_js(X, n=14):
+    if len(X["c"]) < n + 1:
+        return NAN
+    tr = true_range(X)[-n:]
+    hh, ll = X["h"][-n:].max(), X["l"][-n:].min()
+    if hh == ll:
+        return 100.0
+    return 100 * math.log10(tr.sum() / (hh - ll)) / math.log10(n)
+
+
+def pivots_js(h, l, L=3, R=3):
+    highs, lows = [], []
+    for i in range(L, len(h) - R):
+        is_h = is_l = True
+        for j in range(i - L, i + R + 1):
+            if j == i:
+                continue
+            if h[j] >= h[i]: is_h = False
+            if l[j] <= l[i]: is_l = False
+        if is_h: highs.append((i, h[i]))
+        if is_l: lows.append((i, l[i]))
+    return {"highs": highs, "lows": lows}
+
+
+def structure_js(h, l):
+    p = pivots_js(h, l)
+    if len(p["highs"]) < 2 or len(p["lows"]) < 2:
+        return {"state": "unknown", "l2": NAN, "h2": NAN}
+    h1, h2 = p["highs"][-2][1], p["highs"][-1][1]
+    l1, l2 = p["lows"][-2][1], p["lows"][-1][1]
+    state = "up" if h2 > h1 and l2 > l1 else "down" if h2 < h1 and l2 < l1 else "range"
+    return {"state": state, "l2": l2, "h2": h2}
+
+
+def cluster_levels(prices, tol):
+    out, s, cnt = [], 0.0, 0
+    for p in sorted(prices):
+        if cnt and abs(p - s / cnt) / (s / cnt) * 100 <= tol:
+            s += p; cnt += 1
+        else:
+            if cnt: out.append({"price": s / cnt, "touches": cnt})
+            s, cnt = p, 1
+    if cnt: out.append({"price": s / cnt, "touches": cnt})
+    return out
+
+
+def candle_info(X, i):
+    if i < 1:
+        return {}
+    o, h, l, c = X["o"][i], X["h"][i], X["l"][i], X["c"][i]
+    po, pc = X["o"][i - 1], X["c"][i - 1]
+    rng, body = h - l, abs(c - o)
+    lw, uw = min(o, c) - l, h - max(o, c)
+    return {
+        "body": body / rng if rng > 0 else 0,
+        "bull_engulf": c > o and pc < po and c >= po and o <= pc,
+        "bear_engulf": c < o and pc > po and c <= po and o >= pc,
+        "hammer": rng > 0 and lw >= 2 * body and uw <= max(body, rng * 0.15) and lw / rng >= 0.55,
+        "shooter": rng > 0 and uw >= 2 * body and lw <= max(body, rng * 0.15) and uw / rng >= 0.55,
+    }
+
+
+def divergence_js(X, r, L, lookback=40):
+    p = pivots_js(X["h"], X["l"])
+    min_i = len(X["c"]) - lookback
+    pts = [x for x in (p["lows"] if L else p["highs"]) if x[0] >= min_i]
+    if len(pts) < 2:
+        return False
+    (ia, pa), (ib, pb) = pts[-2], pts[-1]
+    return (pb < pa and r[ib] > r[ia]) if L else (pb > pa and r[ib] < r[ia])
+
+
+def crossed_within(a, b, bars, up):
+    n = len(a)
+    for k in range(bars):
+        i = n - 1 - k
+        if i < 1 or not all(fin(x) for x in (a[i], b[i], a[i - 1], b[i - 1])):
+            continue
+        if up and a[i - 1] <= b[i - 1] and a[i] > b[i]: return True
+        if not up and a[i - 1] >= b[i - 1] and a[i] < b[i]: return True
+    return False
+
+
+def grade(d, h4, h1):
+    """Grade a coin with the browser grader's rules. Direction comes from the daily chart."""
+    D, F, H = _cols(d), _cols(h4), _cols(h1)
+    if len(H["c"]) < 60 or len(F["c"]) < 80 or len(D["c"]) < 60:
+        raise RuntimeError("not enough price history")
+    price = H["c"][-1]
+
+    # daily: trend (context only) and direction
+    dc = D["c"]
+    dE50, dE200, dRsi = ema_js(dc, 50), ema_js(dc, 200), rsi_js(dc)
+    dS200 = sma_js(dc, 200)
+    ds = structure_js(D["h"], D["l"])
+    di = len(dc) - 1
+    e200 = fin(dE200[di])
+    d_above = dc[di] > dE50[di] and (not e200 or dc[di] > dE200[di])
+    d_below = dc[di] < dE50[di] and (not e200 or dc[di] < dE200[di])
+    d_stack = ("bull" if dE50[di] > dE200[di] else "bear") if e200 else "n/a"
+    if ds["state"] == "up" or (d_above and d_stack == "bull"):
+        side = "long"
+    elif ds["state"] == "down" or (d_below and d_stack == "bear"):
+        side = "short"
+    else:
+        side = "long"
     L = side == "long"
-    dc, e20d, e50d = d.c.iloc[-1], ema(d.c, 20).iloc[-1], ema(d.c, 50).iloc[-1]
-    lows, highs = pivots(d)
-    a4 = atr(h4).iloc[-1]
-    e21_4h = ema(h4.c, 21).iloc[-1]
-    r4, rd = rsi(h4.c), rsi(d.c).iloc[-1]
-    entry = h1.c.iloc[-1]
-    checks = {}
 
-    # 1. Daily trend
-    checks["trend"] = (dc > e50d and e20d > e50d) if L else (dc < e50d and e20d < e50d)
-    # 2. Daily structure (higher low / lower high intact)
-    if L:
-        checks["structure"] = len(lows) >= 2 and lows[-1] > lows[-2] and dc > lows[-1]
-        level = lows[-1] if lows else None
-    else:
-        checks["structure"] = len(highs) >= 2 and highs[-1] < highs[-2] and dc < highs[-1]
-        level = highs[-1] if highs else None
-    # 3. 4H pullback into the 21 EMA (below 50 EMA allowed if daily level holds)
-    if L:
-        checks["pullback"] = h4.l.tail(6).min() <= e21_4h and level is not None and h4.c.iloc[-1] > level
-    else:
-        checks["pullback"] = h4.h.tail(6).max() >= e21_4h and level is not None and h4.c.iloc[-1] < level
-    # 4. RSI re-entry: 4H near 30 (70 for shorts) recently, daily near 50
-    checks["rsi"] = ((r4.tail(6).min() <= 35) if L else (r4.tail(6).max() >= 65)) and 42 <= rd <= 58
-    # 5. Reward:risk — stop beyond the daily level, target at next daily level
-    rr, stop, target = None, None, None
-    if level is not None:
-        stop = level - 0.25 * a4 if L else level + 0.25 * a4
-        tgts = [x for x in highs if x > entry] if L else [x for x in lows if x < entry]
-        if tgts:
-            target = min(tgts) if L else max(tgts)
-            risk = abs(entry - stop)
-            if risk > 0 and ((L and stop < entry) or (not L and stop > entry)):
-                rr = abs(target - entry) / risk
-    if rr is None:
-        stop, target = None, None
-    checks["rr"] = rr is not None and rr >= MIN_RR
-    # 6. 1H trigger: 9/21 EMA cross in the last 3 closed bars, price on the right side
-    e9, e21 = ema(h1.c, 9), ema(h1.c, 21)
-    diff = (e9 - e21) if L else (e21 - e9)
-    crossed = any(diff.iloc[i] > 0 >= diff.iloc[i-1] for i in range(-3, 0))
-    checks["trigger"] = crossed and ((entry > e9.iloc[-1]) if L else (entry < e9.iloc[-1]))
+    # 4H setup, 1H trigger
+    hc, hv = F["c"], F["v"]
+    hE50, hRsi = ema_js(hc, 50), rsi_js(hc)
+    macd, signal, hist = macd_js(hc)
+    hVolAvg, a4 = sma_js(hv, 20), atr_js(F)
+    i = len(hc) - 1
+    atr4 = a4[i]
+    v1Avg = sma_js(H["v"], 20)
+    j = len(H["c"]) - 1
+    t1 = candle_info(H, j)
 
-    return {"side": side, "met": sum(checks.values()), "checks": checks,
-            "entry": entry, "stop": stop, "target": target, "rr": rr,
-            "rsi4h": r4.iloc[-1], "rsid": rd}
+    trend_ok = (ds["state"] == ("up" if L else "down") and (d_above if L else d_below)
+                and d_stack == ("bull" if L else "bear")
+                and (hc[i] > ds["l2"] if L else hc[i] < ds["h2"]))
+
+    # levels from 4H + daily pivots
+    p4 = pivots_js(F["h"][-200:], F["l"][-200:])
+    pdl = pivots_js(D["h"][-150:], D["l"][-150:])
+    allp = [p for _, p in p4["highs"] + p4["lows"] + pdl["highs"] + pdl["lows"]]
+    levels = [x for x in cluster_levels(allp, TOL_PCT) if x["touches"] >= MIN_TOUCHES]
+    below = sorted([x for x in levels if x["price"] <= price * 1.002], key=lambda x: -x["price"])
+    above = sorted([x for x in levels if x["price"] > price * 0.998], key=lambda x: x["price"])
+    key = (below[0] if below else None) if L else (above[0] if above else None)
+    dist = ((price - key["price"]) if L else (key["price"] - price)) / price * 100 if key else NAN
+
+    fHi, fLo = F["h"][-120:].max(), F["l"][-120:].min()
+
+    # 2. level: near, tested, and holding on a 4H close
+    holds = bool(key) and (hc[i] >= key["price"] if L else hc[i] <= key["price"])
+    weak = bool(key) and key["touches"] >= WEAK_TOUCHES
+    near = bool(key) and abs(dist) <= PROX_PCT
+    c_level = bool(key) and key["touches"] >= MIN_TOUCHES and near and holds
+    word = "support" if L else "resistance"
+    if not key:
+        level_note = f"no {word} with {MIN_TOUCHES}+ tests nearby"
+    elif not holds:
+        level_note = f"{word} lost: 4H closed {fmt(hc[i])}, {'below' if L else 'above'} {fmt(key['price'])}"
+    else:
+        level_note = f"{word} {fmt(key['price'])} tested {key['touches']}x, {dist:.2f}% away"
+    if weak:
+        level_note += f"; caution, {key['touches']} tests, level weakening"
+
+    # 3. confirmations
+    c4 = candle_info(F, i)
+    confirms, conflicts = 0, 0
+    if L:
+        if c4.get("bull_engulf") or c4.get("hammer") or t1.get("bull_engulf") or t1.get("hammer"): confirms += 1
+    else:
+        if c4.get("bear_engulf") or c4.get("shooter") or t1.get("bear_engulf") or t1.get("shooter"): confirms += 1
+    rwin = hRsi[-6:]
+    rsi_ok = (hRsi[i] > hRsi[i - 1] and np.min(rwin) < 45) if L else (hRsi[i] < hRsi[i - 1] and np.max(rwin) > 55)
+    if rsi_ok or divergence_js(F, hRsi, L): confirms += 1
+    hist_ok = (hist[i] > hist[i - 1] > hist[i - 2]) if L else (hist[i] < hist[i - 1] < hist[i - 2])
+    if hist_ok or crossed_within(macd, signal, 3, L): confirms += 1
+    vr4, vr1 = _ratio(hv[i], hVolAvg[i]), _ratio(H["v"][j], v1Avg[j])
+    if vr4 >= VOL_BREAKOUT or vr1 >= VOL_BREAKOUT: confirms += 1
+    lows3, highs3 = F["l"][-3:], F["h"][-3:]
+    ema_bounce = (lows3.min() <= hE50[i] * 1.005 and hc[i] > hE50[i]) if L else (highs3.max() >= hE50[i] * 0.995 and hc[i] < hE50[i])
+    if ema_bounce or crossed_within(hc, hE50, 3, L): confirms += 1
+    if (c4.get("bear_engulf") or c4.get("shooter")) if L else (c4.get("bull_engulf") or c4.get("hammer")): conflicts += 1
+    if crossed_within(macd, signal, 2, not L): conflicts += 1
+    c_confirm = confirms >= MIN_CONFIRMS and conflicts == 0
+
+    # 4. plan and R:R: stop beyond the level by 1 ATR, target at the next level
+    pall = pivots_js(F["h"], F["l"])
+    ks = (1.272, 1.618, 2.0)
+    if L:
+        ref = key["price"] if key else (pall["lows"][-1][1] if pall["lows"] else fLo)
+        stop = min(ref, price) - STOP_ATR * atr4
+        tg = [x for x in above if x["price"] > price * 1.005]
+        target = tg[0]["price"] if tg else next((fLo + (fHi - fLo) * k for k in ks if fLo + (fHi - fLo) * k > price * 1.005), NAN)
+        risk, reward = price - stop, target - price
+    else:
+        ref = key["price"] if key else (pall["highs"][-1][1] if pall["highs"] else fHi)
+        stop = max(ref, price) + STOP_ATR * atr4
+        tg = [x for x in below if x["price"] < price * 0.995]
+        target = tg[0]["price"] if tg else next((fHi - (fHi - fLo) * k for k in ks if fHi - (fHi - fLo) * k < price * 0.995), NAN)
+        risk, reward = stop - price, price - target
+    valid = risk > 0 and reward > 0
+    rr = reward / risk if valid else None
+    c_rr = valid and rr >= MIN_RR
+
+    # 5. volume on the bar that matches the setup
+    bo_i, bo_lv = -1, None
+    for k in range(3):
+        if i - k - 1 < 0: continue
+        a_c, b_c = hc[i - k - 1], hc[i - k]
+        hit = next((lv for lv in levels if (a_c <= lv["price"] < b_c if L else a_c >= lv["price"] > b_c)), None)
+        if hit:
+            bo_i, bo_lv = i - k, hit
+            break
+    holding_break = bo_i >= 0 and (hc[i] > bo_lv["price"] if L else hc[i] < bo_lv["price"]) and (not key or holds)
+    if holding_break:
+        vr = _ratio(hv[bo_i], hVolAvg[bo_i])
+        c_vol = fin(vr) and vr >= VOL_BREAKOUT
+        vol_note = f"breakout bar {vr:.2f}x avg"
+    elif key and near:
+        tol = key["price"] * TOL_PCT / 100
+        b_i = -1
+        for k in range(3):
+            b = i - k
+            touched = F["l"][b] <= key["price"] + tol if L else F["h"][b] >= key["price"] - tol
+            reacted = (hc[b] > F["o"][b] and hc[b] >= key["price"]) if L else (hc[b] < F["o"][b] and hc[b] <= key["price"])
+            if touched and reacted:
+                b_i = b
+                break
+        if b_i >= 0:
+            vr = _ratio(hv[b_i], hVolAvg[b_i])
+            c_vol = fin(vr) and vr >= VOL_BOUNCE
+            vol_note = f"bounce bar {vr:.2f}x avg"
+        else:
+            c_vol, vol_note = False, "no bounce bar yet"
+    else:
+        c_vol = vr4 >= 1.0 and hv[i] > hv[i - 1]
+        vol_note = f"pullback volume {vr4:.2f}x avg"
+
+    # 6. clean price action
+    ch = chop_js(F)
+    chop_state = "clean" if ch < CHOP_PASS else "neutral" if ch <= CHOP_MAX else "choppy"
+    rng = F["h"][-10:] - F["l"][-10:]
+    bodies = np.where(rng > 0, np.abs(hc[-10:] - F["o"][-10:]) / np.where(rng > 0, rng, 1), 0)
+    clean_last = c4.get("body", 0) >= 0.5 or c4.get("hammer" if L else "shooter", False)
+    c_clean = chop_state == "clean" and bodies.mean() >= 0.4 and clean_last
+
+    checks = {"level": c_level, "confirmations": c_confirm, "rr": c_rr, "volume": c_vol, "clean": c_clean}
+    passed = sum(bool(v) for v in checks.values())
+    g = "A+" if passed == 5 else "B+" if passed == 4 else "C" if passed == 3 else "D"
+
+    # RSI re-entry gate: 4H near 30 and daily near 50, off in a bear regime
+    r4, rd = hRsi[i], dRsi[di]
+    recent = [x for x in dRsi[-14:] if fin(x)]
+    bear_env = sum(x < 40 for x in recent) >= 10
+    gate = (not bear_env) and r4 <= RSI4H_TRIGGER and RSI_D_LO <= rd <= RSI_D_HI
+    setup_ok = g in ("A+", "B+")
+    action = "actionable" if setup_ok and gate else "wait"
+    if bear_env:
+        gate_note = "RSI gate off (daily under 40 most of 2 weeks)"
+    elif gate:
+        gate_note = "RSI gate live"
+    else:
+        gate_note = f"RSI gate closed: 4H needs {RSI4H_TRIGGER} or lower, daily {RSI_D_LO}-{RSI_D_HI}"
+
+    return {"side": side, "grade": g, "passed": passed, "scored": 5, "checks": checks,
+            "action": action, "gate_note": gate_note, "trend_ok": trend_ok,
+            "level_note": level_note, "vol_note": vol_note, "chop": ch, "chop_state": chop_state,
+            "entry": price, "stop": stop if valid else None, "target": target if valid else None, "rr": rr,
+            "rsi4h": r4, "rsid": rd}
+
 
 # ---------- breakout scanner (momentum moves the pullback grader misses) ----------
 def breakout(d, h4):
@@ -294,26 +589,36 @@ def run_once():
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
 
-        best = max((grade(d, h4, h1, s) for s in ("long", "short")), key=lambda g: g["met"])
-        tier = 2 if best["met"] == 6 else 1 if best["met"] >= NEAR_MET else 0
-        prev = state.get(coin, {"tier": 0, "sent": {}})
-        sent = prev.get("sent", {})
-        print(f"{coin}: {best['side']} {best['met']}/6 tier {tier}")
+        try:
+            best = grade(d, h4, h1)
+        except Exception as e:
+            print(f"skip {coin} grade: {e}"); best = None
+        if best:
+            ok_grade = best["grade"] in ("A+", "B+")
+            tier = 2 if best["action"] == "actionable" else 1 if ok_grade else 0
+            prev = state.get(coin, {})
+            if not isinstance(prev, dict) or prev.get("v") != STATE_V:
+                prev = {"tier": 0, "sent": {}}          # rules changed; start tiers fresh
+            sent = prev.get("sent", {})
+            print(f"{coin}: {best['side']} {best['grade']} {best['passed']}/5 {best['action']} tier {tier}")
 
-        # alert on a move up into a tier, unless that tier already alerted within the cooldown
-        if tier > prev["tier"] and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
-            label = "🚨 A+ SETUP" if tier == 2 else "👀 Setup forming"
-            missing = [k for k, v in best["checks"].items() if not v]
-            rr = f" ({best['rr']:.1f}R)" if best["rr"] else ""
-            msg = (f"{label}: {coin} {best['side'].upper()} {best['met']}/6\n"
-                   f"Price {fmt(best['entry'])} | Stop {fmt(best['stop'])} | Target {fmt(best['target'])}{rr}\n"
-                   f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f}"
-                   + (f"\nMissing: {', '.join(missing)}" if missing else ""))
-            send(msg, urgent=(tier == 2))
-            log.append(f"{stamp(now)},{coin},{best['side']},{best['met']},{best['entry']}")
-            sent[str(tier)] = now
-        if tier != prev["tier"] or sent != prev.get("sent", {}):
-            state[coin] = {"tier": tier, "sent": sent}; changed = True
+            # alert on a move up into a tier, unless that tier already alerted within the cooldown
+            if tier > prev.get("tier", 0) and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
+                label = "🚨 ACTIONABLE" if tier == 2 else "👀 Setup graded, waiting on RSI"
+                missing = [k for k, v in best["checks"].items() if not v]
+                rr = f" ({best['rr']:.1f}R)" if best["rr"] else ""
+                msg = (f"{label}: {coin} {best['side'].upper()} {best['grade']} {best['passed']}/5\n"
+                       f"Price {fmt(best['entry'])} | Stop {fmt(best['stop'])} | Target {fmt(best['target'])}{rr}\n"
+                       f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f} | {best['gate_note']}\n"
+                       f"Level: {best['level_note']}\n"
+                       f"Volume: {best['vol_note']} | Chop {best['chop']:.0f} {best['chop_state']}\n"
+                       f"Trend {'with you' if best['trend_ok'] else 'not aligned'} (info only)"
+                       + (f"\nMissing: {', '.join(missing)}" if missing else ""))
+                send(msg, urgent=(tier == 2))
+                log.append(f"{stamp(now)},{coin},{best['side']},{best['grade']} {best['passed']}/5 {best['action']},{best['entry']}")
+                sent[str(tier)] = now
+            if tier != prev.get("tier", 0) or sent != prev.get("sent", {}) or prev.get("v") != STATE_V:
+                state[coin] = {"v": STATE_V, "tier": tier, "sent": sent}; changed = True
 
         bo = breakout(d, h4)
         if bo:
