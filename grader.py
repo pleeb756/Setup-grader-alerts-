@@ -913,6 +913,13 @@ def run_once():
             if new_file: f.write(",".join(OUT_COLS) + "\n")
             f.write("\n".join(",".join(str(x) for x in r) for r in out_rows) + "\n")
         SUMMARY_FILE.write_text(summarize(len(state.get("open", []))))
+        n = sum(1 for _ in OUT_FILE.open()) - 1
+        milestone = n // 30 * 30
+        if milestone >= 30 and state.get("review_at", 0) < milestone:
+            send(f"📊 {n} alert outcomes logged. Review outcomes_summary.md "
+                 f"and decide on VA_GATE.")
+            state["review_at"] = milestone
+            STATE_FILE.write_text(json.dumps(state, indent=1))
     if log:
         new_file = not LOG_FILE.exists()
         with LOG_FILE.open("a") as f:
@@ -921,8 +928,7 @@ def run_once():
 
 def main():
     if "--test" in sys.argv:
-        send("✅ Grader alerts are connected.")
-        return
+        send("✅ Grader alerts are connected."); return
     if "--backtest" in sys.argv:
         backtest(); return
     if "--report" in sys.argv:
