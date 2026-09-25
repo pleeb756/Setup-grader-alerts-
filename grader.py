@@ -7,6 +7,14 @@ Actionable vs Wait. Sends a phone push (ntfy) when a coin grades B+ or better
 ("setup graded, waiting on RSI") or turns Actionable (grade plus RSI gate).
 Also flags 4H breakouts and momentum shifts, where 5m and 15m flip against
 the 4H trend with divergence and money-flow confluence pointing to a 4H cross.
+
+Value area: each grade is tagged with the market state from a 4H volume profile
+(balance, imbalance up/down, or an unaccepted probe) and whether the setup fits
+that state. Info only unless VA_GATE=1, which also requires a fit for Actionable.
+
+Outcomes: every graded or momentum-shift alert with a stop and target is tracked
+on closed 1H bars until stop, target, or MAX_HOLD_HRS, then written to
+outcomes.csv and summarized in outcomes_summary.md. Run with --report to print it.
 """
 import json, math, os, time, sys
 from pathlib import Path
@@ -33,6 +41,18 @@ COOLDOWN_HRS = 4        # don't repeat the same tier for a coin within this wind
 STATE_V = 2             # bump when grading rules change so old tiers reset
 STATE_FILE = Path("state.json")
 LOG_FILE = Path("alerts_log.csv")
+OUT_FILE = Path("outcomes.csv")
+SUMMARY_FILE = Path("outcomes_summary.md")
+
+# Value area (auction market theory) settings
+VA_BARS = int(os.environ.get("VA_BARS", "42"))        # 4H bars in the profile (42 = 7 days)
+VA_ACCEPT = int(os.environ.get("VA_ACCEPT", "3"))     # 4H closes outside value needed for acceptance
+VA_PCT = 0.70                                         # share of volume inside the value area
+VA_BINS = 60
+VA_GATE = os.environ.get("VA_GATE", "0") == "1"       # 1 = Actionable also requires a state fit
+
+# Outcome tracking
+MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close at market
 
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 
@@ -239,6 +259,81 @@ def crossed_within(a, b, bars, up):
     return False
 
 
+# ---------- value area (volume profile on 4H) ----------
+def volume_profile(h, l, v, bins=VA_BINS):
+    """Spread each bar's volume evenly across its high-low range. Returns POC, VAL, VAH."""
+    lo, hi = float(l.min()), float(h.max())
+    if not (hi > lo):
+        return None
+    edges = np.linspace(lo, hi, bins + 1)
+    width = h - l
+    overlap = np.clip(np.minimum(h[:, None], edges[1:]) - np.maximum(l[:, None], edges[:-1]), 0, None)
+    share = np.where(width[:, None] > 0, overlap / np.where(width > 0, width, 1)[:, None], 0.0)
+    flat = width <= 0                                  # zero-range bars go to their own bin
+    if flat.any():
+        idx = np.clip(np.searchsorted(edges, h[flat], side="right") - 1, 0, bins - 1)
+        share[np.where(flat)[0], idx] = 1.0
+    vol = (share * v[:, None]).sum(axis=0)
+    total = vol.sum()
+    if total <= 0:
+        return None
+    poc = int(np.argmax(vol))
+    a = b = poc
+    acc = vol[poc]
+    while acc < VA_PCT * total and (a > 0 or b < bins - 1):
+        up = vol[b + 1] if b < bins - 1 else -1
+        dn = vol[a - 1] if a > 0 else -1
+        if up >= dn: b += 1; acc += up
+        else:        a -= 1; acc += dn
+    return {"poc": (edges[poc] + edges[poc + 1]) / 2, "val": edges[a], "vah": edges[b + 1]}
+
+
+def value_state(F, price, L):
+    """Balance vs imbalance against the prior value area, and whether the setup side fits it.
+
+    The profile covers the VA_BARS 4H bars before the last VA_ACCEPT bars, so recent closes
+    are judged against value built earlier. Acceptance = all of the last VA_ACCEPT closes
+    outside value. Outside value without acceptance is a probe (possible failed auction).
+    """
+    n = len(F["c"])
+    if n < VA_BARS + VA_ACCEPT:
+        return {"state": "unknown", "fit": False, "note": "not enough 4H history for a profile"}
+    sl = slice(n - VA_BARS - VA_ACCEPT, n - VA_ACCEPT)
+    vp = volume_profile(F["h"][sl], F["l"][sl], F["v"][sl])
+    if not vp:
+        return {"state": "unknown", "fit": False, "note": "flat profile"}
+    closes = F["c"][-VA_ACCEPT:]
+    if (closes > vp["vah"]).all():   state = "imbalance_up"
+    elif (closes < vp["val"]).all(): state = "imbalance_down"
+    elif price > vp["vah"]:          state = "probe_up"
+    elif price < vp["val"]:          state = "probe_down"
+    else:                            state = "balance"
+
+    if L:
+        if state == "imbalance_up":
+            fit, why = True, "accepted above value, continuation long"
+        elif state == "balance" and price <= vp["poc"]:
+            fit, why = True, "lower half of balance, rotation toward POC/VAH"
+        elif state == "balance":
+            fit, why = False, "buying the upper half of balance"
+        elif state == "imbalance_down":
+            fit, why = False, "long against accepted selling"
+        else:
+            fit, why = False, f"{state.replace('_', ' ')} not accepted yet"
+    else:
+        if state == "imbalance_down":
+            fit, why = True, "accepted below value, continuation short"
+        elif state == "balance" and price >= vp["poc"]:
+            fit, why = True, "upper half of balance, rotation toward POC/VAL"
+        elif state == "balance":
+            fit, why = False, "selling the lower half of balance"
+        elif state == "imbalance_up":
+            fit, why = False, "short against accepted buying"
+        else:
+            fit, why = False, f"{state.replace('_', ' ')} not accepted yet"
+    return {"state": state, "fit": fit, "note": why, **vp}
+
+
 def grade(d, h4, h1):
     """Grade a coin with the browser grader's rules. Direction comes from the daily chart."""
     D, F, H = _cols(d), _cols(h4), _cols(h1)
@@ -335,12 +430,14 @@ def grade(d, h4, h1):
         stop = min(ref, price) - STOP_ATR * atr4
         tg = [x for x in above if x["price"] > price * 1.005]
         target = tg[0]["price"] if tg else next((fLo + (fHi - fLo) * k for k in ks if fLo + (fHi - fLo) * k > price * 1.005), NAN)
+        target_src = "level" if tg else "fib"
         risk, reward = price - stop, target - price
     else:
         ref = key["price"] if key else (pall["highs"][-1][1] if pall["highs"] else fHi)
         stop = max(ref, price) + STOP_ATR * atr4
         tg = [x for x in below if x["price"] < price * 0.995]
         target = tg[0]["price"] if tg else next((fHi - (fHi - fLo) * k for k in ks if fHi - (fHi - fLo) * k < price * 0.995), NAN)
+        target_src = "level" if tg else "fib"
         risk, reward = stop - price, price - target
     valid = risk > 0 and reward > 0
     rr = reward / risk if valid else None
@@ -397,20 +494,25 @@ def grade(d, h4, h1):
     recent = [x for x in dRsi[-14:] if fin(x)]
     bear_env = sum(x < 40 for x in recent) >= 10
     gate = (not bear_env) and r4 <= RSI4H_TRIGGER and RSI_D_LO <= rd <= RSI_D_HI
+    va = value_state(F, price, L)
     setup_ok = g in ("A+", "B+")
-    action = "actionable" if setup_ok and gate else "wait"
+    va_ok = va["fit"] or not VA_GATE
+    action = "actionable" if setup_ok and gate and va_ok else "wait"
     if bear_env:
         gate_note = "RSI gate off (daily under 40 most of 2 weeks)"
     elif gate:
         gate_note = "RSI gate live"
     else:
         gate_note = f"RSI gate closed: 4H needs {RSI4H_TRIGGER} or lower, daily {RSI_D_LO}-{RSI_D_HI}"
+    if VA_GATE and setup_ok and gate and not va["fit"]:
+        gate_note += "; value-area gate closed"
 
     return {"side": side, "grade": g, "passed": passed, "scored": 5, "checks": checks,
             "action": action, "gate_note": gate_note, "trend_ok": trend_ok,
             "level_note": level_note, "vol_note": vol_note, "chop": ch, "chop_state": chop_state,
             "entry": price, "stop": stop if valid else None, "target": target if valid else None, "rr": rr,
-            "rsi4h": r4, "rsid": rd}
+            "rsi4h": r4, "rsid": rd, "va": va, "target_src": target_src if valid else None,
+            "from_t": int(H["t"][-1]) + 3600}
 
 
 # ---------- breakout scanner (momentum moves the pullback grader misses) ----------
@@ -529,7 +631,126 @@ def momentum_shift(h4, m15, m5):
             "entry": entry, "stop": stop,
             "tps": [entry + k * MS_ATR_MULT * a * d for k in (1, 2, 3)],
             "eta": eta, "rsi4h": r4, "mfi": mf.iloc[-1], "cmf": cf,
-            "div": bull_div if d == 1 else bear_div, "bar": int(last.t)}
+            "div": bull_div if d == 1 else bear_div, "bar": int(last.t),
+            "from_t": int(last.t) + 4 * 3600}
+
+# ---------- outcome tracking ----------
+OUT_COLS = ["alert_utc", "resolved_utc", "coin", "kind", "side", "grade", "va_state", "va_fit",
+            "target_src", "entry", "stop", "target", "outcome", "r", "mfe_r", "mae_r", "hours"]
+
+
+def open_trade(state, coin, kind, side, grade_, entry, stop, target, from_t, now,
+               va_state="", va_fit="", target_src=""):
+    """Start tracking an alert. One open trade per coin and kind; skip if no stop/target."""
+    if stop is None or target is None or not all(fin(x) for x in (entry, stop, target)):
+        return
+    if abs(entry - stop) <= 0:
+        return
+    trades = state.setdefault("open", [])
+    if any(t["coin"] == coin and t["kind"] == kind for t in trades):
+        return
+    trades.append({"coin": coin, "kind": kind, "side": side, "grade": grade_,
+                   "entry": float(entry), "stop": float(stop), "target": float(target),
+                   "t": now, "from_t": int(from_t), "va_state": va_state,
+                   "va_fit": va_fit, "target_src": target_src or ""})
+
+
+def walk_trade(tr, h1, now):
+    """Replay closed 1H bars after the alert. Stop and target in the same bar counts as a loss."""
+    L = tr["side"] == "long"
+    entry, stop, target = tr["entry"], tr["stop"], tr["target"]
+    risk = abs(entry - stop)
+    bars = h1[h1.t >= tr["from_t"]]
+    mfe = mae = 0.0
+    outcome, r, end_t = None, None, None
+    for b in bars.itertuples():
+        mfe = max(mfe, ((b.h - entry) if L else (entry - b.l)) / risk)
+        mae = max(mae, ((entry - b.l) if L else (b.h - entry)) / risk)
+        hit_stop = b.l <= stop if L else b.h >= stop
+        hit_tgt = b.h >= target if L else b.l <= target
+        if hit_stop:
+            outcome, r, end_t = ("both" if hit_tgt else "loss"), -1.0, b.t + 3600
+            break
+        if hit_tgt:
+            outcome, r, end_t = "win", abs(target - entry) / risk, b.t + 3600
+            break
+    if outcome is None:
+        if now - tr["t"] < MAX_HOLD_HRS * 3600:
+            return None
+        last = bars.c.iloc[-1] if len(bars) else entry
+        outcome, end_t = "expired", now
+        r = ((last - entry) if L else (entry - last)) / risk
+    return [stamp(tr["t"]), stamp(end_t), tr["coin"], tr["kind"], tr["side"], tr["grade"],
+            tr.get("va_state", ""), tr.get("va_fit", ""), tr.get("target_src", ""),
+            tr["entry"], tr["stop"], tr["target"], outcome, round(r, 3),
+            round(mfe, 3), round(mae, 3), round((end_t - tr["t"]) / 3600, 1)]
+
+
+def resolve_trades(state, coin, h1, now):
+    rows, keep = [], []
+    for tr in state.get("open", []):
+        row = walk_trade(tr, h1, now) if tr["coin"] == coin else None
+        (rows.append(row) if row else keep.append(tr))
+    if rows:
+        state["open"] = keep
+    return rows
+
+
+def expire_orphans(state, now):
+    """Close trades for coins no longer on the watchlist once they pass the hold limit."""
+    rows, keep = [], []
+    for tr in state.get("open", []):
+        if tr["coin"] not in WATCHLIST and now - tr["t"] > MAX_HOLD_HRS * 3600:
+            rows.append([stamp(tr["t"]), stamp(now), tr["coin"], tr["kind"], tr["side"], tr["grade"],
+                         tr.get("va_state", ""), tr.get("va_fit", ""), tr.get("target_src", ""),
+                         tr["entry"], tr["stop"], tr["target"], "dropped", 0.0, 0.0, 0.0,
+                         round((now - tr["t"]) / 3600, 1)])
+        else:
+            keep.append(tr)
+    if rows:
+        state["open"] = keep
+    return rows
+
+
+def summarize(n_open=0):
+    """Win rate and expectancy by alert kind, grade, value-area fit and target source."""
+    if not OUT_FILE.exists():
+        return "No resolved alerts yet."
+    df = pd.read_csv(OUT_FILE)
+    df = df[df.outcome != "dropped"].copy()
+    for col in ("grade", "va_state", "va_fit", "target_src"):
+        df[col] = df[col].fillna("-").astype(str)
+    if df.empty:
+        return "No resolved alerts yet."
+
+    def table(by):
+        g = df.groupby(by, dropna=False)
+        rows = [f"| {' / '.join(by)} | n | win % | avg R | total R | avg MFE R |",
+                "|---|---|---|---|---|---|"]
+        for k, x in g:
+            k = " / ".join(str(v) for v in (k if isinstance(k, tuple) else (k,)))
+            rows.append(f"| {k} | {len(x)} | {100 * (x.outcome == 'win').mean():.0f} | "
+                        f"{x.r.mean():+.2f} | {x.r.sum():+.1f} | {x.mfe_r.mean():.2f} |")
+        return "\n".join(rows)
+
+    parts = [f"# Alert outcomes\n\n{len(df)} resolved, {n_open} still open. "
+             f"Updated {stamp(time.time())} UTC.\n",
+             "Small samples mean little; wait for 30+ per row before changing rules.\n",
+             "## By kind and grade\n\n" + table(["kind", "grade"]),
+             "## By value-area fit\n\n" + table(["kind", "va_fit"]),
+             "## By value-area state\n\n" + table(["kind", "va_state"]),
+             "## By target source\n\n" + table(["kind", "target_src"])]
+    return "\n\n".join(parts) + "\n"
+
+
+def report():
+    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    text = summarize(len(state.get("open", [])))
+    print(text)
+    step = os.environ.get("GITHUB_STEP_SUMMARY")
+    if step:
+        with open(step, "a") as f:
+            f.write(text)
 
 # ---------- alerts ----------
 def send(msg, urgent=False):
@@ -546,6 +767,15 @@ def fmt(p):
 
 def stamp(now):
     return time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))
+
+def va_line(best):
+    va = best["va"]
+    tgt = " | target from fib ext." if best.get("target_src") == "fib" else ""
+    if va["state"] == "unknown":
+        return va["note"] + tgt
+    mark = "fits" if va["fit"] else "no fit"
+    return (f"{va['state'].replace('_', ' ')}, {mark} ({va['note']}) | "
+            f"VAL {fmt(va['val'])} POC {fmt(va['poc'])} VAH {fmt(va['vah'])}{tgt}")
 
 def backtest(bars=180):
     """List every momentum shift in the last `bars` closed 4H candles (no alerts sent)."""
@@ -579,7 +809,7 @@ def backtest(bars=180):
 # ---------- one pass ----------
 def run_once():
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
-    now, changed, log = time.time(), False, []
+    now, changed, log, out_rows = time.time(), False, [], []
 
     for coin, pair in WATCHLIST.items():
         try:
@@ -588,6 +818,12 @@ def run_once():
             time.sleep(1)   # stay under Kraken's public rate limit
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
+
+        done = resolve_trades(state, coin, h1, now)
+        if done:
+            out_rows += done; changed = True
+            for row in done:
+                print(f"{coin}: {row[3]} {row[4]} resolved {row[12]} {row[13]:+.2f}R")
 
         try:
             best = grade(d, h4, h1)
@@ -600,7 +836,8 @@ def run_once():
             if not isinstance(prev, dict) or prev.get("v") != STATE_V:
                 prev = {"tier": 0, "sent": {}}          # rules changed; start tiers fresh
             sent = prev.get("sent", {})
-            print(f"{coin}: {best['side']} {best['grade']} {best['passed']}/5 {best['action']} tier {tier}")
+            print(f"{coin}: {best['side']} {best['grade']} {best['passed']}/5 {best['action']} tier {tier} "
+                  f"| {best['va']['state']} {'fit' if best['va']['fit'] else 'no fit'}")
 
             # alert on a move up into a tier, unless that tier already alerted within the cooldown
             if tier > prev.get("tier", 0) and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
@@ -612,11 +849,16 @@ def run_once():
                        f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f} | {best['gate_note']}\n"
                        f"Level: {best['level_note']}\n"
                        f"Volume: {best['vol_note']} | Chop {best['chop']:.0f} {best['chop_state']}\n"
+                       f"Value: {va_line(best)}\n"
                        f"Trend {'with you' if best['trend_ok'] else 'not aligned'} (info only)"
                        + (f"\nMissing: {', '.join(missing)}" if missing else ""))
                 send(msg, urgent=(tier == 2))
                 log.append(f"{stamp(now)},{coin},{best['side']},{best['grade']} {best['passed']}/5 {best['action']},{best['entry']}")
                 sent[str(tier)] = now
+                open_trade(state, coin, "grade-actionable" if tier == 2 else "grade-watch",
+                           best["side"], best["grade"], best["entry"], best["stop"], best["target"],
+                           best["from_t"], now, best["va"]["state"],
+                           "fit" if best["va"]["fit"] else "no fit", best["target_src"])
             if tier != prev.get("tier", 0) or sent != prev.get("sent", {}) or prev.get("v") != STATE_V:
                 state[coin] = {"v": STATE_V, "tier": tier, "sent": sent}; changed = True
 
@@ -656,9 +898,21 @@ def run_once():
                      + f"\nHave: {', '.join(on)}", urgent=True)
                 log.append(f"{stamp(now)},{coin},shift-{ms['side']},{ms['score']},{ms['entry']}")
                 state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
+                # track to TP2 (2R, matching MIN_RR) so shifts compare fairly with grades
+                open_trade(state, coin, "shift", ms["side"], f"{ms['score']}/7", ms["entry"],
+                           ms["stop"], ms["tps"][1], ms["from_t"], now)
 
+    orphans = expire_orphans(state, now)
+    if orphans:
+        out_rows += orphans; changed = True
     if changed:
         STATE_FILE.write_text(json.dumps(state, indent=1))
+    if out_rows:
+        new_file = not OUT_FILE.exists()
+        with OUT_FILE.open("a") as f:
+            if new_file: f.write(",".join(OUT_COLS) + "\n")
+            f.write("\n".join(",".join(str(x) for x in r) for r in out_rows) + "\n")
+        SUMMARY_FILE.write_text(summarize(len(state.get("open", []))))
     if log:
         new_file = not LOG_FILE.exists()
         with LOG_FILE.open("a") as f:
@@ -667,9 +921,12 @@ def run_once():
 
 def main():
     if "--test" in sys.argv:
-        send("✅ Grader alerts are connected."); return
+        send("✅ Grader alerts are connected.")
+        return
     if "--backtest" in sys.argv:
         backtest(); return
+    if "--report" in sys.argv:
+        report(); return
     run_once()
 
 if __name__ == "__main__":
