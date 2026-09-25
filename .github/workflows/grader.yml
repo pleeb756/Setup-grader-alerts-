@@ -13,6 +13,10 @@ on:
         description: "List past momentum shifts (no alerts)"
         type: boolean
         default: false
+      report:
+        description: "Print alert outcome stats (no alerts)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -41,17 +45,21 @@ jobs:
           MS_MIN: "5"
           MS_MAX_BARS: "6"
           MS_COOLDOWN_HRS: "8"
+          VA_GATE: "0"          # set to "1" to require a value-area fit for Actionable
+          MAX_HOLD_HRS: "336"
         run: |
           python grader.py \
             ${{ inputs.test && '--test' || '' }} \
-            ${{ inputs.backtest && '--backtest' || '' }}
+            ${{ inputs.backtest && '--backtest' || '' }} \
+            ${{ inputs.report && '--report' || '' }}
 
       - name: Save alert state
-        if: ${{ always() && !inputs.backtest && !inputs.test }}
+        if: ${{ always() && !inputs.backtest && !inputs.test && !inputs.report }}
         run: |
           git config user.name grader-bot
           git config user.email grader-bot@users.noreply.github.com
           git add state.json alerts_log.csv
+          git add outcomes.csv outcomes_summary.md 2>/dev/null || true
           git diff --staged --quiet || git commit -m "Update alert state"
           git pull --rebase --autostash || true
           git push || true
