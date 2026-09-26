@@ -5,8 +5,10 @@ Kraken candles: five scored checks (level, confirmations, R:R, volume, clean
 price action), daily trend as context only, and the RSI re-entry gate deciding
 Actionable vs Wait. Sends a phone push (ntfy) when a coin grades B+ or better
 ("setup graded, waiting on RSI") or turns Actionable (grade plus RSI gate).
-Also flags 4H breakouts and momentum shifts, where 5m and 15m flip against
-the 4H trend with divergence and money-flow confluence pointing to a 4H cross.
+Also flags 4H breakouts, 1H impulse breakouts (one outsized, high-volume bar that
+closes through the recent range, caught without waiting for the 4H close), and
+momentum shifts, where 5m and 15m flip against the 4H trend with divergence and
+money-flow confluence pointing to a 4H cross.
 
 Value area: each grade is tagged with the market state from a 4H volume profile
 (balance, imbalance up/down, or an unaccepted probe) and whether the setup fits
@@ -45,6 +47,17 @@ MIN_RR = 2.0            # minimum reward:risk
 BO_LOOKBACK = 20        # 4H bars for the breakout range
 BO_VOL_MULT = 1.5       # breakout bar volume vs 20-bar average
 BO_COOLDOWN_HRS = 12
+BO_RSI_MAX = float(os.environ.get("BO_RSI_MAX", "85"))   # 4H RSI cap for breakout longs (shorts mirror: 100 - this)
+BO_STOP_ATR = 0.5       # breakout stop: this many 4H ATRs back inside the broken level
+BO_TARGET_R = 2.0       # breakout order TP in R
+# Impulse breakouts — one outsized 1H bar through the range, alerted without waiting on the 4H close
+IMP_LOOKBACK = int(os.environ.get("IMP_LOOKBACK", "48"))        # 1H bars for the range (48 = 2 days)
+IMP_ATR_MULT = float(os.environ.get("IMP_ATR_MULT", "2.0"))     # bar range vs 1H ATR before the bar
+IMP_VOL_MULT = float(os.environ.get("IMP_VOL_MULT", "3.0"))     # bar volume vs 20-bar 1H average
+IMP_CLOSE_POS = 0.6     # close in the outer 40% of the bar (not a wick that gave it all back)
+IMP_TARGET_R = float(os.environ.get("IMP_TARGET_R", "2.0"))     # impulse order TP in R
+IMP_EXT_ATR = 1.5       # warn when the close is this many 4H ATRs past the broken level
+IMP_COOLDOWN_HRS = int(os.environ.get("IMP_COOLDOWN_HRS", "6"))
 # Momentum shift settings — lower timeframes flip first, 4H confirmed as about to follow
 MS_MIN = int(os.environ.get("MS_MIN", "5"))              # confluence factors needed (of 7)
 MS_MAX_BARS = float(os.environ.get("MS_MAX_BARS", "6"))  # projected 4H bars until the EMA cross
@@ -608,16 +621,64 @@ def grade(d, h4, h1):
 
 # ---------- breakout scanner (momentum moves the pullback grader misses) ----------
 def breakout(d, h4):
+    """Closed 4H bar through the BO_LOOKBACK range on volume, with the daily EMA50 behind it.
+    RSI is capped at BO_RSI_MAX (was 75): real breakouts often print RSI 75-85 on the bar itself."""
     last = h4.iloc[-1]
     prior = h4.iloc[-BO_LOOKBACK-1:-1]
     vol_ok = last.v > BO_VOL_MULT * prior.v.mean()
     r = rsi(h4.c).iloc[-1]
     e50d = ema(d.c, 50).iloc[-1]
-    if last.c > prior.h.max() and vol_ok and last.c > e50d and 55 <= r <= 75:
+    if last.c > prior.h.max() and vol_ok and last.c > e50d and 55 <= r <= BO_RSI_MAX:
         return "long", prior.h.max(), r, last.v / prior.v.mean()
-    if last.c < prior.l.min() and vol_ok and last.c < e50d and 25 <= r <= 45:
+    if last.c < prior.l.min() and vol_ok and last.c < e50d and 100 - BO_RSI_MAX <= r <= 45:
         return "short", prior.l.min(), r, last.v / prior.v.mean()
     return None
+
+
+def breakout_plan(side, lvl, h4):
+    """Entry at the 4H close, stop BO_STOP_ATR x 4H ATR back inside the broken level, TP at BO_TARGET_R."""
+    d = 1 if side == "long" else -1
+    entry = float(h4.c.iloc[-1])
+    a = float(atr(h4).iloc[-1])
+    stop = lvl - d * BO_STOP_ATR * a
+    if (entry - stop) * d <= 0:
+        return None
+    return {"entry": entry, "stop": stop, "target": entry + d * BO_TARGET_R * abs(entry - stop),
+            "from_t": int(h4.t.iloc[-1]) + 4 * 3600}
+
+
+def impulse(h1, h4):
+    """One outsized closed 1H bar that breaks the IMP_LOOKBACK-bar range on heavy volume.
+    Catches vertical moves the 4H breakout scanner only sees after the 4H bar closes and the
+    momentum-shift scanner never sees (it only fires against the 4H trend)."""
+    if len(h1) < IMP_LOOKBACK + 20:
+        return None
+    last = h1.iloc[-1]
+    prior = h1.iloc[-IMP_LOOKBACK-1:-1]
+    a1 = float(atr(h1).iloc[-2])              # ATR before the bar, so the bar can't inflate its own yardstick
+    rng = last.h - last.l
+    avg_v = prior.v.tail(20).mean()
+    if rng <= 0 or a1 <= 0 or avg_v <= 0:
+        return None
+    size_x, vol_x = rng / a1, last.v / avg_v
+    pos = (last.c - last.l) / rng             # 0 = closed at the low, 1 = at the high
+    if size_x < IMP_ATR_MULT or vol_x < IMP_VOL_MULT:
+        return None
+    if last.c > last.o and pos >= IMP_CLOSE_POS and last.c > prior.h.max():
+        side, d, lvl = "long", 1, prior.h.max()
+    elif last.c < last.o and pos <= 1 - IMP_CLOSE_POS and last.c < prior.l.min():
+        side, d, lvl = "short", -1, prior.l.min()
+    else:
+        return None
+    entry = float(last.c)
+    stop = (last.h + last.l) / 2 - d * 0.25 * a1   # back through the bar's midpoint = impulse failed
+    risk = abs(entry - stop)
+    a4 = float(atr(h4).iloc[-1])
+    ext = abs(entry - lvl) / a4 if a4 > 0 else 0.0
+    return {"side": side, "level": float(lvl), "entry": entry, "stop": float(stop),
+            "target": entry + d * IMP_TARGET_R * risk, "size_x": size_x, "vol_x": vol_x,
+            "ext": ext, "rsi4h": float(rsi(h4.c).iloc[-1]), "bar": int(last.t),
+            "from_t": int(last.t) + 3600}
 
 # ---------- money flow + divergence helpers ----------
 def mfi(df, n=14):
@@ -960,13 +1021,37 @@ def save_metals(markets):
 
 
 def backtest(bars=180):
-    """List every momentum shift in the last `bars` closed 4H candles (no alerts sent)."""
+    """List every 4H breakout, 1H impulse and momentum shift in recent history (no alerts sent)."""
     for coin, pair in WATCHLIST.items():
         try:
-            h4, m15, m5 = candles(pair, 240), candles(pair, 15), candles(pair, 5)
+            d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
+            m15, m5 = candles(pair, 15), candles(pair, 5)
             time.sleep(1)
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
+        for i in range(max(60, len(h4) - bars), len(h4)):
+            sub = h4.iloc[:i + 1].reset_index(drop=True)
+            close_t = sub.t.iloc[-1] + 4 * 3600
+            dd = d[d.t + 86400 <= close_t].reset_index(drop=True)
+            if len(dd) < 50:
+                continue
+            bo = breakout(dd, sub)
+            if bo:
+                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
+                print(f"{coin} {when} UTC  BREAKOUT {bo[0].upper():5} close {fmt(sub.c.iloc[-1])} "
+                      f"through {fmt(bo[1])}  vol {bo[3]:.1f}x  RSI 4H {bo[2]:.0f}")
+        for i in range(IMP_LOOKBACK + 40, len(h1)):
+            sub1 = h1.iloc[:i + 1].reset_index(drop=True)
+            close_t = sub1.t.iloc[-1] + 3600
+            sub4 = h4[h4.t + 4 * 3600 <= close_t].reset_index(drop=True)
+            if len(sub4) < 30:
+                continue
+            im = impulse(sub1, sub4)
+            if im:
+                when = time.strftime('%b %d %H:%M', time.gmtime(im["bar"]))
+                print(f"{coin} {when} UTC  IMPULSE  {im['side'].upper():5} close {fmt(im['entry'])} "
+                      f"through {fmt(im['level'])}  bar {im['size_x']:.1f}x ATR  vol {im['vol_x']:.1f}x  "
+                      f"ext {im['ext']:.1f} ATR")
         found, last_side = 0, None
         for i in range(max(60, len(h4) - bars), len(h4)):
             sub = h4.iloc[:i + 1].reset_index(drop=True)
@@ -1061,13 +1146,43 @@ def run_once():
             key = f"{coin}_bo"
             last_bo = state.get(key, 0)
             if now - last_bo > BO_COOLDOWN_HRS * 3600:
+                plan = breakout_plan(side, lvl, h4)
                 send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
                      f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
-                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}\n"
+                     + (f"{kalshi_plan(side, plan['entry'], plan['stop'], plan['target'])}\n" if plan else "")
+                     + f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}\n"
                      f"{flow_line(fl, side)}", urgent=True)
                 log.append(f"{stamp(now)},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
                 state[key] = now; changed = True
+                if plan:
+                    open_trade(state, coin, "breakout", side, "-", plan["entry"], plan["stop"],
+                               plan["target"], plan["from_t"], now, flow=fl["label"])
             print(f"{coin}: breakout {side}")
+
+        im = impulse(h1, h4)
+        if im:
+            print(f"{coin}: impulse {im['side']} {im['size_x']:.1f}x ATR, vol {im['vol_x']:.1f}x")
+            key = f"{coin}_imp"
+            prev_im = state.get(key, {})
+            if not isinstance(prev_im, dict):
+                prev_im = {}
+            if (prev_im.get("bar") != im["bar"]
+                    and (prev_im.get("side") != im["side"]
+                         or now - prev_im.get("sent", 0) > IMP_COOLDOWN_HRS * 3600)):
+                arrow = "🚀" if im["side"] == "long" else "💥"
+                ext_note = (f"\n⚠️ Extended: close is {im['ext']:.1f} 4H ATR past the level. "
+                            f"Consider waiting for a retest of {fmt(im['level'])}"
+                            if im["ext"] >= IMP_EXT_ATR else "")
+                send(f"{arrow} IMPULSE BREAKOUT {im['side'].upper()}: {coin}\n"
+                     f"1H closed {fmt(im['entry'])} through {fmt(im['level'])} ({IMP_LOOKBACK}-bar range)\n"
+                     f"{kalshi_plan(im['side'], im['entry'], im['stop'], im['target'])}\n"
+                     f"Bar {im['size_x']:.1f}x ATR | Volume {im['vol_x']:.1f}x avg | RSI 4H {im['rsi4h']:.0f}\n"
+                     f"{flow_line(fl, im['side'])}"
+                     + ext_note, urgent=True)
+                log.append(f"{stamp(now)},{coin},impulse-{im['side']},-,{im['entry']}")
+                state[key] = {"bar": im["bar"], "side": im["side"], "sent": now}; changed = True
+                open_trade(state, coin, "impulse", im["side"], "-", im["entry"], im["stop"],
+                           im["target"], im["from_t"], now, flow=fl["label"])
 
         ms = momentum_shift(h4, m15, m5)
         if ms:
