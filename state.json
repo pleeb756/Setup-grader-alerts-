@@ -143,6 +143,21 @@
    "va_state": "",
    "va_fit": "",
    "target_src": ""
+  },
+  {
+   "coin": "ZEC",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 1682.86,
+   "stop": 1631.7482847694062,
+   "target": 1785.0834304611874,
+   "t": 1790461296.5180318,
+   "from_t": 1790460000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow"
   }
  ],
  "HYPE": {
@@ -219,5 +234,10 @@
   "bar": 1790424000,
   "side": "short",
   "sent": 1790442988.631983
+ },
+ "ZEC_imp": {
+  "bar": 1790456400,
+  "side": "long",
+  "sent": 1790461296.5180318
  }
 }
