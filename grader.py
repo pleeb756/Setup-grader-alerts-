@@ -12,6 +12,11 @@ Value area: each grade is tagged with the market state from a 4H volume profile
 (balance, imbalance up/down, or an unaccepted probe) and whether the setup fits
 that state. Info only unless VA_GATE=1, which also requires a fit for Actionable.
 
+Money flow: every alert carries a Flow line from the last closed 4H bar. Direction
+comes from CMF (with OBV vs its EMA as a cross-check); HEAVY means that bar's volume
+was FLOW_VOL_MULT x the 20-bar average and it closed in the direction of the flow.
+Info only, logged to outcomes.csv so it can be judged like the value-area tag.
+
 Outcomes: every graded or momentum-shift alert with a stop and target is tracked
 on closed 1H bars until stop, target, or MAX_HOLD_HRS, then written to
 outcomes.csv and summarized in outcomes_summary.md. Run with --report to print it.
@@ -59,6 +64,11 @@ VA_ACCEPT = int(os.environ.get("VA_ACCEPT", "3"))     # 4H closes outside value 
 VA_PCT = 0.70                                         # share of volume inside the value area
 VA_BINS = 60
 VA_GATE = os.environ.get("VA_GATE", "0") == "1"       # 1 = Actionable also requires a state fit
+
+# Money flow (info only): direction from CMF/OBV, intensity from 4H volume vs its average
+FLOW_VOL_MULT = float(os.environ.get("FLOW_VOL_MULT", "1.5"))  # 4H volume this many x avg = heavy
+FLOW_CMF_MIN = 0.05       # |CMF| under this reads as neutral
+FLOW_SLOPE_BARS = 3       # CMF rising/falling vs this many 4H bars ago
 
 # Outcome tracking
 MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close at market
@@ -628,6 +638,44 @@ def obv(df):
     step = (df.c.diff() > 0).astype(int) - (df.c.diff() < 0).astype(int)
     return (step * df.v).cumsum()
 
+def flow_state(h4):
+    """Money flow on the last closed 4H bar: direction (CMF, OBV) and intensity (volume vs avg)."""
+    unknown = {"label": "unknown", "dir": 0, "heavy": False, "text": "not enough 4H data"}
+    if len(h4) < 40 or h4.v.iloc[-21:].sum() <= 0:
+        return unknown                        # e.g. a futures feed with no volume
+    cf = cmf(h4)
+    now_c, then_c = cf.iloc[-1], cf.iloc[-1 - FLOW_SLOPE_BARS]
+    if not fin(now_c):
+        return unknown
+    ob = obv(h4)
+    obv_up = ob.iloc[-1] > ema(ob, 21).iloc[-1]
+    last = h4.iloc[-1]
+    avg = h4.v.iloc[-21:-1].mean()
+    vx = last.v / avg if avg > 0 else NAN
+    rng = last.h - last.l
+    bar_mf = ((last.c - last.l) - (last.h - last.c)) / rng if rng > 0 else 0.0  # +1 closed at high
+
+    d = 1 if now_c >= FLOW_CMF_MIN else -1 if now_c <= -FLOW_CMF_MIN else 0
+    heavy = (d != 0 and fin(vx) and vx >= FLOW_VOL_MULT
+             and (bar_mf > 0 if d == 1 else bar_mf < 0))
+    word = "inflow" if d == 1 else "outflow" if d == -1 else "neutral"
+    label = f"heavy {word}" if heavy else word
+    trend = ("rising" if now_c > then_c else "falling" if now_c < then_c else "flat") \
+        if fin(then_c) else "-"
+    dot = "\U0001F7E2" if d == 1 else "\U0001F534" if d == -1 else "\u26AA"
+    vtxt = f"{vx:.1f}x" if fin(vx) else "-"
+    text = (f"{dot} {label.upper()} | CMF {now_c:+.2f} ({trend}) | "
+            f"OBV {'above' if obv_up else 'below'} EMA | vol {vtxt} avg")
+    return {"label": label, "dir": d, "heavy": heavy, "cmf": now_c, "trend": trend,
+            "obv_up": obv_up, "vx": vx, "text": text}
+
+def flow_line(fl, side=None):
+    """Flow text for a push, plus whether the money agrees with the trade side."""
+    txt = fl["text"]
+    if side and fl["dir"] != 0:
+        txt += " | with you" if (fl["dir"] == 1) == (side == "long") else " | AGAINST you"
+    return "Flow: " + txt
+
 def swing_idx(series, k=2):
     """Indices of pivot lows and highs in a series."""
     v = series.values
@@ -717,11 +765,12 @@ def momentum_shift(h4, m15, m5):
 
 # ---------- outcome tracking ----------
 OUT_COLS = ["alert_utc", "resolved_utc", "coin", "kind", "side", "grade", "va_state", "va_fit",
-            "target_src", "entry", "stop", "target", "outcome", "r", "mfe_r", "mae_r", "hours"]
+            "target_src", "entry", "stop", "target", "outcome", "r", "mfe_r", "mae_r", "hours",
+            "flow"]
 
 
 def open_trade(state, coin, kind, side, grade_, entry, stop, target, from_t, now,
-               va_state="", va_fit="", target_src=""):
+               va_state="", va_fit="", target_src="", flow=""):
     """Start tracking an alert. One open trade per coin and kind; skip if no stop/target."""
     if stop is None or target is None or not all(fin(x) for x in (entry, stop, target)):
         return
@@ -733,7 +782,7 @@ def open_trade(state, coin, kind, side, grade_, entry, stop, target, from_t, now
     trades.append({"coin": coin, "kind": kind, "side": side, "grade": grade_,
                    "entry": float(entry), "stop": float(stop), "target": float(target),
                    "t": now, "from_t": int(from_t), "va_state": va_state,
-                   "va_fit": va_fit, "target_src": target_src or ""})
+                   "va_fit": va_fit, "target_src": target_src or "", "flow": flow or ""})
 
 
 def walk_trade(tr, h1, now):
@@ -764,7 +813,7 @@ def walk_trade(tr, h1, now):
     return [stamp(tr["t"]), stamp(end_t), tr["coin"], tr["kind"], tr["side"], tr["grade"],
             tr.get("va_state", ""), tr.get("va_fit", ""), tr.get("target_src", ""),
             tr["entry"], tr["stop"], tr["target"], outcome, round(r, 3),
-            round(mfe, 3), round(mae, 3), round((end_t - tr["t"]) / 3600, 1)]
+            round(mfe, 3), round(mae, 3), round((end_t - tr["t"]) / 3600, 1), tr.get("flow", "")]
 
 
 def resolve_trades(state, coin, h1, now):
@@ -785,7 +834,7 @@ def expire_orphans(state, now):
             rows.append([stamp(tr["t"]), stamp(now), tr["coin"], tr["kind"], tr["side"], tr["grade"],
                          tr.get("va_state", ""), tr.get("va_fit", ""), tr.get("target_src", ""),
                          tr["entry"], tr["stop"], tr["target"], "dropped", 0.0, 0.0, 0.0,
-                         round((now - tr["t"]) / 3600, 1)])
+                         round((now - tr["t"]) / 3600, 1), tr.get("flow", "")])
         else:
             keep.append(tr)
     if rows:
@@ -799,10 +848,20 @@ def summarize(n_open=0):
         return "No resolved alerts yet."
     df = pd.read_csv(OUT_FILE)
     df = df[df.outcome != "dropped"].copy()
-    for col in ("grade", "va_state", "va_fit", "target_src"):
+    if "flow" not in df:
+        df["flow"] = ""
+    for col in ("grade", "va_state", "va_fit", "target_src", "flow"):
         df[col] = df[col].fillna("-").astype(str)
     if df.empty:
         return "No resolved alerts yet."
+
+    def flow_vs(r):
+        f = r.flow
+        if f in ("-", "", "nan", "unknown"): return "-"
+        if "neutral" in f: return "neutral"
+        w = "with" if ("inflow" in f) == (r.side == "long") else "against"
+        return ("heavy " if f.startswith("heavy") else "") + w
+    df["flow_vs"] = df.apply(flow_vs, axis=1)
 
     def table(by):
         g = df.groupby(by, dropna=False)
@@ -820,7 +879,8 @@ def summarize(n_open=0):
              "## By kind and grade\n\n" + table(["kind", "grade"]),
              "## By value-area fit\n\n" + table(["kind", "va_fit"]),
              "## By value-area state\n\n" + table(["kind", "va_state"]),
-             "## By target source\n\n" + table(["kind", "target_src"])]
+             "## By target source\n\n" + table(["kind", "target_src"]),
+             "## By money flow vs trade side\n\n" + table(["kind", "flow_vs"])]
     return "\n\n".join(parts) + "\n"
 
 
@@ -945,6 +1005,12 @@ def run_once():
             metals[coin] = {"d1": metal_rows(d, 400), "h1": metal_rows(h1, 720),
                             "m15": metal_rows(m15, 300), "m5": metal_rows(m5, 300)}
 
+        try:
+            fl = flow_state(h4)
+        except Exception as e:
+            print(f"skip {coin} flow: {e}")
+            fl = {"label": "unknown", "dir": 0, "heavy": False, "text": "unavailable"}
+
         done = resolve_trades(state, coin, h1, now)
         if done:
             out_rows += done; changed = True
@@ -963,7 +1029,7 @@ def run_once():
                 prev = {"tier": 0, "sent": {}}          # rules changed; start tiers fresh
             sent = prev.get("sent", {})
             print(f"{coin}: {best['side']} {best['grade']} {best['passed']}/5 {best['action']} tier {tier} "
-                  f"| {best['va']['state']} {'fit' if best['va']['fit'] else 'no fit'}")
+                  f"| {best['va']['state']} {'fit' if best['va']['fit'] else 'no fit'} | flow {fl['label']}")
 
             # alert on a move up into a tier, unless that tier already alerted within the cooldown
             if tier > prev.get("tier", 0) and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
@@ -975,6 +1041,7 @@ def run_once():
                        f"Level: {best['level_note']}\n"
                        f"Volume: {best['vol_note']} | Chop {best['chop']:.0f} {best['chop_state']}\n"
                        f"Value: {va_line(best)}\n"
+                       f"{flow_line(fl, best['side'])}\n"
                        f"Trend {'with you' if best['trend_ok'] else 'not aligned'} (info only)"
                        + (f"\nMissing: {', '.join(missing)}" if missing else ""))
                 send(msg, urgent=(tier == 2))
@@ -983,7 +1050,8 @@ def run_once():
                 open_trade(state, coin, "grade-actionable" if tier == 2 else "grade-watch",
                            best["side"], best["grade"], best["entry"], best["stop"], best["target"],
                            best["from_t"], now, best["va"]["state"],
-                           "fit" if best["va"]["fit"] else "no fit", best["target_src"])
+                           "fit" if best["va"]["fit"] else "no fit", best["target_src"],
+                           fl["label"])
             if tier != prev.get("tier", 0) or sent != prev.get("sent", {}) or prev.get("v") != STATE_V:
                 state[coin] = {"v": STATE_V, "tier": tier, "sent": sent}; changed = True
 
@@ -995,7 +1063,8 @@ def run_once():
             if now - last_bo > BO_COOLDOWN_HRS * 3600:
                 send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
                      f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
-                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}", urgent=True)
+                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}\n"
+                     f"{flow_line(fl, side)}", urgent=True)
                 log.append(f"{stamp(now)},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
                 state[key] = now; changed = True
             print(f"{coin}: breakout {side}")
@@ -1016,14 +1085,15 @@ def run_once():
                 send(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
                      f"5m+15m flipped, 4H cross in ~{eta} bars\n"
                      f"{kalshi_plan(ms['side'], ms['entry'], ms['stop'], ms['tps'][2])}\n"
-                     f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f} | CMF {ms['cmf']:+.2f}"
+                     f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f}\n"
+                     f"{flow_line(fl, ms['side'])}"
                      + ("\nDivergence confirmed" if ms["div"] else "")
                      + f"\nHave: {', '.join(on)}", urgent=True)
                 log.append(f"{stamp(now)},{coin},shift-{ms['side']},{ms['score']},{ms['entry']}")
                 state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
                 # track to the order TP (TP3, 3R); MFE in the log shows how often 1R/2R were reached
                 open_trade(state, coin, "shift", ms["side"], f"{ms['score']}/7", ms["entry"],
-                           ms["stop"], ms["tps"][2], ms["from_t"], now)
+                           ms["stop"], ms["tps"][2], ms["from_t"], now, flow=fl["label"])
 
     save_metals(metals)
     orphans = expire_orphans(state, now)
@@ -1032,6 +1102,11 @@ def run_once():
     if changed:
         STATE_FILE.write_text(json.dumps(state, indent=1))
     if out_rows:
+        if OUT_FILE.exists():
+            old = pd.read_csv(OUT_FILE)
+            if "flow" not in old:             # file from before the flow column
+                old["flow"] = ""
+                old.to_csv(OUT_FILE, index=False)
         new_file = not OUT_FILE.exists()
         with OUT_FILE.open("a") as f:
             if new_file: f.write(",".join(OUT_COLS) + "\n")
@@ -1052,7 +1127,8 @@ def run_once():
 
 def main():
     if "--test" in sys.argv:
-        send("✅ Grader alerts are connected."); return
+        send("✅ Grader alerts are connected.")
+        return
     if "--backtest" in sys.argv:
         backtest(); return
     if "--report" in sys.argv:
