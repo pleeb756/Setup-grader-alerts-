@@ -144,5 +144,75 @@
    "va_fit": "",
    "target_src": ""
   }
- ]
+ ],
+ "HYPE": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "SUI": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "DOGE": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "LTC": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "kSHIB": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "VVV": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "ADA": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "WLD": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "BNB": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "AAVE": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "Gold": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "Silver": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "Platinum": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ },
+ "Palladium": {
+  "v": 2,
+  "tier": 0,
+  "sent": {}
+ }
 }
