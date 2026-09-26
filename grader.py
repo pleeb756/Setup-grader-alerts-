@@ -869,4 +869,195 @@ def kalshi_plan(side, entry, stop, target):
     lines = [f"Order: Entry {fmt(entry)} | SL {fmt(stop)} | TP {fmt(target)} ({total_r:.1f}R)"]
     alerts = []
     for k in (1, 2):
-        if k < total_r -
+        if k < total_r - 0.25:                     # skip levels sitting on top of the TP
+            note = "take partial, move SL to entry" if k == 1 else "take partial"
+            alerts.append(f"{k}R {fmt(entry + d * k * risk)} ({note})")
+    if alerts:
+        lines.append("Price alerts: " + " | ".join(alerts))
+    return "\n".join(lines)
+
+
+def metal_rows(df, n):
+    return [[int(r.t), round(r.o, 4), round(r.h, 4), round(r.l, 4), round(r.c, 4), int(r.v)]
+            for r in df.tail(n).itertuples()]
+
+
+def save_metals(markets):
+    """Write metal candles for the browser grader; skip the write when nothing changed."""
+    if not markets:
+        return
+    old = {}
+    if METALS_FILE.exists():
+        try:
+            old = json.loads(METALS_FILE.read_text()).get("markets", {})
+        except Exception:
+            old = {}
+    merged = {**old, **markets}
+    if merged == old:
+        return
+    METALS_FILE.write_text(json.dumps({"asof": stamp(time.time()), "markets": merged},
+                                      separators=(",", ":")))
+
+
+def backtest(bars=180):
+    """List every momentum shift in the last `bars` closed 4H candles (no alerts sent)."""
+    for coin, pair in WATCHLIST.items():
+        try:
+            h4, m15, m5 = candles(pair, 240), candles(pair, 15), candles(pair, 5)
+            time.sleep(1)
+        except Exception as e:
+            print(f"skip {coin}: {e}"); continue
+        found, last_side = 0, None
+        for i in range(max(60, len(h4) - bars), len(h4)):
+            sub = h4.iloc[:i + 1].reset_index(drop=True)
+            close_t = sub.t.iloc[-1] + 4 * 3600
+            c15 = m15[m15.t + 900 <= close_t].reset_index(drop=True)
+            c5 = m5[m5.t + 300 <= close_t].reset_index(drop=True)
+            if len(c15) < 30 or len(c5) < 30:
+                continue                      # 5m/15m history does not reach that far back
+            ms = momentum_shift(sub, c15, c5)
+            if ms and ms["score"] >= MS_MIN and ms["side"] != last_side:
+                found += 1
+                last_side = ms["side"]
+                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
+                eta = f"{ms['eta']:.1f}" if ms["eta"] is not None else "-"
+                print(f"{coin} {when} UTC  {ms['side'].upper():5} {ms['score']}/7  "
+                      f"entry {fmt(ms['entry'])}  4H cross in ~{eta} bars  "
+                      f"MFI {ms['mfi']:.0f}  CMF {ms['cmf']:+.2f}"
+                      + ("  DIV" if ms["div"] else ""))
+        if not found:
+            print(f"{coin}: no momentum shifts (5m/15m history only reaches back ~2 days)")
+
+# ---------- one pass ----------
+def run_once():
+    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    now, changed, log, out_rows = time.time(), False, [], []
+    metals = {}
+
+    for coin, pair in WATCHLIST.items():
+        try:
+            d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
+            m15, m5 = candles(pair, 15), candles(pair, 5)
+            time.sleep(1)   # stay under Kraken's public rate limit
+        except Exception as e:
+            print(f"skip {coin}: {e}"); continue
+        if pair.startswith("yf:"):
+            metals[coin] = {"d1": metal_rows(d, 400), "h1": metal_rows(h1, 720),
+                            "m15": metal_rows(m15, 300), "m5": metal_rows(m5, 300)}
+
+        done = resolve_trades(state, coin, h1, now)
+        if done:
+            out_rows += done; changed = True
+            for row in done:
+                print(f"{coin}: {row[3]} {row[4]} resolved {row[12]} {row[13]:+.2f}R")
+
+        try:
+            best = grade(d, h4, h1)
+        except Exception as e:
+            print(f"skip {coin} grade: {e}"); best = None
+        if best:
+            ok_grade = best["grade"] in ("A+", "B+")
+            tier = 2 if best["action"] == "actionable" else 1 if ok_grade else 0
+            prev = state.get(coin, {})
+            if not isinstance(prev, dict) or prev.get("v") != STATE_V:
+                prev = {"tier": 0, "sent": {}}          # rules changed; start tiers fresh
+            sent = prev.get("sent", {})
+            print(f"{coin}: {best['side']} {best['grade']} {best['passed']}/5 {best['action']} tier {tier} "
+                  f"| {best['va']['state']} {'fit' if best['va']['fit'] else 'no fit'}")
+
+            # alert on a move up into a tier, unless that tier already alerted within the cooldown
+            if tier > prev.get("tier", 0) and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
+                label = "🚨 ACTIONABLE" if tier == 2 else "👀 Setup graded, waiting on RSI"
+                missing = [k for k, v in best["checks"].items() if not v]
+                msg = (f"{label}: {coin} {best['side'].upper()} {best['grade']} {best['passed']}/5\n"
+                       f"{kalshi_plan(best['side'], best['entry'], best['stop'], best['target'])}\n"
+                       f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f} | {best['gate_note']}\n"
+                       f"Level: {best['level_note']}\n"
+                       f"Volume: {best['vol_note']} | Chop {best['chop']:.0f} {best['chop_state']}\n"
+                       f"Value: {va_line(best)}\n"
+                       f"Trend {'with you' if best['trend_ok'] else 'not aligned'} (info only)"
+                       + (f"\nMissing: {', '.join(missing)}" if missing else ""))
+                send(msg, urgent=(tier == 2))
+                log.append(f"{stamp(now)},{coin},{best['side']},{best['grade']} {best['passed']}/5 {best['action']},{best['entry']}")
+                sent[str(tier)] = now
+                open_trade(state, coin, "grade-actionable" if tier == 2 else "grade-watch",
+                           best["side"], best["grade"], best["entry"], best["stop"], best["target"],
+                           best["from_t"], now, best["va"]["state"],
+                           "fit" if best["va"]["fit"] else "no fit", best["target_src"])
+            if tier != prev.get("tier", 0) or sent != prev.get("sent", {}) or prev.get("v") != STATE_V:
+                state[coin] = {"v": STATE_V, "tier": tier, "sent": sent}; changed = True
+
+        bo = breakout(d, h4)
+        if bo:
+            side, lvl, r, vx = bo
+            key = f"{coin}_bo"
+            last_bo = state.get(key, 0)
+            if now - last_bo > BO_COOLDOWN_HRS * 3600:
+                send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
+                     f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
+                     f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}", urgent=True)
+                log.append(f"{stamp(now)},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
+                state[key] = now; changed = True
+            print(f"{coin}: breakout {side}")
+
+        ms = momentum_shift(h4, m15, m5)
+        if ms:
+            eta = f"{ms['eta']:.1f}" if ms["eta"] is not None else "-"
+            print(f"{coin}: shift {ms['side']} {ms['score']}/7, 4H cross in ~{eta} bars")
+            key = f"{coin}_ms"
+            prev_ms = state.get(key, {})
+            if not isinstance(prev_ms, dict):
+                prev_ms = {}
+            if (ms["score"] >= MS_MIN and prev_ms.get("bar") != ms["bar"]
+                    and (prev_ms.get("side") != ms["side"]
+                         or now - prev_ms.get("sent", 0) > MS_COOLDOWN_HRS * 3600)):
+                on = [k for k, v in ms["factors"].items() if v]
+                arrow = "🔼" if ms["side"] == "long" else "🔽"
+                send(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
+                     f"5m+15m flipped, 4H cross in ~{eta} bars\n"
+                     f"{kalshi_plan(ms['side'], ms['entry'], ms['stop'], ms['tps'][2])}\n"
+                     f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f} | CMF {ms['cmf']:+.2f}"
+                     + ("\nDivergence confirmed" if ms["div"] else "")
+                     + f"\nHave: {', '.join(on)}", urgent=True)
+                log.append(f"{stamp(now)},{coin},shift-{ms['side']},{ms['score']},{ms['entry']}")
+                state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
+                # track to the order TP (TP3, 3R); MFE in the log shows how often 1R/2R were reached
+                open_trade(state, coin, "shift", ms["side"], f"{ms['score']}/7", ms["entry"],
+                           ms["stop"], ms["tps"][2], ms["from_t"], now)
+
+    save_metals(metals)
+    orphans = expire_orphans(state, now)
+    if orphans:
+        out_rows += orphans; changed = True
+    if changed:
+        STATE_FILE.write_text(json.dumps(state, indent=1))
+    if out_rows:
+        new_file = not OUT_FILE.exists()
+        with OUT_FILE.open("a") as f:
+            if new_file: f.write(",".join(OUT_COLS) + "\n")
+            f.write("\n".join(",".join(str(x) for x in r) for r in out_rows) + "\n")
+        SUMMARY_FILE.write_text(summarize(len(state.get("open", []))))
+        n = sum(1 for _ in OUT_FILE.open()) - 1
+        milestone = n // 30 * 30
+        if milestone >= 30 and state.get("review_at", 0) < milestone:
+            send(f"📊 {n} alert outcomes logged. Review outcomes_summary.md "
+                 f"and decide on VA_GATE.")
+            state["review_at"] = milestone
+            STATE_FILE.write_text(json.dumps(state, indent=1))
+    if log:
+        new_file = not LOG_FILE.exists()
+        with LOG_FILE.open("a") as f:
+            if new_file: f.write("utc,coin,side,met,price\n")
+            f.write("\n".join(log) + "\n")
+
+def main():
+    if "--test" in sys.argv:
+        send("✅ Grader alerts are connected."); return
+    if "--backtest" in sys.argv:
+        backtest(); return
+    if "--report" in sys.argv:
+        report(); return
+    run_once()
+
+if __name__ == "__main__":
+    main()
