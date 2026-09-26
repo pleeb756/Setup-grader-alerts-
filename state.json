@@ -143,6 +143,20 @@
    "va_state": "",
    "va_fit": "",
    "target_src": ""
+  },
+  {
+   "coin": "LTC",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 72.99,
+   "stop": 76.55425907568426,
+   "target": 62.29722277294722,
+   "t": 1790442988.631983,
+   "from_t": 1790438400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": ""
   }
  ],
  "HYPE": {
@@ -214,5 +228,10 @@
   "v": 2,
   "tier": 0,
   "sent": {}
+ },
+ "LTC_ms": {
+  "bar": 1790424000,
+  "side": "short",
+  "sent": 1790442988.631983
  }
 }
