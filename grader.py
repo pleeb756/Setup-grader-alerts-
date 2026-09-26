@@ -23,11 +23,19 @@ import numpy as np
 import pandas as pd
 
 # ---------- settings ----------
-WATCHLIST = {  # display name -> Kraken pair
-    "BTC": "XBTUSD", "ETH": "ETHUSD", "SOL": "SOLUSD", "XRP": "XRPUSD",
-    "ZEC": "ZECUSD", "LINK": "LINKUSD", "UNI": "UNIUSD", "XLM": "XLMUSD",
-    "HBAR": "HBARUSD", "NEAR": "NEARUSD",
+WATCHLIST = {  # display name -> data source (Kalshi perps only)
+    # crypto: Kraken spot pairs
+    "BTC": "XBTUSD", "ETH": "ETHUSD", "HYPE": "HYPEUSD", "XRP": "XRPUSD",
+    "SOL": "SOLUSD", "ZEC": "ZECUSD", "NEAR": "NEARUSD", "SUI": "SUIUSD",
+    "DOGE": "XDGUSD", "LTC": "LTCUSD", "LINK": "LINKUSD", "kSHIB": "SHIBUSD",
+    "VVV": "VVVUSD", "ADA": "ADAUSD", "WLD": "WLDUSD", "BNB": "BNBUSD",
+    "AAVE": "AAVEUSD",
+    # metals: COMEX/NYMEX front-month futures via Yahoo Finance ("yf:" prefix)
+    "Gold": "yf:GC=F", "Silver": "yf:SI=F", "Platinum": "yf:PL=F", "Palladium": "yf:PA=F",
 }
+# Kalshi quotes kSHIB per 1,000 SHIB; scale Kraken prices so alerts match the app.
+# Grades are unaffected: every check uses ratios, so scaling price changes nothing.
+PRICE_MULT = {"SHIBUSD": 1000}
 MIN_RR = 2.0            # minimum reward:risk
 BO_LOOKBACK = 20        # 4H bars for the breakout range
 BO_VOL_MULT = 1.5       # breakout bar volume vs 20-bar average
@@ -57,17 +65,89 @@ MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 
 # ---------- data ----------
+# ---------- metals (Yahoo Finance futures) ----------
+# Yahoo has no 4H bars, so 4H is built from closed 1H bars. Futures pause daily and on
+# weekends, so metals simply get no new bars while the market is closed.
+YF_SPEC = {1440: ("1d", "2y"), 240: ("60m", "60d"), 60: ("60m", "60d"),
+           15: ("15m", "5d"), 5: ("5m", "2d")}
+YF_HEADERS = {"User-Agent": "Mozilla/5.0 (setup-grader)"}
+_yf_cache = {}
+
+
+def _yf_fetch(sym, interval, rng):
+    key = (sym, interval)
+    if key in _yf_cache:
+        return _yf_cache[key]
+    last_err = None
+    for attempt in range(4):
+        host = "query1" if attempt % 2 == 0 else "query2"
+        try:
+            r = requests.get(f"https://{host}.finance.yahoo.com/v8/finance/chart/{sym}",
+                             params={"interval": interval, "range": rng},
+                             headers=YF_HEADERS, timeout=20)
+            if r.status_code == 429:
+                last_err = "rate limited"; time.sleep(3 * (attempt + 1)); continue
+            res = r.json()["chart"]["result"][0]
+            q = res["indicators"]["quote"][0]
+            df = pd.DataFrame({"t": res["timestamp"], "o": q["open"], "h": q["high"],
+                               "l": q["low"], "c": q["close"], "v": q["volume"]})
+            df = df.dropna(subset=["o", "h", "l", "c"]).astype(
+                {"t": int, "o": float, "h": float, "l": float, "c": float})
+            df["v"] = df["v"].fillna(0).astype(float)
+            df = df.drop_duplicates("t", keep="last").sort_values("t").reset_index(drop=True)
+            _yf_cache[key] = df
+            return df
+        except Exception as e:
+            last_err = e; time.sleep(2)
+    raise RuntimeError(f"{sym} {interval}: {last_err}")
+
+
+def yf_candles(sym, minutes):
+    interval, rng = YF_SPEC[minutes]
+    now = time.time()
+    df = _yf_fetch(sym, interval, rng)
+    if minutes == 240:
+        h1 = df[df.t + 3600 <= now].copy()
+        h1["b"] = h1.t // 14400 * 14400
+        df = (h1.groupby("b").agg(o=("o", "first"), h=("h", "max"), l=("l", "min"),
+                                   c=("c", "last"), v=("v", "sum"))
+                .reset_index().rename(columns={"b": "t"}))
+        step = 14400
+    else:
+        step = 86400 if minutes == 1440 else minutes * 60
+    df = df[df.t + step <= now].reset_index(drop=True)     # closed bars only
+    if len(df) < 30:
+        raise RuntimeError(f"{sym}: only {len(df)} closed {minutes}m bars")
+    return df
+
+
 def candles(pair, minutes):
-    r = requests.get("https://api.kraken.com/0/public/OHLC",
-                     params={"pair": pair, "interval": minutes}, timeout=20)
-    j = r.json()
-    if j.get("error"):
-        raise RuntimeError(f"{pair}: {j['error']}")
-    key = next(k for k in j["result"] if k != "last")
-    df = pd.DataFrame(j["result"][key],
-                      columns=["t", "o", "h", "l", "c", "vwap", "v", "n"])
-    df = df.astype({"o": float, "h": float, "l": float, "c": float, "v": float})
-    return df.iloc[:-1].reset_index(drop=True)   # drop the still-forming bar
+    """Closed candles: Yahoo futures for "yf:" symbols, Kraken spot for everything else."""
+    if pair.startswith("yf:"):
+        return yf_candles(pair[3:], minutes)
+    return kraken_candles(pair, minutes)
+
+
+def kraken_candles(pair, minutes):
+    """Closed Kraken candles. Retries with backoff if Kraken rate-limits the run."""
+    for attempt in range(4):
+        r = requests.get("https://api.kraken.com/0/public/OHLC",
+                         params={"pair": pair, "interval": minutes}, timeout=20)
+        j = r.json()
+        err = j.get("error") or []
+        if any("Too many requests" in e or "Rate limit" in e for e in err):
+            time.sleep(3 * (attempt + 1)); continue
+        if err:
+            raise RuntimeError(f"{pair}: {err}")
+        key = next(k for k in j["result"] if k != "last")
+        df = pd.DataFrame(j["result"][key],
+                          columns=["t", "o", "h", "l", "c", "vwap", "v", "n"])
+        df = df.astype({"o": float, "h": float, "l": float, "c": float, "v": float})
+        m = PRICE_MULT.get(pair, 1)
+        if m != 1:
+            df[["o", "h", "l", "c"]] *= m
+        return df.iloc[:-1].reset_index(drop=True)   # drop the still-forming bar
+    raise RuntimeError(f"{pair}: still rate-limited after retries")
 
 # ---------- indicators ----------
 def ema(s, n): return s.ewm(span=n, adjust=False).mean()
@@ -777,6 +857,25 @@ def va_line(best):
     return (f"{va['state'].replace('_', ' ')}, {mark} ({va['note']}) | "
             f"VAL {fmt(va['val'])} POC {fmt(va['poc'])} VAH {fmt(va['vah'])}{tgt}")
 
+def kalshi_plan(side, entry, stop, target):
+    """Kalshi takes one TP per order: the final target goes on the order, and each whole R
+    before it becomes a manual price alert for a partial close (the first also moves SL to entry)."""
+    if stop is None or target is None or not all(fin(x) for x in (entry, stop, target)):
+        return "No valid plan (stop or target missing)"
+    risk = abs(entry - stop)
+    d = 1 if side == "long" else -1
+    total_r = abs(target - entry) / risk
+    lines = [f"Order: Entry {fmt(entry)} | SL {fmt(stop)} | TP {fmt(target)} ({total_r:.1f}R)"]
+    alerts = []
+    for k in (1, 2):
+        if k < total_r - 0.25:                     # skip levels sitting on top of the TP
+            note = "take partial, move SL to entry" if k == 1 else "take partial"
+            alerts.append(f"{k}R {fmt(entry + d * k * risk)} ({note})")
+    if alerts:
+        lines.append("Price alerts: " + " | ".join(alerts))
+    return "\n".join(lines)
+
+
 def backtest(bars=180):
     """List every momentum shift in the last `bars` closed 4H candles (no alerts sent)."""
     for coin, pair in WATCHLIST.items():
@@ -843,9 +942,8 @@ def run_once():
             if tier > prev.get("tier", 0) and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
                 label = "🚨 ACTIONABLE" if tier == 2 else "👀 Setup graded, waiting on RSI"
                 missing = [k for k, v in best["checks"].items() if not v]
-                rr = f" ({best['rr']:.1f}R)" if best["rr"] else ""
                 msg = (f"{label}: {coin} {best['side'].upper()} {best['grade']} {best['passed']}/5\n"
-                       f"Price {fmt(best['entry'])} | Stop {fmt(best['stop'])} | Target {fmt(best['target'])}{rr}\n"
+                       f"{kalshi_plan(best['side'], best['entry'], best['stop'], best['target'])}\n"
                        f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f} | {best['gate_note']}\n"
                        f"Level: {best['level_note']}\n"
                        f"Volume: {best['vol_note']} | Chop {best['chop']:.0f} {best['chop_state']}\n"
@@ -887,20 +985,18 @@ def run_once():
                     and (prev_ms.get("side") != ms["side"]
                          or now - prev_ms.get("sent", 0) > MS_COOLDOWN_HRS * 3600)):
                 on = [k for k, v in ms["factors"].items() if v]
-                tp = " / ".join(fmt(x) for x in ms["tps"])
                 arrow = "🔼" if ms["side"] == "long" else "🔽"
                 send(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
                      f"5m+15m flipped, 4H cross in ~{eta} bars\n"
-                     f"Entry {fmt(ms['entry'])} | SL {fmt(ms['stop'])}\n"
-                     f"TP1-3 {tp}\n"
+                     f"{kalshi_plan(ms['side'], ms['entry'], ms['stop'], ms['tps'][2])}\n"
                      f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f} | CMF {ms['cmf']:+.2f}"
                      + ("\nDivergence confirmed" if ms["div"] else "")
                      + f"\nHave: {', '.join(on)}", urgent=True)
                 log.append(f"{stamp(now)},{coin},shift-{ms['side']},{ms['score']},{ms['entry']}")
                 state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
-                # track to TP2 (2R, matching MIN_RR) so shifts compare fairly with grades
+                # track to the order TP (TP3, 3R); MFE in the log shows how often 1R/2R were reached
                 open_trade(state, coin, "shift", ms["side"], f"{ms['score']}/7", ms["entry"],
-                           ms["stop"], ms["tps"][1], ms["from_t"], now)
+                           ms["stop"], ms["tps"][2], ms["from_t"], now)
 
     orphans = expire_orphans(state, now)
     if orphans:
