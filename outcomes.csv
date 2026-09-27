@@ -1,2 +1,3 @@
 alert_utc,resolved_utc,coin,kind,side,grade,va_state,va_fit,target_src,entry,stop,target,outcome,r,mfe_r,mae_r,hours,flow
 2026-09-26 01:16,2026-09-26 22:00,ZEC,shift,short,5/7,,,,1555.32,1639.8718719674328,1386.2162560651343,loss,-1.0,0.457,1.652,20.7,
+2026-09-26 22:21,2026-09-27 05:00,ZEC,impulse,long,-,,,,1682.86,1631.7482847694062,1785.0834304611874,loss,-1.0,0.003,1.009,6.6,outflow

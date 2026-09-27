@@ -146,21 +146,6 @@
   },
   {
    "coin": "ZEC",
-   "kind": "impulse",
-   "side": "long",
-   "grade": "-",
-   "entry": 1682.86,
-   "stop": 1631.7482847694062,
-   "target": 1785.0834304611874,
-   "t": 1790461296.5180318,
-   "from_t": 1790460000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "outflow"
-  },
-  {
-   "coin": "ZEC",
    "kind": "breakout",
    "side": "long",
    "grade": "-",
