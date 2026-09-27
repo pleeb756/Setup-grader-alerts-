@@ -10,6 +10,12 @@ closes through the recent range, caught without waiting for the 4H close), and
 momentum shifts, where 5m and 15m flip against the 4H trend with divergence and
 money-flow confluence pointing to a 4H cross.
 
+Scaled impulse entries: an impulse alert is a STARTER (half size), with the stop for the
+full position set below the broken level. The second half is signalled (✅ ADD) on the
+first closed 4H bar within IMP_ADD_BARS that closes beyond the level at a price no worse
+than the starter entry. A 4H close back inside the range, or no pullback in time, cancels
+the add. Starter and add are tracked separately as "impulse" and "impulse-add".
+
 Value area: each grade is tagged with the market state from a 4H volume profile
 (balance, imbalance up/down, or an unaccepted probe) and whether the setup fits
 that state. Info only unless VA_GATE=1, which also requires a fit for Actionable.
@@ -17,6 +23,7 @@ that state. Info only unless VA_GATE=1, which also requires a fit for Actionable
 Money flow: every alert carries a Flow line from the last closed 4H bar. Direction
 comes from CMF (with OBV vs its EMA as a cross-check); HEAVY means that bar's volume
 was FLOW_VOL_MULT x the 20-bar average and it closed in the direction of the flow.
+Impulse alerts use 1H flow instead, since the 4H bar holding the impulse hasn't closed.
 Info only, logged to outcomes.csv so it can be judged like the value-area tag.
 
 Outcomes: every graded or momentum-shift alert with a stop and target is tracked
@@ -57,6 +64,8 @@ IMP_VOL_MULT = float(os.environ.get("IMP_VOL_MULT", "3.0"))     # bar volume vs 
 IMP_CLOSE_POS = 0.6     # close in the outer 40% of the bar (not a wick that gave it all back)
 IMP_TARGET_R = float(os.environ.get("IMP_TARGET_R", "2.0"))     # impulse order TP in R
 IMP_EXT_ATR = 1.5       # warn when the close is this many 4H ATRs past the broken level
+IMP_STOP_ATR = 0.25     # full-position stop: this many 4H ATRs beyond the broken level
+IMP_ADD_BARS = int(os.environ.get("IMP_ADD_BARS", "3"))  # 4H closes to wait for the add (3 = 12h)
 IMP_COOLDOWN_HRS = int(os.environ.get("IMP_COOLDOWN_HRS", "6"))
 # Momentum shift settings — lower timeframes flip first, 4H confirmed as about to follow
 MS_MIN = int(os.environ.get("MS_MIN", "5"))              # confluence factors needed (of 7)
@@ -671,14 +680,46 @@ def impulse(h1, h4):
     else:
         return None
     entry = float(last.c)
-    stop = (last.h + last.l) / 2 - d * 0.25 * a1   # back through the bar's midpoint = impulse failed
-    risk = abs(entry - stop)
     a4 = float(atr(h4).iloc[-1])
+    # stop for the FULL scaled position sits beyond the broken level, so a normal retest
+    # can't take out the starter before the add is due
+    stop = lvl - d * IMP_STOP_ATR * a4
+    risk = abs(entry - stop)
+    if risk <= 0:
+        return None
     ext = abs(entry - lvl) / a4 if a4 > 0 else 0.0
     return {"side": side, "level": float(lvl), "entry": entry, "stop": float(stop),
             "target": entry + d * IMP_TARGET_R * risk, "size_x": size_x, "vol_x": vol_x,
             "ext": ext, "rsi4h": float(rsi(h4.c).iloc[-1]), "bar": int(last.t),
             "from_t": int(last.t) + 3600}
+
+def add_check(tr, h4):
+    """Decide the second half of a scaled impulse entry from newly closed 4H bars.
+    Returns ("add", bar), ("cancel", reason) or None (keep waiting). Updates tr in place."""
+    L = tr["side"] == "long"
+    d = 1 if L else -1
+    lvl, entry = tr["level"], tr["entry"]
+    seen = tr.get("add_seen", 0)
+    # 4H bars closing after the impulse bar (a 4H bar that closes with it is the same price)
+    bars = h4[(h4.t + 4 * 3600 > tr["from_t"]) & (h4.t > seen)]
+    for b in bars.itertuples():
+        tr["add_seen"] = int(b.t)
+        tr["add_n"] = tr.get("add_n", 0) + 1
+        if (b.c - lvl) * d <= 0:
+            return "cancel", f"4H closed {fmt(b.c)}, back inside the range (level {fmt(lvl)})"
+        if (b.c - entry) * d <= 0:
+            return "add", b
+        if tr["add_n"] >= IMP_ADD_BARS:
+            return "cancel", (f"no pullback to the starter entry {fmt(entry)} "
+                              f"within {IMP_ADD_BARS} 4H closes")
+    return None
+
+
+def scaled_rr(side, e1, e2, stop, target):
+    """Average entry and reward:risk of the full position after the add."""
+    avg = (e1 + e2) / 2
+    risk, reward = abs(avg - stop), abs(target - avg)
+    return avg, (reward / risk if risk > 0 else NAN)
 
 # ---------- money flow + divergence helpers ----------
 def mfi(df, n=14):
@@ -700,8 +741,10 @@ def obv(df):
     return (step * df.v).cumsum()
 
 def flow_state(h4):
-    """Money flow on the last closed 4H bar: direction (CMF, OBV) and intensity (volume vs avg)."""
-    unknown = {"label": "unknown", "dir": 0, "heavy": False, "text": "not enough 4H data"}
+    """Money flow on the last closed bar: direction (CMF, OBV) and intensity (volume vs avg).
+    Called with 4H bars for most alerts, and with 1H bars for impulse alerts so the Flow line
+    reflects the breakout bar instead of the 4H bar that closed before it."""
+    unknown = {"label": "unknown", "dir": 0, "heavy": False, "text": "not enough bar data"}
     if len(h4) < 40 or h4.v.iloc[-21:].sum() <= 0:
         return unknown                        # e.g. a futures feed with no volume
     cf = cmf(h4)
@@ -730,12 +773,12 @@ def flow_state(h4):
     return {"label": label, "dir": d, "heavy": heavy, "cmf": now_c, "trend": trend,
             "obv_up": obv_up, "vx": vx, "text": text}
 
-def flow_line(fl, side=None):
+def flow_line(fl, side=None, tf=None):
     """Flow text for a push, plus whether the money agrees with the trade side."""
     txt = fl["text"]
     if side and fl["dir"] != 0:
         txt += " | with you" if (fl["dir"] == 1) == (side == "long") else " | AGAINST you"
-    return "Flow: " + txt
+    return (f"Flow ({tf}): " if tf else "Flow: ") + txt
 
 def swing_idx(series, k=2):
     """Indices of pivot lows and highs in a series."""
@@ -1169,20 +1212,65 @@ def run_once():
             if (prev_im.get("bar") != im["bar"]
                     and (prev_im.get("side") != im["side"]
                          or now - prev_im.get("sent", 0) > IMP_COOLDOWN_HRS * 3600)):
+                try:
+                    fl1 = flow_state(h1)           # 1H flow includes the impulse bar itself
+                except Exception as e:
+                    print(f"skip {coin} 1H flow: {e}")
+                    fl1 = {"label": "unknown", "dir": 0, "heavy": False, "text": "unavailable"}
                 arrow = "🚀" if im["side"] == "long" else "💥"
                 ext_note = (f"\n⚠️ Extended: close is {im['ext']:.1f} 4H ATR past the level. "
-                            f"Consider waiting for a retest of {fmt(im['level'])}"
+                            f"Consider a smaller starter; the add waits for the retest of {fmt(im['level'])}"
                             if im["ext"] >= IMP_EXT_ATR else "")
+                better = "at or below" if im["side"] == "long" else "at or above"
                 send(f"{arrow} IMPULSE BREAKOUT {im['side'].upper()}: {coin}\n"
                      f"1H closed {fmt(im['entry'])} through {fmt(im['level'])} ({IMP_LOOKBACK}-bar range)\n"
+                     f"STARTER: HALF size. SL covers the full position\n"
                      f"{kalshi_plan(im['side'], im['entry'], im['stop'], im['target'])}\n"
+                     f"Add plan: other half on a 4H close beyond {fmt(im['level'])}, "
+                     f"{better} {fmt(im['entry'])}, within {IMP_ADD_BARS * 4}h\n"
                      f"Bar {im['size_x']:.1f}x ATR | Volume {im['vol_x']:.1f}x avg | RSI 4H {im['rsi4h']:.0f}\n"
-                     f"{flow_line(fl, im['side'])}"
+                     f"{flow_line(fl1, im['side'], '1H')}"
                      + ext_note, urgent=True)
                 log.append(f"{stamp(now)},{coin},impulse-{im['side']},-,{im['entry']}")
                 state[key] = {"bar": im["bar"], "side": im["side"], "sent": now}; changed = True
                 open_trade(state, coin, "impulse", im["side"], "-", im["entry"], im["stop"],
-                           im["target"], im["from_t"], now, flow=fl["label"])
+                           im["target"], im["from_t"], now, flow=fl1["label"])
+                for t in state.get("open", []):
+                    if t["coin"] == coin and t["kind"] == "impulse" and t["t"] == now:
+                        t.update({"level": im["level"], "add": "pending", "add_n": 0, "add_seen": 0})
+
+        # second half of a scaled impulse entry
+        for tr in state.get("open", []):
+            if tr["coin"] != coin or tr["kind"] != "impulse" or tr.get("add") != "pending":
+                continue
+            before = (tr.get("add_seen"), tr.get("add_n"))
+            res = add_check(tr, h4)
+            if (tr.get("add_seen"), tr.get("add_n")) != before:
+                changed = True
+            if not res:
+                continue
+            what, info = res
+            changed = True
+            if what == "add":
+                b = info
+                add_px = float(b.c)
+                avg, rr = scaled_rr(tr["side"], tr["entry"], add_px, tr["stop"], tr["target"])
+                tr["add"], tr["add_price"] = "done", add_px
+                send(f"✅ ADD SECOND HALF: {coin} {tr['side'].upper()}\n"
+                     f"4H closed {fmt(add_px)} beyond {fmt(tr['level'])}: retest held\n"
+                     f"Add: {fmt(add_px)} | Avg entry {fmt(avg)}\n"
+                     f"Keep SL {fmt(tr['stop'])} | TP {fmt(tr['target'])} (full position {rr:.1f}R)\n"
+                     f"{flow_line(fl, tr['side'], '4H')}", urgent=True)
+                log.append(f"{stamp(now)},{coin},impulse-add-{tr['side']},-,{add_px}")
+                open_trade(state, coin, "impulse-add", tr["side"], "-", add_px, tr["stop"],
+                           tr["target"], int(b.t) + 4 * 3600, now, flow=fl["label"])
+                print(f"{coin}: impulse add at {fmt(add_px)}, avg {fmt(avg)}")
+            else:
+                tr["add"] = "cancelled"
+                send(f"❌ NO ADD: {coin} {tr['side'].upper()}\n{info}\n"
+                     f"Starter only. Keep its SL {fmt(tr['stop'])}")
+                log.append(f"{stamp(now)},{coin},impulse-noadd-{tr['side']},-,-")
+                print(f"{coin}: impulse add cancelled ({info})")
 
         ms = momentum_shift(h4, m15, m5)
         if ms:
