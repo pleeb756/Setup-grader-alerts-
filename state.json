@@ -1,5 +1,5 @@
 {
- "ZEC_bo": 1790122282.9181638,
+ "ZEC_bo": 1790468810.2485566,
  "SOL": {
   "v": 2,
   "tier": 0,
@@ -158,6 +158,21 @@
    "va_fit": "",
    "target_src": "",
    "flow": "outflow"
+  },
+  {
+   "coin": "ZEC",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 1653.15,
+   "stop": 1619.4816239540191,
+   "target": 1720.486752091962,
+   "t": 1790468810.2485566,
+   "from_t": 1790467200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow"
   }
  ],
  "HYPE": {
