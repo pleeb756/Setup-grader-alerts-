@@ -1,6 +1,6 @@
 # Alert outcomes
 
-4 resolved, 9 still open. Updated 2026-09-27 14:17 UTC.
+5 resolved, 8 still open. Updated 2026-09-27 15:18 UTC.
 
 
 Small samples mean little; wait for 30+ per row before changing rules.
@@ -10,6 +10,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / grade | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
+| breakout / - | 1 | 0 | -1.00 | -1.0 | 0.76 |
 | impulse / - | 3 | 0 | -1.00 | -3.0 | 0.41 |
 | shift / 5/7 | 1 | 0 | -1.00 | -1.0 | 0.46 |
 
@@ -17,6 +18,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / va_fit | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
+| breakout / - | 1 | 0 | -1.00 | -1.0 | 0.76 |
 | impulse / - | 3 | 0 | -1.00 | -3.0 | 0.41 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
 
@@ -24,6 +26,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / va_state | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
+| breakout / - | 1 | 0 | -1.00 | -1.0 | 0.76 |
 | impulse / - | 3 | 0 | -1.00 | -3.0 | 0.41 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
 
@@ -31,6 +34,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / target_src | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
+| breakout / - | 1 | 0 | -1.00 | -1.0 | 0.76 |
 | impulse / - | 3 | 0 | -1.00 | -3.0 | 0.41 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
 
@@ -38,6 +42,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / flow_vs | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
+| breakout / heavy with | 1 | 0 | -1.00 | -1.0 | 0.76 |
 | impulse / against | 1 | 0 | -1.00 | -1.0 | 0.00 |
 | impulse / with | 2 | 0 | -1.00 | -2.0 | 0.62 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
