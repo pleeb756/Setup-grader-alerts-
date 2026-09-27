@@ -31,7 +31,9 @@ on closed 1H bars until stop, target, or MAX_HOLD_HRS, then written to
 outcomes.csv and summarized in outcomes_summary.md. Run with --report to print it.
 """
 import json, math, os, time, sys
+from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 import requests
 import numpy as np
 import pandas as pd
@@ -96,6 +98,7 @@ FLOW_SLOPE_BARS = 3       # CMF rising/falling vs this many 4H bars ago
 MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close at market
 
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
+LOCAL_TZ = ZoneInfo(os.environ.get("ALERT_TZ", "America/Los_Angeles"))  # times shown in alerts
 
 # ---------- data ----------
 # ---------- metals (Yahoo Finance futures) ----------
@@ -1013,6 +1016,11 @@ def fmt(p):
 def stamp(now):
     return time.strftime('%Y-%m-%d %H:%M', time.gmtime(now))
 
+def local_time(ts, day=True):
+    """Unix time as a short local clock time for alerts, e.g. 'Sun 9:00 AM PDT'."""
+    dt = datetime.fromtimestamp(ts, timezone.utc).astimezone(LOCAL_TZ)
+    return dt.strftime("%a %-I:%M %p %Z" if day else "%-I:%M %p")
+
 def va_line(best):
     va = best["va"]
     tgt = " | target from fib ext." if best.get("target_src") == "fib" else ""
@@ -1285,8 +1293,13 @@ def run_once():
                          or now - prev_ms.get("sent", 0) > MS_COOLDOWN_HRS * 3600)):
                 on = [k for k, v in ms["factors"].items() if v]
                 arrow = "🔼" if ms["side"] == "long" else "🔽"
+                bar_close = ms["bar"] + 4 * 3600
+                cross_at = (f" (~{local_time(bar_close + ms['eta'] * 4 * 3600)})"
+                            if ms["eta"] is not None else "")
                 send(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
-                     f"5m+15m flipped, 4H cross in ~{eta} bars\n"
+                     f"5m+15m flipped, 4H cross in ~{eta} bars{cross_at}\n"
+                     f"4H bar closed {local_time(bar_close)} | next close "
+                     f"{local_time(bar_close + 4 * 3600, day=False)}\n"
                      f"{kalshi_plan(ms['side'], ms['entry'], ms['stop'], ms['tps'][2])}\n"
                      f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f}\n"
                      f"{flow_line(fl, ms['side'])}"
