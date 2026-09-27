@@ -203,6 +203,51 @@
    "va_fit": "",
    "target_src": "",
    "flow": "inflow"
+  },
+  {
+   "coin": "HYPE",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 93.33,
+   "stop": 90.74586104759877,
+   "target": 101.08241685720368,
+   "t": 1790497116.6496997,
+   "from_t": 1790496000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow"
+  },
+  {
+   "coin": "SOL",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 124.07,
+   "stop": 122.56885675229935,
+   "target": 127.07228649540127,
+   "t": 1790497116.6496997,
+   "from_t": 1790496000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow"
+  },
+  {
+   "coin": "SUI",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 1.2637,
+   "stop": 1.2275527231805192,
+   "target": 1.3359945536389617,
+   "t": 1790497116.6496997,
+   "from_t": 1790496000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow"
   }
  ],
  "HYPE": {
@@ -299,5 +344,20 @@
   "bar": 1790485200,
   "side": "long",
   "sent": 1790490188.1727803
+ },
+ "HYPE_ms": {
+  "bar": 1790481600,
+  "side": "long",
+  "sent": 1790497116.6496997
+ },
+ "SOL_imp": {
+  "bar": 1790492400,
+  "side": "long",
+  "sent": 1790497116.6496997
+ },
+ "SUI_imp": {
+  "bar": 1790492400,
+  "side": "long",
+  "sent": 1790497116.6496997
  }
 }
