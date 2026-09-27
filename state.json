@@ -233,6 +233,36 @@
    "va_fit": "",
    "target_src": "",
    "flow": "inflow"
+  },
+  {
+   "coin": "VVV",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 31.232,
+   "stop": 29.468779375035904,
+   "target": 36.52166187489229,
+   "t": 1790511759.3227634,
+   "from_t": 1790510400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow"
+  },
+  {
+   "coin": "WLD",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 0.5787,
+   "stop": 0.5389785014289183,
+   "target": 0.6581429971421633,
+   "t": 1790511759.3227634,
+   "from_t": 1790510400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow"
   }
  ],
  "HYPE": {
@@ -344,5 +374,11 @@
   "bar": 1790492400,
   "side": "long",
   "sent": 1790497116.6496997
- }
+ },
+ "VVV_ms": {
+  "bar": 1790496000,
+  "side": "long",
+  "sent": 1790511759.3227634
+ },
+ "WLD_bo": 1790511759.3227634
 }
