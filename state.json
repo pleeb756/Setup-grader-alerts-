@@ -205,21 +205,6 @@
    "flow": "outflow"
   },
   {
-   "coin": "SOL",
-   "kind": "impulse",
-   "side": "long",
-   "grade": "-",
-   "entry": 124.07,
-   "stop": 122.56885675229935,
-   "target": 127.07228649540127,
-   "t": 1790497116.6496997,
-   "from_t": 1790496000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "inflow"
-  },
-  {
    "coin": "SUI",
    "kind": "impulse",
    "side": "long",
