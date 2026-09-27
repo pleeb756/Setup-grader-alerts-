@@ -190,21 +190,6 @@
    "flow": "outflow"
   },
   {
-   "coin": "SUI",
-   "kind": "impulse",
-   "side": "long",
-   "grade": "-",
-   "entry": 1.2637,
-   "stop": 1.2275527231805192,
-   "target": 1.3359945536389617,
-   "t": 1790497116.6496997,
-   "from_t": 1790496000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "inflow"
-  },
-  {
    "coin": "VVV",
    "kind": "shift",
    "side": "long",
