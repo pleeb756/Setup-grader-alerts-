@@ -173,6 +173,36 @@
    "va_fit": "",
    "target_src": "",
    "flow": "heavy inflow"
+  },
+  {
+   "coin": "DOGE",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 0.096128,
+   "stop": 0.09948121091756428,
+   "target": 0.08606836724730718,
+   "t": 1790482700.1895876,
+   "from_t": 1790481600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow"
+  },
+  {
+   "coin": "kSHIB",
+   "kind": "shift",
+   "side": "short",
+   "grade": "6/7",
+   "entry": 0.005878,
+   "stop": 0.0060903528791142695,
+   "target": 0.005240941362657194,
+   "t": 1790482700.1895876,
+   "from_t": 1790481600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow"
   }
  ],
  "HYPE": {
@@ -246,13 +276,23 @@
   "sent": {}
  },
  "LTC_ms": {
-  "bar": 1790424000,
+  "bar": 1790467200,
   "side": "short",
-  "sent": 1790442988.631983
+  "sent": 1790482700.1895876
  },
  "ZEC_imp": {
   "bar": 1790456400,
   "side": "long",
   "sent": 1790461296.5180318
+ },
+ "DOGE_ms": {
+  "bar": 1790467200,
+  "side": "short",
+  "sent": 1790482700.1895876
+ },
+ "kSHIB_ms": {
+  "bar": 1790467200,
+  "side": "short",
+  "sent": 1790482700.1895876
  }
 }
