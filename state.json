@@ -66,14 +66,14 @@
   "sent": 1790357677.3228452
  },
  "LINK_ms": {
-  "bar": 1790164800,
+  "bar": 1790553600,
   "side": "short",
-  "sent": 1790179740.9227111
+  "sent": 1790568033.1011684
  },
  "ZEC_ms": {
-  "bar": 1790395200,
+  "bar": 1790553600,
   "side": "short",
-  "sent": 1790414251.148884
+  "sent": 1790568033.1011684
  },
  "XLM_ms": {
   "bar": 1790251200,
@@ -191,8 +191,72 @@
    "ob": "in-against",
    "level": 2663.17,
    "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add_n": 1,
+   "add_seen": 1790553600
+  },
+  {
+   "coin": "SOL",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 119.8,
+   "stop": 123.23317951612924,
+   "target": 109.50046145161227,
+   "t": 1790568033.1011684,
+   "from_t": 1790568000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "blocked"
+  },
+  {
+   "coin": "ZEC",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 1555.64,
+   "stop": 1629.3292571708448,
+   "target": 1334.5722284874657,
+   "t": 1790568033.1011684,
+   "from_t": 1790568000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "in-against"
+  },
+  {
+   "coin": "LINK",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 13.89684,
+   "stop": 14.380215736935106,
+   "target": 12.446712789194676,
+   "t": 1790568033.1011684,
+   "from_t": 1790568000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "blocked"
+  },
+  {
+   "coin": "ADA",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 0.249995,
+   "stop": 0.2598481917584669,
+   "target": 0.22043542472459932,
+   "t": 1790568033.1011684,
+   "from_t": 1790568000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -281,9 +345,9 @@
   "sent": 1790558308.5788798
  },
  "kSHIB_ms": {
-  "bar": 1790510400,
+  "bar": 1790553600,
   "side": "short",
-  "sent": 1790527479.881341
+  "sent": 1790568033.1011684
  },
  "NEAR_imp": {
   "bar": 1790485200,
@@ -320,5 +384,15 @@
   "bar": 1790557200,
   "side": "short",
   "sent": 1790561936.4871275
+ },
+ "SOL_ms": {
+  "bar": 1790553600,
+  "side": "short",
+  "sent": 1790568033.1011684
+ },
+ "ADA_ms": {
+  "bar": 1790553600,
+  "side": "short",
+  "sent": 1790568033.1011684
  }
 }

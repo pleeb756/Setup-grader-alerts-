@@ -160,3 +160,8 @@ utc,coin,side,met,price
 2026-09-28 01:01,LTC,impulse-short,-,70.14
 2026-09-28 01:18,DOGE,shift-short,6,0.096834
 2026-09-28 02:18,ETH,impulse-short,-,2657.25
+2026-09-28 04:00,SOL,shift-short,5,119.8
+2026-09-28 04:00,ZEC,shift-short,5,1555.64
+2026-09-28 04:00,LINK,shift-short,5,13.89684
+2026-09-28 04:00,kSHIB,shift-short,5,0.005713
+2026-09-28 04:00,ADA,shift-short,5,0.249995
