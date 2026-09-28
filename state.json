@@ -435,6 +435,26 @@
    "add": "pending",
    "add_n": 0,
    "add_seen": 0
+  },
+  {
+   "coin": "Platinum",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 1729.300048828125,
+   "stop": 1736.5051410500225,
+   "target": 1714.88986438433,
+   "t": 1790608943.8066313,
+   "from_t": 1790607600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none",
+   "level": 1730.5999755859375,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -621,5 +641,10 @@
   "bar": 1790604000,
   "side": "short",
   "sent": 1790607768.5097396
+ },
+ "Platinum_imp": {
+  "bar": 1790604000,
+  "side": "short",
+  "sent": 1790608943.8066313
  }
 }
