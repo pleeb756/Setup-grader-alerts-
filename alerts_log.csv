@@ -165,3 +165,6 @@ utc,coin,side,met,price
 2026-09-28 04:00,LINK,shift-short,5,13.89684
 2026-09-28 04:00,kSHIB,shift-short,5,0.005713
 2026-09-28 04:00,ADA,shift-short,5,0.249995
+2026-09-28 06:27,Gold,breakout-short,-,4230.5
+2026-09-28 06:27,Silver,short,B+ 4/5 actionable,62.005001068115234
+2026-09-28 06:27,Silver,breakout-short,-,62.470001220703125

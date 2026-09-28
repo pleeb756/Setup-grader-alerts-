@@ -257,6 +257,54 @@
    "target_src": "",
    "flow": "inflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "Gold",
+   "kind": "breakout",
+   "side": "short",
+   "grade": "-",
+   "entry": 4230.5,
+   "stop": 4295.192932318464,
+   "target": 4101.114135363072,
+   "t": 1790576823.6014884,
+   "from_t": 1790568000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none"
+  },
+  {
+   "coin": "Silver",
+   "kind": "grade-actionable",
+   "side": "short",
+   "grade": "B+",
+   "entry": 62.005001068115234,
+   "stop": 63.799184015138,
+   "target": 57.16999944051107,
+   "t": 1790576823.6014884,
+   "from_t": 1790575200,
+   "va_state": "probe_down",
+   "va_fit": "no fit",
+   "target_src": "level",
+   "flow": "heavy outflow",
+   "ob": "none"
+  },
+  {
+   "coin": "Silver",
+   "kind": "breakout",
+   "side": "short",
+   "grade": "-",
+   "entry": 62.470001220703125,
+   "stop": 63.94320416982779,
+   "target": 59.5235953224538,
+   "t": 1790576823.6014884,
+   "from_t": 1790568000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -316,8 +364,10 @@
  },
  "Silver": {
   "v": 2,
-  "tier": 0,
-  "sent": {}
+  "tier": 2,
+  "sent": {
+   "2": 1790576823.6014884
+  }
  },
  "Platinum": {
   "v": 2,
@@ -394,5 +444,7 @@
   "bar": 1790553600,
   "side": "short",
   "sent": 1790568033.1011684
- }
+ },
+ "Gold_bo": 1790576823.6014884,
+ "Silver_bo": 1790576823.6014884
 }
