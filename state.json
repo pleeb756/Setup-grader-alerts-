@@ -191,8 +191,8 @@
    "ob": "in-against",
    "level": 2663.17,
    "add": "pending",
-   "add_n": 1,
-   "add_seen": 1790553600
+   "add_n": 2,
+   "add_seen": 1790568000
   },
   {
    "coin": "SOL",
@@ -305,6 +305,54 @@
    "target_src": "",
    "flow": "heavy outflow",
    "ob": "none"
+  },
+  {
+   "coin": "SUI",
+   "kind": "shift",
+   "side": "short",
+   "grade": "7/7",
+   "entry": 1.1779,
+   "stop": 1.2560536820831798,
+   "target": 0.9434389537504606,
+   "t": 1790582493.5432756,
+   "from_t": 1790582400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow",
+   "ob": "in-against"
+  },
+  {
+   "coin": "WLD",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 0.5091,
+   "stop": 0.5468202289352239,
+   "target": 0.3959393131943283,
+   "t": 1790582493.5432756,
+   "from_t": 1790582400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "in-against"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 146.97,
+   "stop": 152.83217798173808,
+   "target": 129.38346605478577,
+   "t": 1790582493.5432756,
+   "from_t": 1790582400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -364,7 +412,7 @@
  },
  "Silver": {
   "v": 2,
-  "tier": 2,
+  "tier": 0,
   "sent": {
    "2": 1790576823.6014884
   }
@@ -446,5 +494,20 @@
   "sent": 1790568033.1011684
  },
  "Gold_bo": 1790576823.6014884,
- "Silver_bo": 1790576823.6014884
+ "Silver_bo": 1790576823.6014884,
+ "SUI_ms": {
+  "bar": 1790568000,
+  "side": "short",
+  "sent": 1790582493.5432756
+ },
+ "WLD_ms": {
+  "bar": 1790568000,
+  "side": "short",
+  "sent": 1790582493.5432756
+ },
+ "AAVE_ms": {
+  "bar": 1790568000,
+  "side": "short",
+  "sent": 1790582493.5432756
+ }
 }
