@@ -175,19 +175,24 @@
    "flow": "inflow"
   },
   {
-   "coin": "HYPE",
-   "kind": "shift",
-   "side": "long",
-   "grade": "5/7",
-   "entry": 93.33,
-   "stop": 90.74586104759877,
-   "target": 101.08241685720368,
-   "t": 1790497116.6496997,
-   "from_t": 1790496000,
+   "coin": "LTC",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 70.14,
+   "stop": 70.8479470984841,
+   "target": 68.7241058030318,
+   "t": 1790557304.7588203,
+   "from_t": 1790557200,
    "va_state": "",
    "va_fit": "",
    "target_src": "",
-   "flow": "outflow"
+   "flow": "heavy outflow",
+   "ob": "blocked",
+   "level": 70.38,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -305,5 +310,10 @@
   "side": "long",
   "sent": 1790511759.3227634
  },
- "WLD_bo": 1790511759.3227634
+ "WLD_bo": 1790511759.3227634,
+ "LTC_imp": {
+  "bar": 1790553600,
+  "side": "short",
+  "sent": 1790557304.7588203
+ }
 }

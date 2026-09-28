@@ -1,6 +1,6 @@
 # Alert outcomes
 
-8 resolved, 5 still open. Updated 2026-09-27 23:17 UTC.
+9 resolved, 5 still open. Updated 2026-09-28 01:02 UTC.
 
 
 Small samples mean little; wait for 30+ per row before changing rules.
@@ -12,7 +12,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
-| shift / 5/7 | 2 | 0 | -1.00 | -2.0 | 0.38 |
+| shift / 5/7 | 3 | 0 | -1.00 | -3.0 | 0.29 |
 
 ## By value-area fit
 
@@ -20,7 +20,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
-| shift / - | 2 | 0 | -1.00 | -2.0 | 0.38 |
+| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
 
 ## By value-area state
 
@@ -28,7 +28,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
-| shift / - | 2 | 0 | -1.00 | -2.0 | 0.38 |
+| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
 
 ## By target source
 
@@ -36,7 +36,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
-| shift / - | 2 | 0 | -1.00 | -2.0 | 0.38 |
+| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
 
 ## By money flow vs trade side
 
@@ -46,7 +46,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | impulse / against | 1 | 0 | -1.00 | -1.0 | 0.00 |
 | impulse / with | 3 | 0 | -1.00 | -3.0 | 0.63 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
-| shift / against | 1 | 0 | -1.00 | -1.0 | 0.30 |
+| shift / against | 2 | 0 | -1.00 | -2.0 | 0.21 |
 
 ## By order block
 
@@ -54,4 +54,4 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
-| shift / - | 2 | 0 | -1.00 | -2.0 | 0.38 |
+| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
