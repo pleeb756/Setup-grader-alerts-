@@ -11,3 +11,4 @@ alert_utc,resolved_utc,coin,kind,side,grade,va_state,va_fit,target_src,entry,sto
 2026-09-28 01:01,2026-09-28 03:00,LTC,impulse,short,-,,,,70.14,70.8479470984841,68.7241058030318,loss,-1.0,0.353,1.074,2.0,heavy outflow,blocked
 2026-09-28 02:18,2026-09-28 13:00,ETH,impulse,short,-,,,,2657.25,2670.359182015334,2631.0316359693315,loss,-1.0,1.654,2.711,10.7,heavy outflow,in-against
 2026-09-28 04:00,2026-09-28 13:00,LINK,shift,short,5/7,,,,13.89684,14.380215736935106,12.446712789194676,loss,-1.0,0.792,2.282,9.0,inflow,blocked
+2026-09-28 13:21,2026-09-28 15:00,LINK,impulse,long,-,,,,14.75983,14.406852355831605,15.465785288336788,loss,-1.0,0.332,1.843,1.6,heavy inflow,none

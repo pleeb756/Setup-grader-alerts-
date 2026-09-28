@@ -175,3 +175,11 @@ utc,coin,side,met,price
 2026-09-28 10:59,Silver,short,B+ 4/5 actionable,61.744998931884766
 2026-09-28 12:25,ETH,impulse-noadd-short,-,-
 2026-09-28 13:21,LINK,impulse-long,-,14.75983
+2026-09-28 15:02,BTC,long,B+ 4/5 wait,82998.6
+2026-09-28 15:02,HYPE,impulse-short,-,87.44
+2026-09-28 15:02,SOL,shift-short,5,118.67
+2026-09-28 15:02,ZEC,shift-short,6,1567.49
+2026-09-28 15:02,VVV,impulse-short,-,26.786
+2026-09-28 15:02,ADA,impulse-short,-,0.240884
+2026-09-28 15:02,WLD,impulse-short,-,0.4869
+2026-09-28 15:02,AAVE,impulse-short,-,145.28

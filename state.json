@@ -16,8 +16,10 @@
  "UNI_side": "long",
  "BTC": {
   "v": 2,
-  "tier": 0,
-  "sent": {}
+  "tier": 1,
+  "sent": {
+   "1": 1790607768.5097396
+  }
  },
  "ETH": {
   "v": 2,
@@ -71,9 +73,9 @@
   "sent": 1790568033.1011684
  },
  "ZEC_ms": {
-  "bar": 1790553600,
+  "bar": 1790582400,
   "side": "short",
-  "sent": 1790568033.1011684
+  "sent": 1790607768.5097396
  },
  "XLM_ms": {
   "bar": 1790251200,
@@ -319,21 +321,117 @@
    "ob": "blocked"
   },
   {
-   "coin": "LINK",
-   "kind": "impulse",
+   "coin": "BTC",
+   "kind": "grade-watch",
    "side": "long",
+   "grade": "B+",
+   "entry": 82998.6,
+   "stop": 81873.2477941906,
+   "target": 83658.6,
+   "t": 1790607768.5097396,
+   "from_t": 1790607600,
+   "va_state": "imbalance_down",
+   "va_fit": "no fit",
+   "target_src": "level",
+   "flow": "inflow",
+   "ob": "none"
+  },
+  {
+   "coin": "HYPE",
+   "kind": "impulse",
+   "side": "short",
    "grade": "-",
-   "entry": 14.75983,
-   "stop": 14.406852355831605,
-   "target": 15.465785288336788,
-   "t": 1790601662.0386567,
-   "from_t": 1790600400,
+   "entry": 87.44,
+   "stop": 88.94684208956618,
+   "target": 84.42631582086764,
+   "t": 1790607768.5097396,
+   "from_t": 1790607600,
    "va_state": "",
    "va_fit": "",
    "target_src": "",
-   "flow": "heavy inflow",
+   "flow": "heavy outflow",
    "ob": "none",
-   "level": 14.49252,
+   "level": 88.51,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "VVV",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 26.786,
+   "stop": 27.61590045838731,
+   "target": 25.126199083225387,
+   "t": 1790607768.5097396,
+   "from_t": 1790607600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none",
+   "level": 27.324,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "ADA",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 0.240884,
+   "stop": 0.24339819422379327,
+   "target": 0.2358556115524134,
+   "t": 1790607768.5097396,
+   "from_t": 1790607600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "in-against",
+   "level": 0.241752,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "WLD",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 0.4869,
+   "stop": 0.49729479733521326,
+   "target": 0.4661104053295735,
+   "t": 1790607768.5097396,
+   "from_t": 1790607600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "in-against",
+   "level": 0.4912,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "AAVE",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 145.28,
+   "stop": 147.3015275447928,
+   "target": 141.2369449104144,
+   "t": 1790607768.5097396,
+   "from_t": 1790607600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none",
+   "level": 146.35,
    "add": "pending",
    "add_n": 0,
    "add_seen": 0
@@ -468,9 +566,9 @@
   "sent": 1790561936.4871275
  },
  "SOL_ms": {
-  "bar": 1790553600,
+  "bar": 1790582400,
   "side": "short",
-  "sent": 1790568033.1011684
+  "sent": 1790607768.5097396
  },
  "ADA_ms": {
   "bar": 1790553600,
@@ -498,5 +596,30 @@
   "bar": 1790596800,
   "side": "long",
   "sent": 1790601662.0386567
+ },
+ "HYPE_imp": {
+  "bar": 1790604000,
+  "side": "short",
+  "sent": 1790607768.5097396
+ },
+ "VVV_imp": {
+  "bar": 1790604000,
+  "side": "short",
+  "sent": 1790607768.5097396
+ },
+ "ADA_imp": {
+  "bar": 1790604000,
+  "side": "short",
+  "sent": 1790607768.5097396
+ },
+ "WLD_imp": {
+  "bar": 1790604000,
+  "side": "short",
+  "sent": 1790607768.5097396
+ },
+ "AAVE_imp": {
+  "bar": 1790604000,
+  "side": "short",
+  "sent": 1790607768.5097396
  }
 }
