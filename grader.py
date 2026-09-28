@@ -28,7 +28,9 @@ Info only, logged to outcomes.csv so it can be judged like the value-area tag.
 
 Order blocks (info only): 4H zones from the last opposite-colored candle before a
 displacement candle (body >= OB_DISP_ATR x ATR) that closed through it. Zones stay live
-until a 4H close through their far side. Each alert gets an OB line and an ob tag
+until a 4H close through their far side, and retire after OB_MAX_TESTS separate
+revisits (a zone price keeps returning to is a range, not an order block). Each alert
+gets an OB line and an ob tag
 (in-with, in-against, blocked, near-with, none) logged to outcomes.csv, so whether
 order blocks add an edge can be judged from results before they touch the grade.
 
@@ -106,6 +108,7 @@ OB_DISP_ATR = float(os.environ.get("OB_DISP_ATR", "1.5"))     # displacement bod
 OB_SEARCH = 5           # bars back from the displacement to find the opposite candle
 OB_NEAR_ATR = 1.0       # a supporting zone within this many 4H ATRs behind entry counts as near
 OB_TOL_ATR = 0.1        # tolerance when deciding whether entry sits inside a zone
+OB_MAX_TESTS = int(os.environ.get("OB_MAX_TESTS", "3"))       # retire a zone after this many revisits
 
 # Outcome tracking
 MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close at market
@@ -741,7 +744,8 @@ def scaled_rr(side, e1, e2, stop, target):
 def order_blocks(h4):
     """Live 4H order blocks. Bullish: last red candle before a green displacement candle that
     closed above it (demand). Bearish: mirror (supply). A zone dies on a 4H close through its
-    far side; touches count later bars that traded into it."""
+    far side, or once price has come back to it more than OB_MAX_TESTS separate times. A test
+    is one visit: consecutive bars sitting in the zone count once."""
     n = len(h4)
     if n < 40:
         return []
@@ -761,17 +765,19 @@ def order_blocks(h4):
         if (bull and c[i] <= hi) or (not bull and c[i] >= lo):
             continue                              # displacement never cleared the candle
         used.add(j)
-        status, touches = "fresh", 0
+        broken, tests, was_in = False, 0, False
         for k in range(i + 1, n):
             if (bull and c[k] < lo) or (not bull and c[k] > hi):
-                status = "broken"; break
-            if (bull and l[k] <= hi) or (not bull and h[k] >= lo):
-                touches += 1
-        if status == "broken":
+                broken = True; break
+            now_in = (bull and l[k] <= hi) or (not bull and h[k] >= lo)
+            if now_in and not was_in:
+                tests += 1                        # a new visit, not another bar of the same one
+            was_in = now_in
+        if broken or tests > OB_MAX_TESTS:
             continue
         out.append({"side": "bull" if bull else "bear", "lo": float(lo), "hi": float(hi),
-                    "t": int(t[j]), "touches": touches,
-                    "status": "fresh" if touches == 0 else f"tested {touches}x"})
+                    "t": int(t[j]), "touches": tests,
+                    "status": "fresh" if tests == 0 else f"tested {tests}x"})
     return out
 
 
