@@ -55,7 +55,7 @@
  "ETH_bo": 1789963698.5933664,
  "XRP_sn": 1789732800,
  "XRP_side": "long",
- "LINK_bo": 1790337750.1357565,
+ "LINK_bo": 1790626686.002841,
  "ZEC_sc": {
   "bar": 1790202300,
   "sent": 1790202649.7830098
@@ -367,6 +367,42 @@
    "target_src": "",
    "flow": "heavy outflow",
    "ob": "none"
+  },
+  {
+   "coin": "ZEC",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 1449.38,
+   "stop": 1520.6570731121428,
+   "target": 1306.8258537757147,
+   "t": 1790626686.002841,
+   "from_t": 1790625600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "blocked",
+   "level": 1507.52,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "LINK",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 15.09959,
+   "stop": 14.781853195260624,
+   "target": 15.73506360947875,
+   "t": 1790626686.002841,
+   "from_t": 1790625600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -447,9 +483,9 @@
   "sent": 1790615957.0699906
  },
  "ZEC_imp": {
-  "bar": 1790456400,
-  "side": "long",
-  "sent": 1790461296.5180318
+  "bar": 1790622000,
+  "side": "short",
+  "sent": 1790626686.002841
  },
  "DOGE_ms": {
   "bar": 1790539200,
