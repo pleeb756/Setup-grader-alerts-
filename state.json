@@ -190,9 +190,9 @@
    "flow": "heavy outflow",
    "ob": "in-against",
    "level": 2663.17,
-   "add": "pending",
-   "add_n": 2,
-   "add_seen": 1790568000
+   "add": "cancelled",
+   "add_n": 3,
+   "add_seen": 1790582400
   },
   {
    "coin": "SOL",
