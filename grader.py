@@ -34,6 +34,14 @@ gets an OB line and an ob tag
 (in-with, in-against, blocked, near-with, none) logged to outcomes.csv, so whether
 order blocks add an edge can be judged from results before they touch the grade.
 
+Push rules (from the 30-day paper backtest, 240 simulated trades): only breakouts showed
+an edge, and only when the entry was not into an opposing order block and it was the
+first breakout of its direction in the run. So by default only those breakouts push to
+the phone, with "hold to TP" (partials cut breakout winners). Impulses (-0.50R/trade),
+momentum shifts and grades are still computed, logged ("-muted" in alerts_log.csv) and
+tracked in outcomes.csv, but not pushed. Env toggles: IMP_PUSH, MS_PUSH, GRADE_PUSH
+(1 = push again), BO_REQUIRE_OB, BO_SOLO (0 = drop that breakout filter).
+
 Outcomes: every graded or momentum-shift alert with a stop and target is tracked
 on closed 1H bars until stop, target, or MAX_HOLD_HRS, then written to
 outcomes.csv and summarized in outcomes_summary.md. Run with --report to print it.
@@ -114,6 +122,12 @@ OB_MAX_TESTS = int(os.environ.get("OB_MAX_TESTS", "3"))       # retire a zone af
 MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close at market
 
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
+# Which alert types reach the phone (see "Push rules" above). Muted types still log and track.
+IMP_PUSH = os.environ.get("IMP_PUSH", "0") == "1"
+MS_PUSH = os.environ.get("MS_PUSH", "0") == "1"
+GRADE_PUSH = os.environ.get("GRADE_PUSH", "0") == "1"
+BO_REQUIRE_OB = os.environ.get("BO_REQUIRE_OB", "1") == "1"   # skip breakouts into an opposing OB
+BO_SOLO = os.environ.get("BO_SOLO", "1") == "1"               # one breakout push per direction per run
 LOCAL_TZ = ZoneInfo(os.environ.get("ALERT_TZ", "America/Los_Angeles"))  # times shown in alerts
 
 # ---------- data ----------
@@ -1112,6 +1126,14 @@ def send(msg, urgent=False):
                            "Priority": "high" if urgent else "default"},
                   timeout=20)
 
+def notify(msg, urgent=False, push=True):
+    """Push to the phone, or just print when this alert type is muted."""
+    if push:
+        send(msg, urgent=urgent)
+    else:
+        print("[muted] " + msg.splitlines()[0])
+
+
 def fmt(p):
     if p is None: return "–"
     return f"{p:,.2f}" if p >= 1 else f"{p:.5f}"
@@ -1133,15 +1155,19 @@ def va_line(best):
     return (f"{va['state'].replace('_', ' ')}, {mark} ({va['note']}) | "
             f"VAL {fmt(va['val'])} POC {fmt(va['poc'])} VAH {fmt(va['vah'])}{tgt}")
 
-def kalshi_plan(side, entry, stop, target):
+def kalshi_plan(side, entry, stop, target, partials=True):
     """Kalshi takes one TP per order: the final target goes on the order, and each whole R
-    before it becomes a manual price alert for a partial close (the first also moves SL to entry)."""
+    before it becomes a manual price alert for a partial close (the first also moves SL to entry).
+    partials=False (breakouts): the backtest showed partials cut the winners, so hold to TP."""
     if stop is None or target is None or not all(fin(x) for x in (entry, stop, target)):
         return "No valid plan (stop or target missing)"
     risk = abs(entry - stop)
     d = 1 if side == "long" else -1
     total_r = abs(target - entry) / risk
     lines = [f"Order: Entry {fmt(entry)} | SL {fmt(stop)} | TP {fmt(target)} ({total_r:.1f}R)"]
+    if not partials:
+        lines.append("Hold to TP (no partials; they cut breakout winners in the backtest)")
+        return "\n".join(lines)
     alerts = []
     for k in (1, 2):
         if k < total_r - 0.25:                     # skip levels sitting on top of the TP
@@ -1232,6 +1258,7 @@ def run_once():
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     now, changed, log, out_rows = time.time(), False, [], []
     metals = {}
+    bo_sides_pushed = set()      # BO_SOLO: first breakout push per direction this run
 
     for coin, pair in WATCHLIST.items():
         try:
@@ -1292,8 +1319,9 @@ def run_once():
                        f"{ob_txt}\n"
                        f"Trend {'with you' if best['trend_ok'] else 'not aligned'} (info only)"
                        + (f"\nMissing: {', '.join(missing)}" if missing else ""))
-                send(msg, urgent=(tier == 2))
-                log.append(f"{stamp(now)},{coin},{best['side']},{best['grade']} {best['passed']}/5 {best['action']},{best['entry']}")
+                notify(msg, urgent=(tier == 2), push=GRADE_PUSH)
+                log.append(f"{stamp(now)},{coin},{best['side']},{best['grade']} {best['passed']}/5 {best['action']}"
+                           f"{'' if GRADE_PUSH else ' muted'},{best['entry']}")
                 sent[str(tier)] = now
                 open_trade(state, coin, "grade-actionable" if tier == 2 else "grade-watch",
                            best["side"], best["grade"], best["entry"], best["stop"], best["target"],
@@ -1312,12 +1340,23 @@ def run_once():
                 plan = breakout_plan(side, lvl, h4)
                 ob_tag, ob_txt = ob_info(obs, side, float(h4.c.iloc[-1]),
                                          plan["target"] if plan else None, a4_now)
-                send(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
-                     f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
-                     + (f"{kalshi_plan(side, plan['entry'], plan['stop'], plan['target'])}\n" if plan else "")
-                     + f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}\n"
-                     f"{flow_line(fl, side)}\n{ob_txt}", urgent=True)
-                log.append(f"{stamp(now)},{coin},breakout-{side},-,{h4.c.iloc[-1]}")
+                why_muted = []
+                if BO_REQUIRE_OB and ob_tag in ("in-against", "blocked"):
+                    why_muted.append(f"OB {ob_tag}")
+                if BO_SOLO and side in bo_sides_pushed:
+                    why_muted.append(f"not first {side} breakout this run")
+                push = not why_muted
+                if push:
+                    bo_sides_pushed.add(side)
+                notify(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
+                       f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
+                       + (f"{kalshi_plan(side, plan['entry'], plan['stop'], plan['target'], partials=False)}\n"
+                          if plan else "")
+                       + f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}\n"
+                       f"{flow_line(fl, side)}\n{ob_txt}", urgent=True, push=push)
+                if why_muted:
+                    print(f"{coin}: breakout {side} muted ({'; '.join(why_muted)})")
+                log.append(f"{stamp(now)},{coin},breakout-{side}{'' if push else '-muted'},-,{h4.c.iloc[-1]}")
                 state[key] = now; changed = True
                 if plan:
                     open_trade(state, coin, "breakout", side, "-", plan["entry"], plan["stop"],
@@ -1345,7 +1384,7 @@ def run_once():
                             if im["ext"] >= IMP_EXT_ATR else "")
                 better = "at or below" if im["side"] == "long" else "at or above"
                 ob_tag, ob_txt = ob_info(obs, im["side"], im["entry"], im["target"], a4_now)
-                send(f"{arrow} IMPULSE BREAKOUT {im['side'].upper()}: {coin}\n"
+                notify(f"{arrow} IMPULSE BREAKOUT {im['side'].upper()}: {coin}\n"
                      f"1H closed {fmt(im['entry'])} through {fmt(im['level'])} ({IMP_LOOKBACK}-bar range)\n"
                      f"STARTER: HALF size. SL covers the full position\n"
                      f"{kalshi_plan(im['side'], im['entry'], im['stop'], im['target'])}\n"
@@ -1353,8 +1392,8 @@ def run_once():
                      f"{better} {fmt(im['entry'])}, within {IMP_ADD_BARS * 4}h\n"
                      f"Bar {im['size_x']:.1f}x ATR | Volume {im['vol_x']:.1f}x avg | RSI 4H {im['rsi4h']:.0f}\n"
                      f"{flow_line(fl1, im['side'], '1H')}\n{ob_txt}"
-                     + ext_note, urgent=True)
-                log.append(f"{stamp(now)},{coin},impulse-{im['side']},-,{im['entry']}")
+                     + ext_note, urgent=True, push=IMP_PUSH)
+                log.append(f"{stamp(now)},{coin},impulse-{im['side']}{'' if IMP_PUSH else '-muted'},-,{im['entry']}")
                 state[key] = {"bar": im["bar"], "side": im["side"], "sent": now}; changed = True
                 open_trade(state, coin, "impulse", im["side"], "-", im["entry"], im["stop"],
                            im["target"], im["from_t"], now, flow=fl1["label"], ob=ob_tag)
@@ -1380,20 +1419,20 @@ def run_once():
                 avg, rr = scaled_rr(tr["side"], tr["entry"], add_px, tr["stop"], tr["target"])
                 tr["add"], tr["add_price"] = "done", add_px
                 ob_tag, ob_txt = ob_info(obs, tr["side"], add_px, tr["target"], a4_now)
-                send(f"✅ ADD SECOND HALF: {coin} {tr['side'].upper()}\n"
+                notify(f"✅ ADD SECOND HALF: {coin} {tr['side'].upper()}\n"
                      f"4H closed {fmt(add_px)} beyond {fmt(tr['level'])}: retest held\n"
                      f"Add: {fmt(add_px)} | Avg entry {fmt(avg)}\n"
                      f"Keep SL {fmt(tr['stop'])} | TP {fmt(tr['target'])} (full position {rr:.1f}R)\n"
-                     f"{flow_line(fl, tr['side'], '4H')}\n{ob_txt}", urgent=True)
-                log.append(f"{stamp(now)},{coin},impulse-add-{tr['side']},-,{add_px}")
+                     f"{flow_line(fl, tr['side'], '4H')}\n{ob_txt}", urgent=True, push=IMP_PUSH)
+                log.append(f"{stamp(now)},{coin},impulse-add-{tr['side']}{'' if IMP_PUSH else '-muted'},-,{add_px}")
                 open_trade(state, coin, "impulse-add", tr["side"], "-", add_px, tr["stop"],
                            tr["target"], int(b.t) + 4 * 3600, now, flow=fl["label"], ob=ob_tag)
                 print(f"{coin}: impulse add at {fmt(add_px)}, avg {fmt(avg)}")
             else:
                 tr["add"] = "cancelled"
-                send(f"❌ NO ADD: {coin} {tr['side'].upper()}\n{info}\n"
-                     f"Starter only. Keep its SL {fmt(tr['stop'])}")
-                log.append(f"{stamp(now)},{coin},impulse-noadd-{tr['side']},-,-")
+                notify(f"❌ NO ADD: {coin} {tr['side'].upper()}\n{info}\n"
+                       f"Starter only. Keep its SL {fmt(tr['stop'])}", push=IMP_PUSH)
+                log.append(f"{stamp(now)},{coin},impulse-noadd-{tr['side']}{'' if IMP_PUSH else '-muted'},-,-")
                 print(f"{coin}: impulse add cancelled ({info})")
 
         ms = momentum_shift(h4, m15, m5)
@@ -1413,7 +1452,7 @@ def run_once():
                 bar_close = ms["bar"] + 4 * 3600
                 cross_at = (f" (~{local_time(bar_close + ms['eta'] * 4 * 3600)})"
                             if ms["eta"] is not None else "")
-                send(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
+                notify(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
                      f"5m+15m flipped, 4H cross in ~{eta} bars{cross_at}\n"
                      f"4H bar closed {local_time(bar_close)} | next close "
                      f"{local_time(bar_close + 4 * 3600, day=False)}\n"
@@ -1421,8 +1460,8 @@ def run_once():
                      f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f}\n"
                      f"{flow_line(fl, ms['side'])}\n{ob_txt}"
                      + ("\nDivergence confirmed" if ms["div"] else "")
-                     + f"\nHave: {', '.join(on)}", urgent=True)
-                log.append(f"{stamp(now)},{coin},shift-{ms['side']},{ms['score']},{ms['entry']}")
+                     + f"\nHave: {', '.join(on)}", urgent=True, push=MS_PUSH)
+                log.append(f"{stamp(now)},{coin},shift-{ms['side']}{'' if MS_PUSH else '-muted'},{ms['score']},{ms['entry']}")
                 state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
                 # track to the order TP (TP3, 3R); MFE in the log shows how often 1R/2R were reached
                 open_trade(state, coin, "shift", ms["side"], f"{ms['score']}/7", ms["entry"],
