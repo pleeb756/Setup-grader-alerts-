@@ -26,6 +26,10 @@ Each trade also carries filter tags, so the report shows which rules would have 
   solo      first signal of its side in that run (the rest are the same market bet)
   best      adx25 + aligned + solo
 
+Experiment: impulse_fade takes the opposite side of every impulse (the backtest showed
+chasing impulses loses about 0.5R a trade). Stop just beyond the impulse bar's extreme
+(+0.25 x 4H ATR), target back at the broken range level the impulse ran from.
+
 Modes:
   python papertrade.py --live       open/resolve paper trades on the latest bars (every run)
   python papertrade.py --backtest   replay the last PT_DAYS of history (default 30)
@@ -52,7 +56,8 @@ WIDE_MULT = 1.5
 ADX_MIN = 25.0
 SIMS = ("plan", "partial", "wide")
 FILTERS = ("all", "adx25", "aligned", "va_with", "ob_ok", "flow_with", "solo", "best")
-KINDS = ("impulse", "breakout", "shift", "grade")
+KINDS = ("impulse", "impulse_fade", "breakout", "shift", "grade")
+FADE_BUF_ATR = 0.25     # fade stop: this many 4H ATRs beyond the impulse bar's extreme
 
 STATE = Path("paper_state.json")
 TRADES = Path("paper_trades.csv")
@@ -106,6 +111,16 @@ def signals_at(coin, d, h4, h1, m15, m5, T):
     if im and int(h1.t.iloc[-1]) + H1 == T:                  # only on the bar that just closed
         out.append({"kind": "impulse", "side": im["side"], "stop": im["stop"],
                     "target": im["target"], "score": "-", "key": f"{coin}|impulse|{im['bar']}"})
+        # the experiment: fade it back toward the level it broke
+        bar = h1.iloc[-1]
+        buf = FADE_BUF_ATR * float(G.atr(h4).iloc[-1])
+        if im["side"] == "long":
+            fade = {"side": "short", "stop": float(bar.h) + buf}
+        else:
+            fade = {"side": "long", "stop": float(bar.l) - buf}
+        fade.update({"kind": "impulse_fade", "target": im["level"], "score": "-",
+                     "key": f"{coin}|fade|{im['bar']}"})
+        out.append(fade)
 
     if int(h4.t.iloc[-1]) + H4 == T:                          # a 4H bar just closed
         bo = G.breakout(d, h4)
@@ -170,7 +185,7 @@ def tag_clusters(sigs):
     """solo = first signal of its side at that moment; the rest are the same market bet."""
     seen = set()
     for s in sorted(sigs, key=lambda x: (x["t"], list(G.WATCHLIST).index(x["coin"]))):
-        k = (s["t"], s["side"])
+        k = (s["t"], s["side"], s["kind"] == "impulse_fade")   # the experiment is its own group
         s["solo"] = k not in seen
         seen.add(k)
         s["best"] = s["adx25"] and s["aligned"] and s["solo"]
