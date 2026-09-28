@@ -17,6 +17,10 @@ on:
         description: "Print alert outcome stats (no alerts)"
         type: boolean
         default: false
+      paper_backtest:
+        description: "Paper trader: replay the last 30 days of signals and report (no alerts)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -28,7 +32,7 @@ concurrency:
 jobs:
   grade:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -40,6 +44,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Run grader
+        if: ${{ !inputs.paper_backtest }}
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           MS_MIN: "5"
@@ -53,13 +58,35 @@ jobs:
             ${{ inputs.backtest && '--backtest' || '' }} \
             ${{ inputs.report && '--report' || '' }}
 
+      - name: Paper trader
+        if: ${{ !inputs.test && !inputs.backtest && !inputs.report && !inputs.paper_backtest }}
+        continue-on-error: true
+        env:
+          MS_MIN: "5"
+          MS_MAX_BARS: "6"
+          PT_RISK_USD: "2"      # dollars lost at a full stop, per paper trade
+          PT_FEE_BPS: "12"      # Kalshi fee per side
+          PT_SLIP_BPS: "5"
+        run: python papertrade.py --live
+
+      - name: Paper backtest
+        if: ${{ inputs.paper_backtest }}
+        env:
+          MS_MIN: "5"
+          MS_MAX_BARS: "6"
+          PT_RISK_USD: "2"
+          PT_FEE_BPS: "12"
+          PT_SLIP_BPS: "5"
+          PT_DAYS: "30"
+        run: python papertrade.py --backtest
+
       - name: Save alert state
         if: ${{ always() && !inputs.backtest && !inputs.test && !inputs.report }}
         run: |
           git config user.name grader-bot
           git config user.email grader-bot@users.noreply.github.com
           git add state.json alerts_log.csv
-          for f in outcomes.csv outcomes_summary.md metals.json; do [ -f "$f" ] && git add "$f"; done; true
+          for f in outcomes.csv outcomes_summary.md metals.json paper_state.json paper_trades.csv paper_summary.md backtest_report.md backtest_trades.csv; do [ -f "$f" ] && git add "$f"; done; true
           git diff --staged --quiet || git commit -m "Update alert state"
           git pull --rebase --autostash || true
           git push || true
