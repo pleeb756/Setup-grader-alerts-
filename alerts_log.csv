@@ -184,3 +184,10 @@ utc,coin,side,met,price
 2026-09-28 15:02,WLD,impulse-short,-,0.4869
 2026-09-28 15:02,AAVE,impulse-short,-,145.28
 2026-09-28 15:22,Platinum,impulse-short,-,1729.300048828125
+2026-09-28 16:00,ETH,shift-long,5,2677.98
+2026-09-28 16:00,HYPE,impulse-add-short,-,88.3
+2026-09-28 16:00,NEAR,shift-short,6,4.906
+2026-09-28 16:00,VVV,impulse-add-short,-,26.962
+2026-09-28 16:00,WLD,impulse-add-short,-,0.4878
+2026-09-28 16:00,AAVE,impulse-add-short,-,145.98
+2026-09-28 16:00,Palladium,breakout-short,-,1217.0

@@ -16,7 +16,7 @@
  "UNI_side": "long",
  "BTC": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "1": 1790607768.5097396
   }
@@ -352,9 +352,10 @@
    "flow": "heavy outflow",
    "ob": "none",
    "level": 88.51,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790596800,
+   "add_price": 88.3
   },
   {
    "coin": "VVV",
@@ -372,29 +373,10 @@
    "flow": "heavy outflow",
    "ob": "none",
    "level": 27.324,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
-  },
-  {
-   "coin": "ADA",
-   "kind": "impulse",
-   "side": "short",
-   "grade": "-",
-   "entry": 0.240884,
-   "stop": 0.24339819422379327,
-   "target": 0.2358556115524134,
-   "t": 1790607768.5097396,
-   "from_t": 1790607600,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "in-against",
-   "level": 0.241752,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790596800,
+   "add_price": 26.962
   },
   {
    "coin": "WLD",
@@ -412,9 +394,10 @@
    "flow": "heavy outflow",
    "ob": "in-against",
    "level": 0.4912,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790596800,
+   "add_price": 0.4878
   },
   {
    "coin": "AAVE",
@@ -432,29 +415,122 @@
    "flow": "heavy outflow",
    "ob": "none",
    "level": 146.35,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790596800,
+   "add_price": 145.98
   },
   {
-   "coin": "Platinum",
-   "kind": "impulse",
+   "coin": "ETH",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 2677.98,
+   "stop": 2630.209247052276,
+   "target": 2821.292258843172,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "blocked"
+  },
+  {
+   "coin": "HYPE",
+   "kind": "impulse-add",
    "side": "short",
    "grade": "-",
-   "entry": 1729.300048828125,
-   "stop": 1736.5051410500225,
-   "target": 1714.88986438433,
-   "t": 1790608943.8066313,
-   "from_t": 1790607600,
+   "entry": 88.3,
+   "stop": 88.94684208956618,
+   "target": 84.42631582086764,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
    "va_state": "",
    "va_fit": "",
    "target_src": "",
    "flow": "heavy outflow",
-   "ob": "none",
-   "level": 1730.5999755859375,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "ob": "none"
+  },
+  {
+   "coin": "NEAR",
+   "kind": "shift",
+   "side": "short",
+   "grade": "6/7",
+   "entry": 4.906,
+   "stop": 5.320462392763985,
+   "target": 3.662612821708044,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "blocked"
+  },
+  {
+   "coin": "VVV",
+   "kind": "impulse-add",
+   "side": "short",
+   "grade": "-",
+   "entry": 26.962,
+   "stop": 27.61590045838731,
+   "target": 25.126199083225387,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none"
+  },
+  {
+   "coin": "WLD",
+   "kind": "impulse-add",
+   "side": "short",
+   "grade": "-",
+   "entry": 0.4878,
+   "stop": 0.49729479733521326,
+   "target": 0.4661104053295735,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "in-against"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "impulse-add",
+   "side": "short",
+   "grade": "-",
+   "entry": 145.98,
+   "stop": 147.3015275447928,
+   "target": 141.2369449104144,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "none"
+  },
+  {
+   "coin": "Palladium",
+   "kind": "breakout",
+   "side": "short",
+   "grade": "-",
+   "entry": 1217.0,
+   "stop": 1235.030024198138,
+   "target": 1180.9399516037238,
+   "t": 1790611211.7717032,
+   "from_t": 1790611200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -646,5 +722,16 @@
   "bar": 1790604000,
   "side": "short",
   "sent": 1790608943.8066313
- }
+ },
+ "ETH_ms": {
+  "bar": 1790596800,
+  "side": "long",
+  "sent": 1790611211.7717032
+ },
+ "NEAR_ms": {
+  "bar": 1790596800,
+  "side": "short",
+  "sent": 1790611211.7717032
+ },
+ "Palladium_bo": 1790611211.7717032
 }
