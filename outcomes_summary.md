@@ -1,6 +1,6 @@
 # Alert outcomes
 
-10 resolved, 5 still open. Updated 2026-09-28 03:20 UTC.
+12 resolved, 14 still open. Updated 2026-09-28 13:21 UTC.
 
 
 Small samples mean little; wait for 30+ per row before changing rules.
@@ -11,32 +11,32 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | kind / grade | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
-| impulse / - | 5 | 0 | -1.00 | -5.0 | 0.45 |
-| shift / 5/7 | 3 | 0 | -1.00 | -3.0 | 0.29 |
+| impulse / - | 6 | 0 | -1.00 | -6.0 | 0.65 |
+| shift / 5/7 | 4 | 0 | -1.00 | -4.0 | 0.42 |
 
 ## By value-area fit
 
 | kind / va_fit | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
-| impulse / - | 5 | 0 | -1.00 | -5.0 | 0.45 |
-| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
+| impulse / - | 6 | 0 | -1.00 | -6.0 | 0.65 |
+| shift / - | 4 | 0 | -1.00 | -4.0 | 0.42 |
 
 ## By value-area state
 
 | kind / va_state | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
-| impulse / - | 5 | 0 | -1.00 | -5.0 | 0.45 |
-| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
+| impulse / - | 6 | 0 | -1.00 | -6.0 | 0.65 |
+| shift / - | 4 | 0 | -1.00 | -4.0 | 0.42 |
 
 ## By target source
 
 | kind / target_src | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
-| impulse / - | 5 | 0 | -1.00 | -5.0 | 0.45 |
-| shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
+| impulse / - | 6 | 0 | -1.00 | -6.0 | 0.65 |
+| shift / - | 4 | 0 | -1.00 | -4.0 | 0.42 |
 
 ## By money flow vs trade side
 
@@ -44,10 +44,10 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / heavy with | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / against | 1 | 0 | -1.00 | -1.0 | 0.00 |
-| impulse / heavy with | 1 | 0 | -1.00 | -1.0 | 0.35 |
+| impulse / heavy with | 2 | 0 | -1.00 | -2.0 | 1.00 |
 | impulse / with | 3 | 0 | -1.00 | -3.0 | 0.63 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
-| shift / against | 2 | 0 | -1.00 | -2.0 | 0.21 |
+| shift / against | 3 | 0 | -1.00 | -3.0 | 0.41 |
 
 ## By order block
 
@@ -56,4 +56,6 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
 | impulse / blocked | 1 | 0 | -1.00 | -1.0 | 0.35 |
+| impulse / in-against | 1 | 0 | -1.00 | -1.0 | 1.65 |
 | shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
+| shift / blocked | 1 | 0 | -1.00 | -1.0 | 0.79 |

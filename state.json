@@ -175,26 +175,6 @@
    "flow": "inflow"
   },
   {
-   "coin": "ETH",
-   "kind": "impulse",
-   "side": "short",
-   "grade": "-",
-   "entry": 2657.25,
-   "stop": 2670.359182015334,
-   "target": 2631.0316359693315,
-   "t": 1790561936.4871275,
-   "from_t": 1790560800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "in-against",
-   "level": 2663.17,
-   "add": "cancelled",
-   "add_n": 3,
-   "add_seen": 1790582400
-  },
-  {
    "coin": "SOL",
    "kind": "shift",
    "side": "short",
@@ -225,22 +205,6 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "in-against"
-  },
-  {
-   "coin": "LINK",
-   "kind": "shift",
-   "side": "short",
-   "grade": "5/7",
-   "entry": 13.89684,
-   "stop": 14.380215736935106,
-   "target": 12.446712789194676,
-   "t": 1790568033.1011684,
-   "from_t": 1790568000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "inflow",
-   "ob": "blocked"
   },
   {
    "coin": "ADA",
@@ -353,6 +317,26 @@
    "target_src": "",
    "flow": "inflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "LINK",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 14.75983,
+   "stop": 14.406852355831605,
+   "target": 15.465785288336788,
+   "t": 1790601662.0386567,
+   "from_t": 1790600400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 14.49252,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -412,7 +396,7 @@
  },
  "Silver": {
   "v": 2,
-  "tier": 0,
+  "tier": 2,
   "sent": {
    "2": 1790593191.1233087
   }
@@ -509,5 +493,10 @@
   "bar": 1790568000,
   "side": "short",
   "sent": 1790582493.5432756
+ },
+ "LINK_imp": {
+  "bar": 1790596800,
+  "side": "long",
+  "sent": 1790601662.0386567
  }
 }
