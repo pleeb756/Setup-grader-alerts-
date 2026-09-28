@@ -193,6 +193,26 @@
    "add": "pending",
    "add_n": 0,
    "add_seen": 0
+  },
+  {
+   "coin": "ETH",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 2657.25,
+   "stop": 2670.359182015334,
+   "target": 2631.0316359693315,
+   "t": 1790561936.4871275,
+   "from_t": 1790560800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "in-against",
+   "level": 2663.17,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -315,5 +335,10 @@
   "bar": 1790553600,
   "side": "short",
   "sent": 1790557304.7588203
+ },
+ "ETH_imp": {
+  "bar": 1790557200,
+  "side": "short",
+  "sent": 1790561936.4871275
  }
 }
