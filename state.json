@@ -321,27 +321,6 @@
    "ob": "blocked"
   },
   {
-   "coin": "VVV",
-   "kind": "impulse",
-   "side": "short",
-   "grade": "-",
-   "entry": 26.786,
-   "stop": 27.61590045838731,
-   "target": 25.126199083225387,
-   "t": 1790607768.5097396,
-   "from_t": 1790607600,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "none",
-   "level": 27.324,
-   "add": "done",
-   "add_n": 1,
-   "add_seen": 1790596800,
-   "add_price": 26.962
-  },
-  {
    "coin": "ETH",
    "kind": "shift",
    "side": "long",
@@ -372,22 +351,6 @@
    "target_src": "",
    "flow": "inflow",
    "ob": "blocked"
-  },
-  {
-   "coin": "VVV",
-   "kind": "impulse-add",
-   "side": "short",
-   "grade": "-",
-   "entry": 26.962,
-   "stop": 27.61590045838731,
-   "target": 25.126199083225387,
-   "t": 1790611211.7717032,
-   "from_t": 1790611200,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "none"
   },
   {
    "coin": "Palladium",

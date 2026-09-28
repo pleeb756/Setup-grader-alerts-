@@ -21,3 +21,5 @@ alert_utc,resolved_utc,coin,kind,side,grade,va_state,va_fit,target_src,entry,sto
 2026-09-28 16:00,2026-09-28 17:00,WLD,impulse-add,short,-,,,,0.4878,0.49729479733521326,0.4661104053295735,loss,-1.0,0.4,1.453,1.0,neutral,in-against
 2026-09-28 15:02,2026-09-28 17:00,AAVE,impulse,short,-,,,,145.28,147.3015275447928,141.2369449104144,loss,-1.0,0.549,1.939,2.0,heavy outflow,none
 2026-09-28 16:00,2026-09-28 17:00,AAVE,impulse-add,short,-,,,,145.98,147.3015275447928,141.2369449104144,loss,-1.0,0.341,2.437,1.0,inflow,none
+2026-09-28 15:02,2026-09-28 18:00,VVV,impulse,short,-,,,,26.786,27.61590045838731,25.126199083225387,loss,-1.0,0.289,1.301,3.0,heavy outflow,none
+2026-09-28 16:00,2026-09-28 18:00,VVV,impulse-add,short,-,,,,26.962,27.61590045838731,25.126199083225387,loss,-1.0,0.344,1.382,2.0,heavy outflow,none
