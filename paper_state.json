@@ -153,6 +153,28 @@
    "flow_with": false,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "grade",
+   "side": "long",
+   "stop": 14.007065918357608,
+   "target": 17.16918704,
+   "score": "B+",
+   "key": "LINK|grade|1790640000|long",
+   "coin": "LINK",
+   "t": 1790658000,
+   "entry": 14.75001,
+   "adx": 36.9,
+   "adx25": true,
+   "aligned": true,
+   "va": "imbalance_up",
+   "va_with": true,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": true
   }
  ],
  "seen": {
@@ -163,6 +185,7 @@
   "ZEC|impulse|1790643600": 1790648290.4669502,
   "ZEC|fade|1790643600": 1790648290.4669502,
   "kSHIB|impulse|1790643600": 1790648290.4669502,
-  "kSHIB|fade|1790643600": 1790648290.4669502
+  "kSHIB|fade|1790643600": 1790648290.4669502,
+  "LINK|grade|1790640000|long": 1790658010.56088
  }
 }
