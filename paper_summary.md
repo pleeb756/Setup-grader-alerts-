@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-3 closed, 18 open. Updated 2026-09-29 13:51 UTC.
+4 closed, 17 open. Updated 2026-09-29 14:02 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -22,22 +22,21 @@ Open paper trades:
 - XRP shift long @ 1.52 (SL 1.47, TP 1.67) since 2026-09-29 12:00 UTC
 - BTC shift long @ 84,324.20 (SL 83,075.30, TP 88,070.90) since 2026-09-29 12:00 UTC
 - XRP impulse long @ 1.55 (SL 1.54, TP 1.57) since 2026-09-29 13:00 UTC
-- XRP impulse_fade short @ 1.55 (SL 1.57, TP 1.55) since 2026-09-29 13:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
 
-## ALL (3 signals)
+## ALL (4 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 3 / 0% / -0.87 / -2.6 | 3 / 33% / -0.36 / -1.1 | 3 / 0% / -0.80 / -2.4 |
+| all | 4 / 0% / -0.69 / -2.8 | 4 / 25% / -0.31 / -1.2 | 4 / 0% / -0.62 / -2.5 |
 | adx25 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.08 / -1.1 |
 | aligned | 1 / 0% / -0.13 / -0.1 | 1 / 0% / -0.13 / -0.1 | 1 / 0% / -0.07 / -0.1 |
 | va_with | 1 / 0% / -1.36 / -1.4 | 1 / 100% / +0.17 / +0.2 | 1 / 0% / -1.24 / -1.2 |
-| ob_ok | 2 / 0% / -0.63 / -1.3 | 2 / 0% / -0.63 / -1.3 | 2 / 0% / -0.58 / -1.2 |
+| ob_ok | 3 / 0% / -0.47 / -1.4 | 3 / 0% / -0.47 / -1.4 | 3 / 0% / -0.41 / -1.2 |
 | flow_with | - | - | - |
-| solo | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.08 / -1.1 |
+| solo | 2 / 0% / -0.64 / -1.3 | 2 / 0% / -0.64 / -1.3 | 2 / 0% / -0.58 / -1.2 |
 | best | - | - | - |
 
 ## impulse (1 signals)
@@ -53,18 +52,18 @@ Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30
 | solo | - | - | - |
 | best | - | - | - |
 
-## impulse_fade (2 signals)
+## impulse_fade (3 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 2 / 0% / -0.63 / -1.3 | 2 / 0% / -0.63 / -1.3 | 2 / 0% / -0.58 / -1.2 |
+| all | 3 / 0% / -0.47 / -1.4 | 3 / 0% / -0.47 / -1.4 | 3 / 0% / -0.41 / -1.2 |
 | adx25 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.08 / -1.1 |
 | aligned | 1 / 0% / -0.13 / -0.1 | 1 / 0% / -0.13 / -0.1 | 1 / 0% / -0.07 / -0.1 |
 | va_with | - | - | - |
-| ob_ok | 2 / 0% / -0.63 / -1.3 | 2 / 0% / -0.63 / -1.3 | 2 / 0% / -0.58 / -1.2 |
+| ob_ok | 3 / 0% / -0.47 / -1.4 | 3 / 0% / -0.47 / -1.4 | 3 / 0% / -0.41 / -1.2 |
 | flow_with | - | - | - |
-| solo | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.08 / -1.1 |
+| solo | 2 / 0% / -0.64 / -1.3 | 2 / 0% / -0.64 / -1.3 | 2 / 0% / -0.58 / -1.2 |
 | best | - | - | - |
 
-All signals, partial management: profit factor 0.14, max drawdown 1.1R ($2).
+All signals, partial management: profit factor 0.12, max drawdown 1.3R ($3).
 

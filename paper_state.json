@@ -373,28 +373,6 @@
    "flow_with": false,
    "solo": true,
    "best": false
-  },
-  {
-   "side": "short",
-   "stop": 1.5652586761798304,
-   "kind": "impulse_fade",
-   "target": 1.54562,
-   "score": "-",
-   "key": "XRP|fade|1790683200",
-   "coin": "XRP",
-   "t": 1790686800,
-   "entry": 1.54736,
-   "adx": 14.7,
-   "adx25": false,
-   "aligned": false,
-   "va": "balance",
-   "va_with": false,
-   "ob": "near-with",
-   "ob_ok": true,
-   "flow": "neutral",
-   "flow_with": false,
-   "solo": true,
-   "best": false
   }
  ],
  "seen": {
