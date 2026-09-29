@@ -384,9 +384,10 @@
    "flow": "heavy outflow",
    "ob": "blocked",
    "level": 1507.52,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790625600,
+   "add_price": 1482.97
   },
   {
    "coin": "LINK",
@@ -403,6 +404,22 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "ZEC",
+   "kind": "impulse-add",
+   "side": "short",
+   "grade": "-",
+   "entry": 1482.97,
+   "stop": 1520.6570731121428,
+   "target": 1306.8258537757147,
+   "t": 1790640638.3933182,
+   "from_t": 1790640000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
