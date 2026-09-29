@@ -9,8 +9,10 @@
  },
  "LINK": {
   "v": 2,
-  "tier": 0,
-  "sent": {}
+  "tier": 1,
+  "sent": {
+   "1": 1790659140.4183774
+  }
  },
  "UNI_sn": 1789588800,
  "UNI_side": "long",
@@ -404,6 +406,22 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "LINK",
+   "kind": "grade-watch",
+   "side": "long",
+   "grade": "B+",
+   "entry": 14.75001,
+   "stop": 14.007065918357608,
+   "target": 17.16918704,
+   "t": 1790659140.4183774,
+   "from_t": 1790658000,
+   "va_state": "imbalance_up",
+   "va_fit": "fit",
+   "target_src": "fib",
+   "flow": "neutral",
+   "ob": "none"
   }
  ],
  "HYPE": {
