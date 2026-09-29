@@ -30,6 +30,10 @@ Experiment: impulse_fade takes the opposite side of every impulse (the backtest 
 chasing impulses loses about 0.5R a trade). Stop just beyond the impulse bar's extreme
 (+0.25 x 4H ATR), target back at the broken range level the impulse ran from.
 
+Checkpoint reminder: every CHECKPOINT_N closed breakout paper trades (30, 60, 90...) the
+live run sends a phone push with the breakout plan/ob_ok/solo results, as the cue to review
+paper_summary.md. Needs NTFY_TOPIC in the Paper trader step's env.
+
 Modes:
   python papertrade.py --live       open/resolve paper trades on the latest bars (every run)
   python papertrade.py --backtest   replay the last PT_DAYS of history (default 30)
@@ -58,6 +62,7 @@ SIMS = ("plan", "partial", "wide")
 FILTERS = ("all", "adx25", "aligned", "va_with", "ob_ok", "flow_with", "solo", "best")
 KINDS = ("impulse", "impulse_fade", "breakout", "shift", "grade")
 FADE_BUF_ATR = 0.25     # fade stop: this many 4H ATRs beyond the impulse bar's extreme
+CHECKPOINT_N = int(os.environ.get("PT_CHECKPOINT_N", "30"))  # breakout trades per review push
 
 STATE = Path("paper_state.json")
 TRADES = Path("paper_trades.csv")
@@ -429,7 +434,32 @@ def live():
     if new_rows:
         df_new = pd.DataFrame(new_rows)
         df_new.to_csv(TRADES, mode="a", header=not TRADES.exists(), index=False)
+    checkpoint(state)
+    STATE.write_text(json.dumps(state, indent=1, default=float))
     write_summary(state)
+
+
+def checkpoint(state):
+    """Push a review reminder each time closed breakout paper trades pass a multiple of CHECKPOINT_N."""
+    if not TRADES.exists():
+        return
+    df = pd.read_csv(TRADES)
+    bo = df[df.kind == "breakout"]
+    reached = len(bo) // CHECKPOINT_N * CHECKPOINT_N
+    if reached < CHECKPOINT_N or state.get("checkpoint", 0) >= reached:
+        return
+    lines = [f"📊 PAPER CHECKPOINT: {len(bo)} breakout paper trades closed",
+             "Time to review paper_summary.md (plan = hold to TP):"]
+    for label, sub in (("all", bo), ("ob_ok", bo[bo.ob_ok.astype(str).str.lower() == "true"]),
+                       ("solo", bo[bo.solo.astype(str).str.lower() == "true"])):
+        st = stats(sub, "plan")
+        if st:
+            lines.append(f"{label}: n={st['n']} win {st['win']:.0f}% avg {st['avg']:+.2f}R "
+                         f"total {st['tot']:+.1f}R")
+    lines.append("Backtest had ob_ok +0.17R, solo +0.43R. Still positive = edge holding.")
+    G.send("\n".join(lines), urgent=True)
+    state["checkpoint"] = reached
+    print(f"checkpoint push sent at {reached} breakout trades")
 
 
 def write_summary(state=None):
