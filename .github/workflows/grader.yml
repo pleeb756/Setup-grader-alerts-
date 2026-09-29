@@ -62,6 +62,7 @@ jobs:
         if: ${{ !inputs.test && !inputs.backtest && !inputs.report && !inputs.paper_backtest }}
         continue-on-error: true
         env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # checkpoint reminder pushes
           MS_MIN: "5"
           MS_MAX_BARS: "6"
           PT_RISK_USD: "2"      # dollars lost at a full stop, per paper trade
