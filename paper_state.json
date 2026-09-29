@@ -65,11 +65,34 @@
    "flow_with": false,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "short",
+   "stop": 0.52838661387492,
+   "target": 0.3788401583752397,
+   "score": "7/7",
+   "key": "WLD|shift|1790625600|short",
+   "coin": "WLD",
+   "t": 1790643600,
+   "entry": 0.4872,
+   "adx": 34.9,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "in-against",
+   "ob_ok": false,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
   "LTC|shift|1790625600|short": 1790641624.0038326,
   "NEAR|shift|1790625600|short": 1790643832.359893,
-  "SUI|shift|1790625600|short": 1790643832.359893
+  "SUI|shift|1790625600|short": 1790643832.359893,
+  "WLD|shift|1790625600|short": 1790644785.0632715
  }
 }
