@@ -404,6 +404,26 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "kSHIB",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 0.005555,
+   "stop": 0.005597316906671019,
+   "target": 0.005470366186657962,
+   "t": 1790648247.7679236,
+   "from_t": 1790647200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "blocked",
+   "level": 0.005561,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -606,5 +626,10 @@
   "side": "short",
   "sent": 1790643791.5675318
  },
- "Palladium_bo": 1790611211.7717032
+ "Palladium_bo": 1790611211.7717032,
+ "kSHIB_imp": {
+  "bar": 1790643600,
+  "side": "short",
+  "sent": 1790648247.7679236
+ }
 }
