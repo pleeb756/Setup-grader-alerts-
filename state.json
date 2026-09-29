@@ -423,9 +423,9 @@
    "flow": "heavy inflow",
    "ob": "none",
    "level": 157.57,
-   "add": "pending",
-   "add_n": 2,
-   "add_seen": 1790683200
+   "add": "cancelled",
+   "add_n": 3,
+   "add_seen": 1790697600
   },
   {
    "coin": "WLD",
@@ -531,7 +531,7 @@
  },
  "Palladium": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "1": 1790708490.9789827
   }
