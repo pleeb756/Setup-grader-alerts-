@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-3 closed, 15 open. Updated 2026-09-29 12:26 UTC.
+3 closed, 16 open. Updated 2026-09-29 12:54 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -20,6 +20,7 @@ Open paper trades:
 - BNB shift long @ 766.50 (SL 753.17, TP 806.48) since 2026-09-29 12:00 UTC
 - AAVE impulse_fade short @ 171.41 (SL 174.54, TP 168.96) since 2026-09-29 12:00 UTC
 - XRP shift long @ 1.52 (SL 1.47, TP 1.67) since 2026-09-29 12:00 UTC
+- BTC shift long @ 84,324.20 (SL 83,075.30, TP 88,070.90) since 2026-09-29 12:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 

@@ -65,9 +65,9 @@
  "XLM_bo": 1789992633.606118,
  "HBAR_bo": 1789834110.8035157,
  "BTC_ms": {
-  "bar": 1790337600,
-  "side": "short",
-  "sent": 1790357677.3228452
+  "bar": 1790668800,
+  "side": "long",
+  "sent": 1790686386.0628502
  },
  "LINK_ms": {
   "bar": 1790553600,
@@ -442,6 +442,38 @@
    "target_src": "fib",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "BTC",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 84324.2,
+   "stop": 83075.29873608997,
+   "target": 88070.90379173006,
+   "t": 1790686386.0628502,
+   "from_t": 1790683200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "in-against"
+  },
+  {
+   "coin": "BNB",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 766.5,
+   "stop": 753.1728464700788,
+   "target": 806.4814605897639,
+   "t": 1790686386.0628502,
+   "from_t": 1790683200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -652,5 +684,10 @@
   "side": "short",
   "sent": 1790648247.7679236
  },
- "AAVE_bo": 1790668880.9303176
+ "AAVE_bo": 1790668880.9303176,
+ "BNB_ms": {
+  "bar": 1790668800,
+  "side": "long",
+  "sent": 1790686386.0628502
+ }
 }

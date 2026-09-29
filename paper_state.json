@@ -329,6 +329,28 @@
    "flow_with": false,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 83075.29873608997,
+   "target": 88070.90379173006,
+   "score": "5/7",
+   "key": "BTC|shift|1790668800|long",
+   "coin": "BTC",
+   "t": 1790683200,
+   "entry": 84324.2,
+   "adx": 13.1,
+   "adx25": false,
+   "aligned": true,
+   "va": "balance",
+   "va_with": false,
+   "ob": "in-against",
+   "ob_ok": false,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -349,6 +371,7 @@
   "WLD|grade|1790668800|long": 1790683193.6834555,
   "BNB|shift|1790668800|long": 1790683193.6834555,
   "AAVE|fade|1790679600": 1790683193.6834555,
-  "XRP|shift|1790668800|long": 1790684769.879779
+  "XRP|shift|1790668800|long": 1790684769.879779,
+  "BTC|shift|1790668800|long": 1790686428.5539808
  }
 }
