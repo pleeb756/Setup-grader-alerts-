@@ -212,3 +212,5 @@ utc,coin,side,met,price
 2026-09-29 12:25,WLD,long,B+ 4/5 wait muted,0.5059
 2026-09-29 12:53,BTC,shift-long-muted,5,84324.2
 2026-09-29 12:53,BNB,shift-long-muted,5,766.5
+2026-09-29 13:23,XRP,impulse-long-muted,-,1.54736
+2026-09-29 13:23,ADA,shift-long-muted,5,0.253713

@@ -351,6 +351,50 @@
    "flow_with": false,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "impulse",
+   "side": "long",
+   "stop": 1.5370413238201697,
+   "target": 1.5679973523596609,
+   "score": "-",
+   "key": "XRP|impulse|1790683200",
+   "coin": "XRP",
+   "t": 1790686800,
+   "entry": 1.54736,
+   "adx": 14.7,
+   "adx25": false,
+   "aligned": true,
+   "va": "balance",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
+  },
+  {
+   "side": "short",
+   "stop": 1.5652586761798304,
+   "kind": "impulse_fade",
+   "target": 1.54562,
+   "score": "-",
+   "key": "XRP|fade|1790683200",
+   "coin": "XRP",
+   "t": 1790686800,
+   "entry": 1.54736,
+   "adx": 14.7,
+   "adx25": false,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "near-with",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -372,6 +416,8 @@
   "BNB|shift|1790668800|long": 1790683193.6834555,
   "AAVE|fade|1790679600": 1790683193.6834555,
   "XRP|shift|1790668800|long": 1790684769.879779,
-  "BTC|shift|1790668800|long": 1790686428.5539808
+  "BTC|shift|1790668800|long": 1790686428.5539808,
+  "XRP|impulse|1790683200": 1790688226.1982586,
+  "XRP|fade|1790683200": 1790688226.1982586
  }
 }
