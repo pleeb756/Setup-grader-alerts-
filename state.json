@@ -406,6 +406,42 @@
    "target_src": "fib",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 163.75,
+   "stop": 154.8130522003899,
+   "target": 181.6238955992202,
+   "t": 1790668880.9303176,
+   "from_t": 1790668800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "none"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 163.75,
+   "stop": 156.28652610019495,
+   "target": 178.6769477996101,
+   "t": 1790668880.9303176,
+   "from_t": 1790668800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 157.57,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -589,9 +625,9 @@
   "sent": 1790607768.5097396
  },
  "AAVE_imp": {
-  "bar": 1790604000,
-  "side": "short",
-  "sent": 1790607768.5097396
+  "bar": 1790665200,
+  "side": "long",
+  "sent": 1790668880.9303176
  },
  "Platinum_imp": {
   "bar": 1790604000,
@@ -613,5 +649,6 @@
   "bar": 1790643600,
   "side": "short",
   "sent": 1790648247.7679236
- }
+ },
+ "AAVE_bo": 1790668880.9303176
 }

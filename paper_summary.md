@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-2 closed, 7 open. Updated 2026-09-29 07:52 UTC.
+2 closed, 10 open. Updated 2026-09-29 08:02 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -12,6 +12,9 @@ Open paper trades:
 - ZEC impulse short @ 1,402.58 (SL 1,458.12, TP 1,291.49) since 2026-09-29 02:00 UTC
 - ZEC impulse_fade long @ 1,402.58 (SL 1,367.89, TP 1,445.17) since 2026-09-29 02:00 UTC
 - LINK grade long @ 14.75 (SL 14.01, TP 17.17) since 2026-09-29 05:00 UTC
+- AAVE impulse long @ 163.75 (SL 156.29, TP 178.68) since 2026-09-29 08:00 UTC
+- AAVE impulse_fade short @ 163.75 (SL 167.49, TP 157.57) since 2026-09-29 08:00 UTC
+- AAVE breakout long @ 163.75 (SL 154.81, TP 181.62) since 2026-09-29 08:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
