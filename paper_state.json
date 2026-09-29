@@ -133,28 +133,6 @@
    "best": false
   },
   {
-   "kind": "impulse",
-   "side": "short",
-   "stop": 0.005597316906671019,
-   "target": 0.005470366186657962,
-   "score": "-",
-   "key": "kSHIB|impulse|1790643600",
-   "coin": "kSHIB",
-   "t": 1790647200,
-   "entry": 0.005555,
-   "adx": 20.6,
-   "adx25": false,
-   "aligned": false,
-   "va": "imbalance_down",
-   "va_with": true,
-   "ob": "blocked",
-   "ob_ok": false,
-   "flow": "neutral",
-   "flow_with": false,
-   "solo": false,
-   "best": false
-  },
-  {
    "kind": "grade",
    "side": "long",
    "stop": 14.007065918357608,
