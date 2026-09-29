@@ -70,9 +70,9 @@
   "sent": 1790686386.0628502
  },
  "LINK_ms": {
-  "bar": 1790553600,
+  "bar": 1790697600,
   "side": "short",
-  "sent": 1790568033.1011684
+  "sent": 1790725450.4425063
  },
  "ZEC_ms": {
   "bar": 1790582400,
@@ -458,6 +458,22 @@
    "target_src": "fib",
    "flow": "heavy outflow",
    "ob": "none"
+  },
+  {
+   "coin": "LINK",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 14.64,
+   "stop": 15.395311453136262,
+   "target": 12.374065640591217,
+   "t": 1790725450.4425063,
+   "from_t": 1790712000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {

@@ -351,6 +351,28 @@
    "flow_with": true,
    "solo": true,
    "best": true
+  },
+  {
+   "kind": "shift",
+   "side": "short",
+   "stop": 15.395311453136262,
+   "target": 12.374065640591217,
+   "score": "5/7",
+   "key": "LINK|shift|1790697600|short",
+   "coin": "LINK",
+   "t": 1790722800,
+   "entry": 14.67341,
+   "adx": 36.4,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -376,6 +398,7 @@
   "XRP|impulse|1790683200": 1790688226.1982586,
   "XRP|fade|1790683200": 1790688226.1982586,
   "ETH|shift|1790683200|short": 1790697627.6145537,
-  "Palladium|grade|1790683200|short": 1790708538.751744
+  "Palladium|grade|1790683200|short": 1790708538.751744,
+  "LINK|shift|1790697600|short": 1790725483.6417522
  }
 }
