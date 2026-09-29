@@ -442,6 +442,22 @@
    "target_src": "fib",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "Palladium",
+   "kind": "grade-watch",
+   "side": "short",
+   "grade": "B+",
+   "entry": 1229.0,
+   "stop": 1265.9682476404396,
+   "target": 1142.172,
+   "t": 1790708490.9789827,
+   "from_t": 1790708400,
+   "va_state": "imbalance_down",
+   "va_fit": "fit",
+   "target_src": "fib",
+   "flow": "heavy outflow",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -515,8 +531,10 @@
  },
  "Palladium": {
   "v": 2,
-  "tier": 0,
-  "sent": {}
+  "tier": 1,
+  "sent": {
+   "1": 1790708490.9789827
+  }
  },
  "LTC_ms": {
   "bar": 1790625600,

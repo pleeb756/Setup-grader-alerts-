@@ -329,6 +329,28 @@
    "flow_with": true,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "grade",
+   "side": "short",
+   "stop": 1265.9682476404396,
+   "target": 1142.172,
+   "score": "B+",
+   "key": "Palladium|grade|1790683200|short",
+   "coin": "Palladium",
+   "t": 1790708400,
+   "entry": 1229.0,
+   "adx": 29.7,
+   "adx25": true,
+   "aligned": true,
+   "va": "imbalance_down",
+   "va_with": true,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "heavy outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": true
   }
  ],
  "seen": {
@@ -353,6 +375,7 @@
   "BTC|shift|1790668800|long": 1790686428.5539808,
   "XRP|impulse|1790683200": 1790688226.1982586,
   "XRP|fade|1790683200": 1790688226.1982586,
-  "ETH|shift|1790683200|short": 1790697627.6145537
+  "ETH|shift|1790683200|short": 1790697627.6145537,
+  "Palladium|grade|1790683200|short": 1790708538.751744
  }
 }
