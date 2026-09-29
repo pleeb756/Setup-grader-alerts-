@@ -265,28 +265,6 @@
    "best": false
   },
   {
-   "side": "short",
-   "stop": 174.5432257641047,
-   "kind": "impulse_fade",
-   "target": 168.96,
-   "score": "-",
-   "key": "AAVE|fade|1790679600",
-   "coin": "AAVE",
-   "t": 1790683200,
-   "entry": 171.41,
-   "adx": 27.5,
-   "adx25": true,
-   "aligned": false,
-   "va": "probe_up",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "heavy inflow",
-   "flow_with": false,
-   "solo": true,
-   "best": false
-  },
-  {
    "kind": "shift",
    "side": "long",
    "stop": 1.4650279429210182,
