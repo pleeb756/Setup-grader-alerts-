@@ -442,42 +442,6 @@
    "target_src": "fib",
    "flow": "neutral",
    "ob": "none"
-  },
-  {
-   "coin": "BTC",
-   "kind": "shift",
-   "side": "long",
-   "grade": "5/7",
-   "entry": 84324.2,
-   "stop": 83075.29873608997,
-   "target": 88070.90379173006,
-   "t": 1790686386.0628502,
-   "from_t": 1790683200,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "in-against"
-  },
-  {
-   "coin": "XRP",
-   "kind": "impulse",
-   "side": "long",
-   "grade": "-",
-   "entry": 1.54736,
-   "stop": 1.5370413238201697,
-   "target": 1.5679973523596609,
-   "t": 1790688190.1423461,
-   "from_t": 1790686800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy inflow",
-   "ob": "none",
-   "level": 1.54562,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -673,14 +637,14 @@
   "sent": 1790608943.8066313
  },
  "ETH_ms": {
-  "bar": 1790596800,
-  "side": "long",
-  "sent": 1790611211.7717032
+  "bar": 1790683200,
+  "side": "short",
+  "sent": 1790698948.7497823
  },
  "NEAR_ms": {
-  "bar": 1790625600,
-  "side": "short",
-  "sent": 1790643791.5675318
+  "bar": 1790683200,
+  "side": "long",
+  "sent": 1790698948.7497823
  },
  "Palladium_bo": 1790611211.7717032,
  "kSHIB_imp": {
@@ -698,5 +662,6 @@
   "bar": 1790683200,
   "side": "long",
   "sent": 1790688190.1423461
- }
+ },
+ "review_at": 30
 }
