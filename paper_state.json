@@ -153,28 +153,6 @@
    "flow_with": false,
    "solo": false,
    "best": false
-  },
-  {
-   "side": "long",
-   "stop": 0.0054776830933289805,
-   "kind": "impulse_fade",
-   "target": 0.005561,
-   "score": "-",
-   "key": "kSHIB|fade|1790643600",
-   "coin": "kSHIB",
-   "t": 1790647200,
-   "entry": 0.005555,
-   "adx": 20.6,
-   "adx25": false,
-   "aligned": true,
-   "va": "imbalance_down",
-   "va_with": false,
-   "ob": "near-with",
-   "ob_ok": true,
-   "flow": "neutral",
-   "flow_with": false,
-   "solo": false,
-   "best": false
   }
  ],
  "seen": {
