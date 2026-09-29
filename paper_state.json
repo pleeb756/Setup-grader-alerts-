@@ -21,9 +21,55 @@
    "flow_with": true,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "short",
+   "stop": 5.232771654985274,
+   "target": 3.581685035044181,
+   "score": "7/7",
+   "key": "NEAR|shift|1790625600|short",
+   "coin": "NEAR",
+   "t": 1790643600,
+   "entry": 4.7598,
+   "adx": 34.5,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "short",
+   "stop": 1.2419498780189946,
+   "target": 0.9417503659430162,
+   "score": "7/7",
+   "key": "SUI|shift|1790625600|short",
+   "coin": "SUI",
+   "t": 1790643600,
+   "entry": 1.1453,
+   "adx": 44.4,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": false,
+   "best": false
   }
  ],
  "seen": {
-  "LTC|shift|1790625600|short": 1790641624.0038326
+  "LTC|shift|1790625600|short": 1790641624.0038326,
+  "NEAR|shift|1790625600|short": 1790643832.359893,
+  "SUI|shift|1790625600|short": 1790643832.359893
  }
 }

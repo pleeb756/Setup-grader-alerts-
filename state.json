@@ -390,22 +390,6 @@
    "add_price": 1482.97
   },
   {
-   "coin": "LINK",
-   "kind": "breakout",
-   "side": "long",
-   "grade": "-",
-   "entry": 15.09959,
-   "stop": 14.781853195260624,
-   "target": 15.73506360947875,
-   "t": 1790626686.002841,
-   "from_t": 1790625600,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "none"
-  },
-  {
    "coin": "ZEC",
    "kind": "impulse-add",
    "side": "short",
@@ -618,9 +602,9 @@
   "sent": 1790611211.7717032
  },
  "NEAR_ms": {
-  "bar": 1790596800,
+  "bar": 1790625600,
   "side": "short",
-  "sent": 1790611211.7717032
+  "sent": 1790643791.5675318
  },
  "Palladium_bo": 1790611211.7717032
 }
