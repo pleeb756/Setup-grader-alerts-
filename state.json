@@ -9,7 +9,7 @@
  },
  "LINK": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "1": 1790659140.4183774
   }
@@ -305,22 +305,6 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "in-against"
-  },
-  {
-   "coin": "AAVE",
-   "kind": "shift",
-   "side": "short",
-   "grade": "5/7",
-   "entry": 146.97,
-   "stop": 152.83217798173808,
-   "target": 129.38346605478577,
-   "t": 1790582493.5432756,
-   "from_t": 1790582400,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "inflow",
-   "ob": "blocked"
   },
   {
    "coin": "ETH",
