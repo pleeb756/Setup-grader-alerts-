@@ -1,6 +1,6 @@
 # Alert outcomes
 
-28 resolved, 20 still open. Updated 2026-09-29 12:26 UTC.
+29 resolved, 22 still open. Updated 2026-09-29 16:00 UTC.
 
 
 Small samples mean little; wait for 30+ per row before changing rules.
@@ -14,7 +14,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | grade-watch / B+ | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | impulse / - | 14 | 0 | -1.00 | -14.0 | 0.57 |
 | impulse-add / - | 4 | 0 | -1.00 | -4.0 | 0.40 |
-| shift / 5/7 | 5 | 0 | -1.00 | -5.0 | 0.43 |
+| shift / 5/7 | 6 | 0 | -1.00 | -6.0 | 0.37 |
 
 ## By value-area fit
 
@@ -24,7 +24,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | grade-watch / no fit | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | impulse / - | 14 | 0 | -1.00 | -14.0 | 0.57 |
 | impulse-add / - | 4 | 0 | -1.00 | -4.0 | 0.40 |
-| shift / - | 5 | 0 | -1.00 | -5.0 | 0.43 |
+| shift / - | 6 | 0 | -1.00 | -6.0 | 0.37 |
 
 ## By value-area state
 
@@ -34,7 +34,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | grade-watch / imbalance_down | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | impulse / - | 14 | 0 | -1.00 | -14.0 | 0.57 |
 | impulse-add / - | 4 | 0 | -1.00 | -4.0 | 0.40 |
-| shift / - | 5 | 0 | -1.00 | -5.0 | 0.43 |
+| shift / - | 6 | 0 | -1.00 | -6.0 | 0.37 |
 
 ## By target source
 
@@ -44,7 +44,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | grade-watch / level | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | impulse / - | 14 | 0 | -1.00 | -14.0 | 0.57 |
 | impulse-add / - | 4 | 0 | -1.00 | -4.0 | 0.40 |
-| shift / - | 5 | 0 | -1.00 | -5.0 | 0.43 |
+| shift / - | 6 | 0 | -1.00 | -6.0 | 0.37 |
 
 ## By money flow vs trade side
 
@@ -62,6 +62,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | impulse-add / neutral | 1 | 0 | -1.00 | -1.0 | 0.40 |
 | shift / - | 1 | 0 | -1.00 | -1.0 | 0.46 |
 | shift / against | 4 | 0 | -1.00 | -4.0 | 0.43 |
+| shift / heavy with | 1 | 0 | -1.00 | -1.0 | 0.06 |
 
 ## By order block
 
@@ -77,4 +78,4 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | impulse-add / in-against | 1 | 0 | -1.00 | -1.0 | 0.40 |
 | impulse-add / none | 3 | 0 | -1.00 | -3.0 | 0.39 |
 | shift / - | 3 | 0 | -1.00 | -3.0 | 0.29 |
-| shift / blocked | 2 | 0 | -1.00 | -2.0 | 0.65 |
+| shift / blocked | 3 | 0 | -1.00 | -3.0 | 0.45 |

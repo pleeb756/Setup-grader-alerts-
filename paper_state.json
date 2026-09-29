@@ -111,28 +111,6 @@
    "best": false
   },
   {
-   "side": "long",
-   "stop": 1367.8873606815814,
-   "kind": "impulse_fade",
-   "target": 1445.17,
-   "score": "-",
-   "key": "ZEC|fade|1790643600",
-   "coin": "ZEC",
-   "t": 1790647200,
-   "entry": 1402.58,
-   "adx": 18.3,
-   "adx25": false,
-   "aligned": true,
-   "va": "probe_down",
-   "va_with": false,
-   "ob": "near-with",
-   "ob_ok": true,
-   "flow": "outflow",
-   "flow_with": false,
-   "solo": true,
-   "best": false
-  },
-  {
    "kind": "grade",
    "side": "long",
    "stop": 14.007065918357608,
@@ -353,24 +331,24 @@
    "best": false
   },
   {
-   "kind": "impulse",
-   "side": "long",
-   "stop": 1.5370413238201697,
-   "target": 1.5679973523596609,
-   "score": "-",
-   "key": "XRP|impulse|1790683200",
-   "coin": "XRP",
-   "t": 1790686800,
-   "entry": 1.54736,
-   "adx": 14.7,
+   "kind": "shift",
+   "side": "short",
+   "stop": 2732.0483253270654,
+   "target": 2498.255024018804,
+   "score": "5/7",
+   "key": "ETH|shift|1790683200|short",
+   "coin": "ETH",
+   "t": 1790697600,
+   "entry": 2673.6,
+   "adx": 13.9,
    "adx25": false,
-   "aligned": true,
+   "aligned": false,
    "va": "balance",
    "va_with": false,
-   "ob": "none",
+   "ob": "near-with",
    "ob_ok": true,
-   "flow": "neutral",
-   "flow_with": false,
+   "flow": "heavy outflow",
+   "flow_with": true,
    "solo": true,
    "best": false
   }
@@ -396,6 +374,7 @@
   "XRP|shift|1790668800|long": 1790684769.879779,
   "BTC|shift|1790668800|long": 1790686428.5539808,
   "XRP|impulse|1790683200": 1790688226.1982586,
-  "XRP|fade|1790683200": 1790688226.1982586
+  "XRP|fade|1790683200": 1790688226.1982586,
+  "ETH|shift|1790683200|short": 1790697627.6145537
  }
 }
