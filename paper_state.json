@@ -307,6 +307,28 @@
    "flow_with": false,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 1.4650279429210182,
+   "target": 1.670916171236945,
+   "score": "5/7",
+   "key": "XRP|shift|1790668800|long",
+   "coin": "XRP",
+   "t": 1790683200,
+   "entry": 1.5165,
+   "adx": 14.7,
+   "adx25": false,
+   "aligned": true,
+   "va": "balance",
+   "va_with": false,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -326,6 +348,7 @@
   "ADA|shift|1790668800|long": 1790683193.6834555,
   "WLD|grade|1790668800|long": 1790683193.6834555,
   "BNB|shift|1790668800|long": 1790683193.6834555,
-  "AAVE|fade|1790679600": 1790683193.6834555
+  "AAVE|fade|1790679600": 1790683193.6834555,
+  "XRP|shift|1790668800|long": 1790684769.879779
  }
 }

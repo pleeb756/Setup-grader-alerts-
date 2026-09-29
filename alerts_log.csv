@@ -207,3 +207,6 @@ utc,coin,side,met,price
 2026-09-29 05:19,LINK,long,B+ 4/5 wait muted,14.75001
 2026-09-29 08:01,AAVE,breakout-long,-,163.75
 2026-09-29 08:01,AAVE,impulse-long-muted,-,163.75
+2026-09-29 12:25,XRP,shift-long-muted,5,1.5165
+2026-09-29 12:25,kSHIB,shift-long-muted,6,0.005834000000000001
+2026-09-29 12:25,WLD,long,B+ 4/5 wait muted,0.5059
