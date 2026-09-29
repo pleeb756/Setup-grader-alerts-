@@ -1,4 +1,29 @@
 {
- "open": [],
- "seen": {}
+ "open": [
+  {
+   "kind": "shift",
+   "side": "short",
+   "stop": 72.14881872520718,
+   "target": 60.39354382437845,
+   "score": "6/7",
+   "key": "LTC|shift|1790625600|short",
+   "coin": "LTC",
+   "t": 1790640000,
+   "entry": 69.21,
+   "adx": 27.7,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "in-against",
+   "ob_ok": false,
+   "flow": "outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": false
+  }
+ ],
+ "seen": {
+  "LTC|shift|1790625600|short": 1790641624.0038326
+ }
 }
