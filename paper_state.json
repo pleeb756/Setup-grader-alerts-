@@ -395,6 +395,28 @@
    "flow_with": true,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 1216.9903313377613,
+   "target": 1323.0290059867161,
+   "score": "5/7",
+   "key": "Palladium|shift|1790740800|long",
+   "coin": "Palladium",
+   "t": 1790755200,
+   "entry": 1243.5,
+   "adx": 28.9,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -422,6 +444,7 @@
   "ETH|shift|1790683200|short": 1790697627.6145537,
   "Palladium|grade|1790683200|short": 1790708538.751744,
   "LINK|shift|1790697600|short": 1790725483.6417522,
-  "AAVE|shift|1790726400|short": 1790740886.1784291
+  "AAVE|shift|1790726400|short": 1790740886.1784291,
+  "Palladium|shift|1790740800|long": 1790755217.9991097
  }
 }
