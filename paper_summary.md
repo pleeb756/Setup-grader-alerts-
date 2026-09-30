@@ -2,11 +2,10 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-19 closed, 22 open. Updated 2026-09-30 16:49 UTC.
+20 closed, 21 open. Updated 2026-09-30 17:00 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
-- NEAR shift short @ 4.76 (SL 5.23, TP 3.58) since 2026-09-29 01:00 UTC
 - SUI shift short @ 1.15 (SL 1.24, TP 0.94175) since 2026-09-29 01:00 UTC
 - LINK grade long @ 14.75 (SL 14.01, TP 17.17) since 2026-09-29 05:00 UTC
 - AAVE impulse long @ 163.75 (SL 156.29, TP 178.68) since 2026-09-29 08:00 UTC
@@ -31,17 +30,17 @@ Open paper trades:
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
 
-## ALL (19 signals)
+## ALL (20 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 19 / 11% / -0.84 / -15.9 | 19 / 26% / -0.70 / -13.3 | 19 / 32% / -0.53 / -10.0 |
-| adx25 | 5 / 0% / -1.08 / -5.4 | 5 / 0% / -1.03 / -5.1 | 5 / 20% / -0.62 / -3.1 |
+| all | 20 / 10% / -0.85 / -16.9 | 20 / 25% / -0.72 / -14.4 | 20 / 30% / -0.55 / -11.1 |
+| adx25 | 6 / 0% / -1.07 / -6.4 | 6 / 0% / -1.03 / -6.2 | 6 / 17% / -0.69 / -4.1 |
 | aligned | 8 / 0% / -1.01 / -8.1 | 8 / 12% / -0.79 / -6.3 | 8 / 12% / -0.72 / -5.8 |
 | va_with | 1 / 0% / -1.36 / -1.4 | 1 / 100% / +0.17 / +0.2 | 1 / 0% / -1.24 / -1.2 |
 | ob_ok | 14 / 14% / -0.71 / -9.9 | 14 / 29% / -0.64 / -8.9 | 14 / 43% / -0.32 / -4.4 |
-| flow_with | 6 / 33% / -0.22 / -1.3 | 6 / 50% / -0.30 / -1.8 | 6 / 50% / -0.25 / -1.5 |
-| solo | 9 / 11% / -0.81 / -7.3 | 9 / 22% / -0.75 / -6.8 | 9 / 33% / -0.49 / -4.4 |
+| flow_with | 7 / 29% / -0.33 / -2.3 | 7 / 43% / -0.41 / -2.9 | 7 / 43% / -0.36 / -2.5 |
+| solo | 10 / 10% / -0.83 / -8.3 | 10 / 20% / -0.78 / -7.8 | 10 / 30% / -0.54 / -5.4 |
 | best | - | - | - |
 
 ## impulse (8 signals)
@@ -70,18 +69,18 @@ Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30
 | solo | 5 / 20% / -0.50 / -2.5 | 5 / 20% / -0.70 / -3.5 | 5 / 60% / +0.02 / +0.1 |
 | best | - | - | - |
 
-## shift (1 signals)
+## shift (2 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 1 / 0% / -1.04 / -1.0 | 1 / 0% / -1.04 / -1.0 | 1 / 0% / -1.02 / -1.0 |
-| adx25 | 1 / 0% / -1.04 / -1.0 | 1 / 0% / -1.04 / -1.0 | 1 / 0% / -1.02 / -1.0 |
+| all | 2 / 0% / -1.03 / -2.1 | 2 / 0% / -1.03 / -2.1 | 2 / 0% / -1.02 / -2.0 |
+| adx25 | 2 / 0% / -1.03 / -2.1 | 2 / 0% / -1.03 / -2.1 | 2 / 0% / -1.02 / -2.0 |
 | aligned | - | - | - |
 | va_with | - | - | - |
 | ob_ok | - | - | - |
-| flow_with | - | - | - |
-| solo | 1 / 0% / -1.04 / -1.0 | 1 / 0% / -1.04 / -1.0 | 1 / 0% / -1.02 / -1.0 |
+| flow_with | 1 / 0% / -1.03 / -1.0 | 1 / 0% / -1.03 / -1.0 | 1 / 0% / -1.02 / -1.0 |
+| solo | 2 / 0% / -1.03 / -2.1 | 2 / 0% / -1.03 / -2.1 | 2 / 0% / -1.02 / -2.0 |
 | best | - | - | - |
 
-All signals, partial management: profit factor 0.06, max drawdown 12.3R ($25).
+All signals, partial management: profit factor 0.05, max drawdown 13.3R ($27).
 
