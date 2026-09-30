@@ -235,3 +235,8 @@ utc,coin,side,met,price
 2026-09-30 13:22,kSHIB,impulse-long-muted,-,0.005947999999999999
 2026-09-30 13:22,Gold,impulse-long-muted,-,4240.2001953125
 2026-09-30 14:51,AAVE,shift-short-muted,5,161.64
+2026-09-30 16:02,BTC,shift-long-muted,5,84084.9
+2026-09-30 16:02,LINK,shift-short-muted,6,14.24475
+2026-09-30 16:02,VVV,shift-long-muted,5,28.178
+2026-09-30 16:02,Silver,short,B+ 4/5 wait muted,60.625
+2026-09-30 16:02,Silver,breakout-short,-,60.625

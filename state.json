@@ -65,14 +65,14 @@
  "XLM_bo": 1789992633.606118,
  "HBAR_bo": 1789834110.8035157,
  "BTC_ms": {
-  "bar": 1790668800,
+  "bar": 1790769600,
   "side": "long",
-  "sent": 1790686386.0628502
+  "sent": 1790784148.9126585
  },
  "LINK_ms": {
-  "bar": 1790740800,
+  "bar": 1790769600,
   "side": "short",
-  "sent": 1790755184.954623
+  "sent": 1790784148.9126585
  },
  "ZEC_ms": {
   "bar": 1790582400,
@@ -474,6 +474,54 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "BTC",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 84084.9,
+   "stop": 82689.66575000173,
+   "target": 88270.6027499948,
+   "t": 1790784148.9126585,
+   "from_t": 1790784000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "in-against"
+  },
+  {
+   "coin": "VVV",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 28.178,
+   "stop": 26.45574640076376,
+   "target": 33.344760797708716,
+   "t": 1790784148.9126585,
+   "from_t": 1790784000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow",
+   "ob": "none"
+  },
+  {
+   "coin": "Silver",
+   "kind": "grade-watch",
+   "side": "short",
+   "grade": "B+",
+   "entry": 60.625,
+   "stop": 61.659737486382056,
+   "target": 57.16999944051107,
+   "t": 1790784148.9126585,
+   "from_t": 1790784000,
+   "va_state": "probe_down",
+   "va_fit": "no fit",
+   "target_src": "level",
+   "flow": "heavy outflow",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -535,9 +583,10 @@
  },
  "Silver": {
   "v": 2,
-  "tier": 0,
+  "tier": 1,
   "sent": {
-   "2": 1790593191.1233087
+   "2": 1790593191.1233087,
+   "1": 1790784148.9126585
   }
  },
  "Platinum": {
@@ -593,9 +642,9 @@
   "sent": 1790497116.6496997
  },
  "VVV_ms": {
-  "bar": 1790496000,
+  "bar": 1790769600,
   "side": "long",
-  "sent": 1790511759.3227634
+  "sent": 1790784148.9126585
  },
  "WLD_bo": 1790511759.3227634,
  "LTC_imp": {
@@ -619,7 +668,7 @@
   "sent": 1790688190.1423461
  },
  "Gold_bo": 1790621423.208394,
- "Silver_bo": 1790576823.6014884,
+ "Silver_bo": 1790784148.9126585,
  "SUI_ms": {
   "bar": 1790683200,
   "side": "short",

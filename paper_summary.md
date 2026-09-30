@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-19 closed, 18 open. Updated 2026-09-30 15:51 UTC.
+19 closed, 21 open. Updated 2026-09-30 16:03 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -23,6 +23,9 @@ Open paper trades:
 - AAVE shift short @ 159.52 (SL 167.73, TP 134.90) since 2026-09-30 04:00 UTC
 - Palladium shift long @ 1,243.50 (SL 1,216.99, TP 1,323.03) since 2026-09-30 08:00 UTC
 - Gold shift long @ 4,218.30 (SL 4,172.44, TP 4,355.88) since 2026-09-30 12:00 UTC
+- VVV shift long @ 28.18 (SL 26.46, TP 33.34) since 2026-09-30 16:00 UTC
+- Silver breakout short @ 60.62 (SL 61.03, TP 59.80) since 2026-09-30 16:00 UTC
+- Silver grade short @ 60.62 (SL 61.66, TP 57.17) since 2026-09-30 16:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
