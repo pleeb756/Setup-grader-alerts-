@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-8 closed, 29 open. Updated 2026-09-30 13:24 UTC.
+8 closed, 29 open. Updated 2026-09-30 13:50 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
