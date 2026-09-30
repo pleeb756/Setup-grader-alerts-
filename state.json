@@ -291,22 +291,6 @@
    "ob": "in-against"
   },
   {
-   "coin": "WLD",
-   "kind": "shift",
-   "side": "short",
-   "grade": "5/7",
-   "entry": 0.5091,
-   "stop": 0.5468202289352239,
-   "target": 0.3959393131943283,
-   "t": 1790582493.5432756,
-   "from_t": 1790582400,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "in-against"
-  },
-  {
    "coin": "ETH",
    "kind": "shift",
    "side": "long",
@@ -506,6 +490,106 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "BTC",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 85261.7,
+   "stop": 84320.9810320516,
+   "target": 87143.1379358968,
+   "t": 1790774555.82451,
+   "from_t": 1790773200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "blocked",
+   "level": 84527.1,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "SOL",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 121.86,
+   "stop": 121.1193816635195,
+   "target": 123.34123667296099,
+   "t": 1790774555.82451,
+   "from_t": 1790773200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 121.67,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "DOGE",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 0.0972744,
+   "stop": 0.09606149887768847,
+   "target": 0.09970020224462305,
+   "t": 1790774555.82451,
+   "from_t": 1790773200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 0.0965968,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "kSHIB",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 0.005947999999999999,
+   "stop": 0.005873461820669647,
+   "target": 0.006097076358660704,
+   "t": 1790774555.82451,
+   "from_t": 1790773200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "blocked",
+   "level": 0.005907000000000001,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "Gold",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 4240.2001953125,
+   "stop": 4226.356812307279,
+   "target": 4267.886961322942,
+   "t": 1790774555.82451,
+   "from_t": 1790773200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 4234.0,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -615,9 +699,9 @@
   "sent": 1790497116.6496997
  },
  "SOL_imp": {
-  "bar": 1790492400,
+  "bar": 1790769600,
   "side": "long",
-  "sent": 1790497116.6496997
+  "sent": 1790774555.82451
  },
  "SUI_imp": {
   "bar": 1790492400,
@@ -714,9 +798,9 @@
  },
  "Palladium_bo": 1790611211.7717032,
  "kSHIB_imp": {
-  "bar": 1790643600,
-  "side": "short",
-  "sent": 1790648247.7679236
+  "bar": 1790769600,
+  "side": "long",
+  "sent": 1790774555.82451
  },
  "AAVE_bo": 1790668880.9303176,
  "BNB_ms": {
@@ -739,5 +823,20 @@
   "bar": 1790755200,
   "side": "long",
   "sent": 1790771318.5609062
+ },
+ "BTC_imp": {
+  "bar": 1790769600,
+  "side": "long",
+  "sent": 1790774555.82451
+ },
+ "DOGE_imp": {
+  "bar": 1790769600,
+  "side": "long",
+  "sent": 1790774555.82451
+ },
+ "Gold_imp": {
+  "bar": 1790769600,
+  "side": "long",
+  "sent": 1790774555.82451
  }
 }
