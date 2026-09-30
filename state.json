@@ -458,6 +458,22 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "shift",
+   "side": "short",
+   "grade": "5/7",
+   "entry": 159.52,
+   "stop": 167.72778923603616,
+   "target": 134.89663229189156,
+   "t": 1790740852.2061348,
+   "from_t": 1790740800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -615,9 +631,9 @@
   "sent": 1790651991.0524132
  },
  "AAVE_ms": {
-  "bar": 1790568000,
+  "bar": 1790726400,
   "side": "short",
-  "sent": 1790582493.5432756
+  "sent": 1790740852.2061348
  },
  "LINK_imp": {
   "bar": 1790596800,
