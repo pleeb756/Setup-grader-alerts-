@@ -30,3 +30,4 @@ alert_utc,resolved_utc,coin,kind,side,grade,va_state,va_fit,target_src,entry,sto
 2026-09-29 12:53,2026-09-29 16:00,BNB,shift,long,5/7,,,,766.5,753.1728464700788,806.4814605897639,loss,-1.0,0.057,1.012,3.1,heavy inflow,blocked
 2026-09-29 12:53,2026-09-29 16:00,BTC,shift,long,5/7,,,,84324.2,83075.29873608997,88070.90379173006,loss,-1.0,0.162,1.157,3.1,neutral,in-against
 2026-09-29 13:23,2026-09-29 16:00,XRP,impulse,long,-,,,,1.54736,1.5370413238201697,1.5679973523596609,loss,-1.0,1.279,3.83,2.6,heavy inflow,none
+2026-09-29 12:25,2026-09-30 00:00,WLD,grade-watch,long,B+,balance,no fit,fib,0.5059,0.48059773064062217,0.6511583999999999,loss,-1.0,0.652,1.154,11.6,neutral,none

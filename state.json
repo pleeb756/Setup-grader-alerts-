@@ -428,22 +428,6 @@
    "add_seen": 1790697600
   },
   {
-   "coin": "WLD",
-   "kind": "grade-watch",
-   "side": "long",
-   "grade": "B+",
-   "entry": 0.5059,
-   "stop": 0.48059773064062217,
-   "target": 0.6511583999999999,
-   "t": 1790684735.0010645,
-   "from_t": 1790683200,
-   "va_state": "balance",
-   "va_fit": "no fit",
-   "target_src": "fib",
-   "flow": "neutral",
-   "ob": "none"
-  },
-  {
    "coin": "Palladium",
    "kind": "grade-watch",
    "side": "short",
@@ -671,9 +655,9 @@
   "sent": 1790608943.8066313
  },
  "ETH_ms": {
-  "bar": 1790683200,
+  "bar": 1790712000,
   "side": "short",
-  "sent": 1790698948.7497823
+  "sent": 1790728074.6611314
  },
  "NEAR_ms": {
   "bar": 1790683200,
