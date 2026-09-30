@@ -323,22 +323,6 @@
    "ob": "blocked"
   },
   {
-   "coin": "NEAR",
-   "kind": "shift",
-   "side": "short",
-   "grade": "6/7",
-   "entry": 4.906,
-   "stop": 5.320462392763985,
-   "target": 3.662612821708044,
-   "t": 1790611211.7717032,
-   "from_t": 1790611200,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "inflow",
-   "ob": "blocked"
-  },
-  {
    "coin": "ZEC",
    "kind": "impulse",
    "side": "short",
