@@ -461,6 +461,28 @@
    "flow_with": true,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 84.866295826513,
+   "target": 96.281112520461,
+   "score": "6/7",
+   "key": "HYPE|shift|1790769600|long",
+   "coin": "HYPE",
+   "t": 1790784000,
+   "entry": 87.72,
+   "adx": 35.3,
+   "adx25": true,
+   "aligned": true,
+   "va": "imbalance_down",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": false,
+   "solo": true,
+   "best": true
   }
  ],
  "seen": {
@@ -503,6 +525,7 @@
   "Gold|fade|1790769600": 1790774601.4561057,
   "VVV|shift|1790769600|long": 1790784185.1218305,
   "Silver|breakout|1790769600": 1790784185.1218305,
-  "Silver|grade|1790769600|short": 1790784185.1218305
+  "Silver|grade|1790769600|short": 1790784185.1218305,
+  "HYPE|shift|1790769600|long": 1790785451.9104888
  }
 }
