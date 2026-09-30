@@ -417,6 +417,28 @@
    "flow_with": false,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 4172.440678531178,
+   "target": 4355.877183156468,
+   "score": "5/7",
+   "key": "Gold|shift|1790755200|long",
+   "coin": "Gold",
+   "t": 1790769600,
+   "entry": 4218.2998046875,
+   "adx": 34.6,
+   "adx25": true,
+   "aligned": false,
+   "va": "probe_down",
+   "va_with": false,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "outflow",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -445,6 +467,7 @@
   "Palladium|grade|1790683200|short": 1790708538.751744,
   "LINK|shift|1790697600|short": 1790725483.6417522,
   "AAVE|shift|1790726400|short": 1790740886.1784291,
-  "Palladium|shift|1790740800|long": 1790755217.9991097
+  "Palladium|shift|1790740800|long": 1790755217.9991097,
+  "Gold|shift|1790755200|long": 1790771357.4211593
  }
 }
