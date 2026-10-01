@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-24 closed, 23 open. Updated 2026-10-01 22:58 UTC.
+25 closed, 22 open. Updated 2026-10-01 23:18 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -18,7 +18,6 @@ Open paper trades:
 - ETH shift short @ 2,673.60 (SL 2,732.05, TP 2,498.26) since 2026-09-29 16:00 UTC
 - Palladium grade short @ 1,229.00 (SL 1,265.97, TP 1,142.17) since 2026-09-29 19:00 UTC
 - LINK shift short @ 14.67 (SL 15.40, TP 12.37) since 2026-09-29 23:00 UTC
-- AAVE shift short @ 159.52 (SL 167.73, TP 134.90) since 2026-09-30 04:00 UTC
 - Gold shift long @ 4,218.30 (SL 4,172.44, TP 4,355.88) since 2026-09-30 12:00 UTC
 - VVV shift long @ 28.18 (SL 26.46, TP 33.34) since 2026-09-30 16:00 UTC
 - Silver grade short @ 60.62 (SL 61.66, TP 57.17) since 2026-09-30 16:00 UTC
@@ -32,17 +31,17 @@ Open paper trades:
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
 
-## ALL (24 signals)
+## ALL (25 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 24 / 12% / -0.83 / -19.9 | 24 / 25% / -0.73 / -17.6 | 24 / 33% / -0.51 / -12.3 |
-| adx25 | 9 / 0% / -1.11 / -10.0 | 9 / 0% / -1.08 / -9.7 | 9 / 22% / -0.67 / -6.0 |
+| all | 25 / 12% / -0.84 / -20.9 | 25 / 24% / -0.75 / -18.7 | 25 / 32% / -0.53 / -13.3 |
+| adx25 | 10 / 0% / -1.11 / -11.1 | 10 / 0% / -1.08 / -10.8 | 10 / 20% / -0.71 / -7.1 |
 | aligned | 11 / 9% / -0.90 / -9.9 | 11 / 18% / -0.76 / -8.4 | 11 / 27% / -0.54 / -5.9 |
 | va_with | 1 / 0% / -1.36 / -1.4 | 1 / 100% / +0.17 / +0.2 | 1 / 0% / -1.24 / -1.2 |
 | ob_ok | 17 / 18% / -0.69 / -11.8 | 17 / 29% / -0.65 / -11.0 | 17 / 47% / -0.27 / -4.5 |
-| flow_with | 8 / 25% / -0.47 / -3.7 | 8 / 38% / -0.53 / -4.3 | 8 / 38% / -0.47 / -3.8 |
-| solo | 13 / 15% / -0.78 / -10.2 | 13 / 23% / -0.77 / -10.0 | 13 / 31% / -0.55 / -7.1 |
+| flow_with | 9 / 22% / -0.53 / -4.8 | 9 / 33% / -0.59 / -5.3 | 9 / 33% / -0.53 / -4.8 |
+| solo | 14 / 14% / -0.80 / -11.2 | 14 / 21% / -0.79 / -11.0 | 14 / 29% / -0.58 / -8.2 |
 | best | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.27 / -1.3 |
 
 ## impulse (8 signals)
@@ -84,17 +83,17 @@ Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30
 | solo | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.27 / -1.3 |
 | best | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.27 / -1.3 |
 
-## shift (3 signals)
+## shift (4 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.04 / -3.1 |
-| adx25 | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.04 / -3.1 |
+| all | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.04 / -4.2 |
+| adx25 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.04 / -4.2 |
 | aligned | - | - | - |
 | va_with | - | - | - |
 | ob_ok | - | - | - |
-| flow_with | 1 / 0% / -1.03 / -1.0 | 1 / 0% / -1.03 / -1.0 | 1 / 0% / -1.02 / -1.0 |
-| solo | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.04 / -3.1 |
+| flow_with | 2 / 0% / -1.04 / -2.1 | 2 / 0% / -1.04 / -2.1 | 2 / 0% / -1.03 / -2.1 |
+| solo | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.04 / -4.2 |
 | best | - | - | - |
 
 ## grade (1 signals)
@@ -110,5 +109,5 @@ Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30
 | solo | - | - | - |
 | best | - | - | - |
 
-All signals, partial management: profit factor 0.06, max drawdown 16.9R ($34).
+All signals, partial management: profit factor 0.06, max drawdown 18.0R ($36).
 
