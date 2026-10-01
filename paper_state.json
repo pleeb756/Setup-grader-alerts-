@@ -375,28 +375,6 @@
    "best": true
   },
   {
-   "kind": "breakout",
-   "side": "short",
-   "stop": 61.02986950610947,
-   "target": 59.800257783435356,
-   "score": "-",
-   "key": "Silver|breakout|1790769600",
-   "coin": "Silver",
-   "t": 1790784000,
-   "entry": 60.619998931884766,
-   "adx": 31.8,
-   "adx25": true,
-   "aligned": true,
-   "va": "probe_down",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "heavy outflow",
-   "flow_with": true,
-   "solo": true,
-   "best": true
-  },
-  {
    "kind": "grade",
    "side": "short",
    "stop": 61.659737486382056,
