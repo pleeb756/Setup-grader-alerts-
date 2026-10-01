@@ -538,6 +538,22 @@
    "target_src": "",
    "flow": "heavy outflow",
    "ob": "none"
+  },
+  {
+   "coin": "NEAR",
+   "kind": "shift",
+   "side": "short",
+   "grade": "6/7",
+   "entry": 4.9161,
+   "stop": 5.3247561799871095,
+   "target": 3.6901314600386725,
+   "t": 1790871627.3256862,
+   "from_t": 1790870400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -741,9 +757,9 @@
   "sent": 1790728074.6611314
  },
  "NEAR_ms": {
-  "bar": 1790683200,
-  "side": "long",
-  "sent": 1790698948.7497823
+  "bar": 1790856000,
+  "side": "short",
+  "sent": 1790871627.3256862
  },
  "Palladium_bo": 1790870376.723778,
  "kSHIB_imp": {
