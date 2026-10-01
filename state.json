@@ -291,43 +291,6 @@
    "ob": "blocked"
   },
   {
-   "coin": "ZEC",
-   "kind": "impulse",
-   "side": "short",
-   "grade": "-",
-   "entry": 1449.38,
-   "stop": 1520.6570731121428,
-   "target": 1306.8258537757147,
-   "t": 1790626686.002841,
-   "from_t": 1790625600,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "blocked",
-   "level": 1507.52,
-   "add": "done",
-   "add_n": 1,
-   "add_seen": 1790625600,
-   "add_price": 1482.97
-  },
-  {
-   "coin": "ZEC",
-   "kind": "impulse-add",
-   "side": "short",
-   "grade": "-",
-   "entry": 1482.97,
-   "stop": 1520.6570731121428,
-   "target": 1306.8258537757147,
-   "t": 1790640638.3933182,
-   "from_t": 1790640000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "outflow",
-   "ob": "blocked"
-  },
-  {
    "coin": "LINK",
    "kind": "grade-watch",
    "side": "long",
@@ -442,22 +405,6 @@
    "target_src": "",
    "flow": "heavy outflow",
    "ob": "in-against"
-  },
-  {
-   "coin": "VVV",
-   "kind": "shift",
-   "side": "long",
-   "grade": "5/7",
-   "entry": 28.178,
-   "stop": 26.45574640076376,
-   "target": 33.344760797708716,
-   "t": 1790784148.9126585,
-   "from_t": 1790784000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "outflow",
-   "ob": "none"
   },
   {
    "coin": "HYPE",
@@ -596,9 +543,9 @@
  },
  "Palladium": {
   "v": 2,
-  "tier": 0,
+  "tier": 1,
   "sent": {
-   "1": 1790708490.9789827
+   "1": 1790886017.0425303
   }
  },
  "LTC_ms": {
