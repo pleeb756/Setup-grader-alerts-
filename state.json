@@ -460,22 +460,6 @@
    "ob": "blocked"
   },
   {
-   "coin": "Gold",
-   "kind": "shift",
-   "side": "long",
-   "grade": "5/7",
-   "entry": 4218.2998046875,
-   "stop": 4172.440678531178,
-   "target": 4355.877183156468,
-   "t": 1790771318.5609062,
-   "from_t": 1790769600,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "outflow",
-   "ob": "blocked"
-  },
-  {
    "coin": "BTC",
    "kind": "shift",
    "side": "long",
