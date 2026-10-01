@@ -42,3 +42,4 @@ alert_utc,resolved_utc,coin,kind,side,grade,va_state,va_fit,target_src,entry,sto
 2026-09-30 12:28,2026-10-01 01:00,Gold,shift,long,5/7,,,,4218.2998046875,4172.440678531178,4355.877183156468,loss,-1.0,0.715,1.066,12.5,outflow,blocked
 2026-09-30 04:00,2026-10-01 05:00,AAVE,shift,short,5/7,,,,159.52,167.72778923603616,134.89663229189156,loss,-1.0,0.253,1.094,25.0,heavy outflow,blocked
 2026-09-30 16:02,2026-10-01 06:00,Silver,grade-watch,short,B+,probe_down,no fit,level,60.625,61.659737486382056,57.16999944051107,loss,-1.0,0.353,1.087,14.0,heavy outflow,none
+2026-09-28 04:00,2026-10-01 17:00,ZEC,shift,short,5/7,,,,1555.64,1629.3292571708448,1334.5722284874657,win,3.0,3.041,0.602,85.0,neutral,in-against

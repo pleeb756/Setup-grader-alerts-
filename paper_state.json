@@ -483,6 +483,50 @@
    "flow_with": true,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "impulse",
+   "side": "short",
+   "stop": 1375.1901467469772,
+   "target": 1276.0697065060458,
+   "score": "-",
+   "key": "ZEC|impulse|1790870400",
+   "coin": "ZEC",
+   "t": 1790874000,
+   "entry": 1342.15,
+   "adx": 16.2,
+   "adx25": false,
+   "aligned": false,
+   "va": "imbalance_down",
+   "va_with": true,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": false
+  },
+  {
+   "side": "long",
+   "stop": 1318.0998532530227,
+   "kind": "impulse_fade",
+   "target": 1361.75,
+   "score": "-",
+   "key": "ZEC|fade|1790870400",
+   "coin": "ZEC",
+   "t": 1790874000,
+   "entry": 1342.15,
+   "adx": 16.2,
+   "adx25": false,
+   "aligned": true,
+   "va": "imbalance_down",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -530,6 +574,8 @@
   "Platinum|shift|1790841600|long": 1790857633.0967476,
   "NEAR|shift|1790856000|short": 1790870416.465065,
   "WLD|shift|1790856000|short": 1790870416.465065,
-  "Palladium|breakout|1790856000": 1790870416.465065
+  "Palladium|breakout|1790856000": 1790870416.465065,
+  "ZEC|impulse|1790870400": 1790874117.154406,
+  "ZEC|fade|1790870400": 1790874117.154406
  }
 }

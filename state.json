@@ -195,22 +195,6 @@
    "ob": "blocked"
   },
   {
-   "coin": "ZEC",
-   "kind": "shift",
-   "side": "short",
-   "grade": "5/7",
-   "entry": 1555.64,
-   "stop": 1629.3292571708448,
-   "target": 1334.5722284874657,
-   "t": 1790568033.1011684,
-   "from_t": 1790568000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "in-against"
-  },
-  {
    "coin": "ADA",
    "kind": "shift",
    "side": "short",
@@ -639,9 +623,9 @@
   "sent": 1790645521.3130271
  },
  "ZEC_imp": {
-  "bar": 1790643600,
+  "bar": 1790870400,
   "side": "short",
-  "sent": 1790649017.803902
+  "sent": 1790874074.8912754
  },
  "DOGE_ms": {
   "bar": 1790539200,
