@@ -417,6 +417,28 @@
    "flow_with": false,
    "solo": true,
    "best": true
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 1707.0145935395942,
+   "target": 1844.5563170374674,
+   "score": "5/7",
+   "key": "Platinum|shift|1790841600|long",
+   "coin": "Platinum",
+   "t": 1790856000,
+   "entry": 1741.4000244140625,
+   "adx": 25.5,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -460,6 +482,7 @@
   "VVV|shift|1790769600|long": 1790784185.1218305,
   "Silver|breakout|1790769600": 1790784185.1218305,
   "Silver|grade|1790769600|short": 1790784185.1218305,
-  "HYPE|shift|1790769600|long": 1790785451.9104888
+  "HYPE|shift|1790769600|long": 1790785451.9104888,
+  "Platinum|shift|1790841600|long": 1790857633.0967476
  }
 }

@@ -490,6 +490,22 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "none"
+  },
+  {
+   "coin": "Platinum",
+   "kind": "shift",
+   "side": "long",
+   "grade": "5/7",
+   "entry": 1741.4000244140625,
+   "stop": 1707.0145935395942,
+   "target": 1844.5563170374674,
+   "t": 1790857584.2159975,
+   "from_t": 1790856000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -739,5 +755,10 @@
   "bar": 1790769600,
   "side": "long",
   "sent": 1790774555.82451
+ },
+ "Platinum_ms": {
+  "bar": 1790841600,
+  "side": "long",
+  "sent": 1790857584.2159975
  }
 }

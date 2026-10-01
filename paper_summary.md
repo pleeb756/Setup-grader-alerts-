@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-22 closed, 19 open. Updated 2026-10-01 12:03 UTC.
+22 closed, 20 open. Updated 2026-10-01 12:27 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -24,6 +24,7 @@ Open paper trades:
 - VVV shift long @ 28.18 (SL 26.46, TP 33.34) since 2026-09-30 16:00 UTC
 - Silver grade short @ 60.62 (SL 61.66, TP 57.17) since 2026-09-30 16:00 UTC
 - HYPE shift long @ 87.72 (SL 84.87, TP 96.28) since 2026-09-30 16:00 UTC
+- Platinum shift long @ 1,741.40 (SL 1,707.01, TP 1,844.56) since 2026-10-01 12:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
