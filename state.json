@@ -508,22 +508,6 @@
    "ob": "in-against"
   },
   {
-   "coin": "Palladium",
-   "kind": "breakout",
-   "side": "short",
-   "grade": "-",
-   "entry": 1182.0,
-   "stop": 1192.416003148782,
-   "target": 1161.167993702436,
-   "t": 1790870376.723778,
-   "from_t": 1790870400,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "none"
-  },
-  {
    "coin": "NEAR",
    "kind": "shift",
    "side": "short",

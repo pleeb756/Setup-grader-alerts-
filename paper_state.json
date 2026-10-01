@@ -505,28 +505,6 @@
    "flow_with": true,
    "solo": true,
    "best": false
-  },
-  {
-   "side": "long",
-   "stop": 1318.0998532530227,
-   "kind": "impulse_fade",
-   "target": 1361.75,
-   "score": "-",
-   "key": "ZEC|fade|1790870400",
-   "coin": "ZEC",
-   "t": 1790874000,
-   "entry": 1342.15,
-   "adx": 16.2,
-   "adx25": false,
-   "aligned": true,
-   "va": "imbalance_down",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "outflow",
-   "flow_with": false,
-   "solo": true,
-   "best": false
   }
  ],
  "seen": {
