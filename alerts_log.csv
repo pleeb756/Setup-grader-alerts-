@@ -287,3 +287,6 @@ utc,coin,side,met,price
 2026-10-02 19:01,DOGE,impulse-short-muted,-,0.0910481
 2026-10-02 19:01,kSHIB,impulse-short-muted,-,0.005578
 2026-10-02 19:01,ADA,impulse-short-muted,-,0.239615
+2026-10-02 19:59,ADA,shift-short-muted,6,0.239535
+2026-10-02 19:59,BNB,shift-short-muted,5,766.38
+2026-10-02 19:59,Platinum,impulse-noadd-short-muted,-,-

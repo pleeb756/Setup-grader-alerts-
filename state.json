@@ -471,9 +471,9 @@
    "flow": "heavy outflow",
    "ob": "none",
    "level": 1707.0,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "cancelled",
+   "add_n": 1,
+   "add_seen": 1790956800
   },
   {
    "coin": "Gold",
@@ -490,54 +490,6 @@
    "target_src": "level",
    "flow": "heavy outflow",
    "ob": "none"
-  },
-  {
-   "coin": "Silver",
-   "kind": "grade-watch",
-   "side": "short",
-   "grade": "B+",
-   "entry": 60.06999969482422,
-   "stop": 61.030166573938274,
-   "target": 57.16999944051107,
-   "t": 1790958029.0903866,
-   "from_t": 1790956800,
-   "va_state": "probe_down",
-   "va_fit": "no fit",
-   "target_src": "level",
-   "flow": "heavy outflow",
-   "ob": "none"
-  },
-  {
-   "coin": "Platinum",
-   "kind": "breakout",
-   "side": "short",
-   "grade": "-",
-   "entry": 1690.9000244140625,
-   "stop": 1708.3696501331478,
-   "target": 1655.9607729758918,
-   "t": 1790958029.0903866,
-   "from_t": 1790956800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "none"
-  },
-  {
-   "coin": "Palladium",
-   "kind": "breakout",
-   "side": "short",
-   "grade": "-",
-   "entry": 1164.0,
-   "stop": 1174.6849577098742,
-   "target": 1142.6300845802516,
-   "t": 1790958029.0903866,
-   "from_t": 1790956800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "near-with"
   },
   {
    "coin": "BTC",
@@ -652,8 +604,8 @@
    "ob": "none",
    "level": 0.241279,
    "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add_n": 1,
+   "add_seen": 1790956800
   }
  ],
  "HYPE": {
@@ -683,7 +635,7 @@
  },
  "VVV": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "1": 1790943881.821534
   }
@@ -712,7 +664,7 @@
  },
  "Gold": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "1": 1790958029.0903866
   }
@@ -799,9 +751,9 @@
   "sent": 1790900868.124045
  },
  "ADA_ms": {
-  "bar": 1790668800,
-  "side": "long",
-  "sent": 1790688190.1423461
+  "bar": 1790956800,
+  "side": "short",
+  "sent": 1790971179.993458
  },
  "Gold_bo": 1790621423.208394,
  "Silver_bo": 1790956761.7838347,
@@ -873,9 +825,9 @@
  },
  "AAVE_bo": 1790928114.7766738,
  "BNB_ms": {
-  "bar": 1790784000,
-  "side": "long",
-  "sent": 1790810257.445043
+  "bar": 1790956800,
+  "side": "short",
+  "sent": 1790971179.993458
  },
  "XRP_imp": {
   "bar": 1790964000,
