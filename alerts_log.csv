@@ -270,3 +270,6 @@ utc,coin,side,met,price
 2026-10-02 12:24,Platinum,shift-short-muted,5,1734.9000244140625
 2026-10-02 13:21,Silver,impulse-long-muted,-,62.05500030517578
 2026-10-02 14:00,WLD,impulse-long-muted,-,0.5784
+2026-10-02 15:59,Silver,breakout-short,-,60.154998779296875
+2026-10-02 15:59,Silver,impulse-short-muted,-,60.154998779296875
+2026-10-02 15:59,Platinum,impulse-short-muted,-,1698.0

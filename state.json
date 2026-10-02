@@ -371,22 +371,6 @@
    "ob": "none"
   },
   {
-   "coin": "Platinum",
-   "kind": "shift",
-   "side": "long",
-   "grade": "5/7",
-   "entry": 1741.4000244140625,
-   "stop": 1707.0145935395942,
-   "target": 1844.5563170374674,
-   "t": 1790857584.2159975,
-   "from_t": 1790856000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "outflow",
-   "ob": "none"
-  },
-  {
    "coin": "NEAR",
    "kind": "shift",
    "side": "short",
@@ -538,6 +522,46 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "Silver",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 60.154998779296875,
+   "stop": 60.480165059855366,
+   "target": 59.50466621817989,
+   "t": 1790956761.7838347,
+   "from_t": 1790956800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none",
+   "level": 60.2599983215332,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "Platinum",
+   "kind": "impulse",
+   "side": "short",
+   "grade": "-",
+   "entry": 1698.0,
+   "stop": 1713.4044448175505,
+   "target": 1667.191110364899,
+   "t": 1790956761.7838347,
+   "from_t": 1790956800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy outflow",
+   "ob": "none",
+   "level": 1707.0,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -686,7 +710,7 @@
   "sent": 1790688190.1423461
  },
  "Gold_bo": 1790621423.208394,
- "Silver_bo": 1790784148.9126585,
+ "Silver_bo": 1790956761.7838347,
  "SUI_ms": {
   "bar": 1790683200,
   "side": "short",
@@ -733,9 +757,9 @@
   "sent": 1790917234.8192377
  },
  "Platinum_imp": {
-  "bar": 1790604000,
+  "bar": 1790953200,
   "side": "short",
-  "sent": 1790608943.8066313
+  "sent": 1790956761.7838347
  },
  "ETH_ms": {
   "bar": 1790712000,
@@ -799,8 +823,8 @@
  "LTC_bo": 1790928114.7766738,
  "VVV_bo": 1790943881.821534,
  "Silver_imp": {
-  "bar": 1790942400,
-  "side": "long",
-  "sent": 1790947302.2719648
+  "bar": 1790953200,
+  "side": "short",
+  "sent": 1790956761.7838347
  }
 }
