@@ -419,28 +419,6 @@
    "best": false
   },
   {
-   "kind": "breakout",
-   "side": "short",
-   "stop": 1192.416003148782,
-   "target": 1161.167993702436,
-   "score": "-",
-   "key": "Palladium|breakout|1790856000",
-   "coin": "Palladium",
-   "t": 1790870400,
-   "entry": 1182.0,
-   "adx": 30.3,
-   "adx25": true,
-   "aligned": true,
-   "va": "imbalance_down",
-   "va_with": true,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "heavy outflow",
-   "flow_with": true,
-   "solo": false,
-   "best": false
-  },
-  {
    "kind": "shift",
    "side": "long",
    "stop": 115.26763530438612,
