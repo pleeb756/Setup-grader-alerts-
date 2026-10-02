@@ -1,6 +1,6 @@
 # Alert outcomes
 
-59 resolved, 32 still open. Updated 2026-10-02 16:21 UTC.
+60 resolved, 31 still open. Updated 2026-10-02 17:20 UTC.
 
 
 Small samples mean little; wait for 30+ per row before changing rules.
@@ -12,7 +12,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
 | grade-watch / B+ | 3 | 33 | -0.47 | -1.4 | 0.68 |
-| impulse / - | 26 | 8 | -0.77 | -20.0 | 0.78 |
+| impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
 | impulse-add / - | 6 | 17 | -0.05 | -0.3 | 1.34 |
 | shift / 5/7 | 16 | 6 | -0.75 | -12.0 | 0.57 |
 | shift / 6/7 | 1 | 0 | -1.00 | -1.0 | 0.87 |
@@ -23,7 +23,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
 | grade-watch / no fit | 3 | 33 | -0.47 | -1.4 | 0.68 |
-| impulse / - | 26 | 8 | -0.77 | -20.0 | 0.78 |
+| impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
 | impulse-add / - | 6 | 17 | -0.05 | -0.3 | 1.34 |
 | shift / - | 17 | 6 | -0.76 | -13.0 | 0.59 |
 
@@ -35,7 +35,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | grade-watch / balance | 1 | 0 | -1.00 | -1.0 | 0.65 |
 | grade-watch / imbalance_down | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | grade-watch / probe_down | 1 | 0 | -1.00 | -1.0 | 0.35 |
-| impulse / - | 26 | 8 | -0.77 | -20.0 | 0.78 |
+| impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
 | impulse-add / - | 6 | 17 | -0.05 | -0.3 | 1.34 |
 | shift / - | 17 | 6 | -0.76 | -13.0 | 0.59 |
 
@@ -46,7 +46,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
 | grade-watch / fib | 1 | 0 | -1.00 | -1.0 | 0.65 |
 | grade-watch / level | 2 | 50 | -0.21 | -0.4 | 0.69 |
-| impulse / - | 26 | 8 | -0.77 | -20.0 | 0.78 |
+| impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
 | impulse-add / - | 6 | 17 | -0.05 | -0.3 | 1.34 |
 | shift / - | 17 | 6 | -0.76 | -13.0 | 0.59 |
 
@@ -61,7 +61,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | grade-watch / neutral | 1 | 0 | -1.00 | -1.0 | 0.65 |
 | grade-watch / with | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | impulse / against | 1 | 0 | -1.00 | -1.0 | 0.00 |
-| impulse / heavy with | 20 | 10 | -0.70 | -14.0 | 0.79 |
+| impulse / heavy with | 21 | 10 | -0.71 | -15.0 | 0.77 |
 | impulse / neutral | 2 | 0 | -1.00 | -2.0 | 1.25 |
 | impulse / with | 3 | 0 | -1.00 | -3.0 | 0.63 |
 | impulse-add / against | 1 | 0 | -1.00 | -1.0 | 0.34 |
@@ -84,7 +84,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
 | impulse / blocked | 5 | 20 | -0.40 | -2.0 | 0.93 |
 | impulse / in-against | 4 | 0 | -1.00 | -4.0 | 0.86 |
-| impulse / none | 13 | 8 | -0.77 | -10.0 | 0.79 |
+| impulse / none | 14 | 7 | -0.79 | -11.0 | 0.75 |
 | impulse-add / blocked | 1 | 100 | +4.67 | +4.7 | 4.78 |
 | impulse-add / in-against | 2 | 0 | -1.00 | -2.0 | 1.04 |
 | impulse-add / none | 3 | 0 | -1.00 | -3.0 | 0.39 |

@@ -509,26 +509,6 @@
    "ob": "none"
   },
   {
-   "coin": "Silver",
-   "kind": "impulse",
-   "side": "short",
-   "grade": "-",
-   "entry": 60.154998779296875,
-   "stop": 60.480165059855366,
-   "target": 59.50466621817989,
-   "t": 1790956761.7838347,
-   "from_t": 1790956800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "none",
-   "level": 60.2599983215332,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
-  },
-  {
    "coin": "Platinum",
    "kind": "impulse",
    "side": "short",
@@ -871,7 +851,7 @@
   "side": "long",
   "sent": 1790688190.1423461
  },
- "review_at": 30,
+ "review_at": 60,
  "Palladium_ms": {
   "bar": 1790740800,
   "side": "long",
