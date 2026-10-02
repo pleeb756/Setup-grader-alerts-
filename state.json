@@ -575,6 +575,26 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "Silver",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 62.05500030517578,
+   "stop": 61.72770325519557,
+   "target": 62.7095944051362,
+   "t": 1790947302.2719648,
+   "from_t": 1790946000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "none",
+   "level": 61.91999816894531,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -834,5 +854,10 @@
  },
  "BTC_bo": 1790928114.7766738,
  "LTC_bo": 1790928114.7766738,
- "VVV_bo": 1790943881.821534
+ "VVV_bo": 1790943881.821534,
+ "Silver_imp": {
+  "bar": 1790942400,
+  "side": "long",
+  "sent": 1790947302.2719648
+ }
 }
