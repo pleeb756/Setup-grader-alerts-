@@ -1,6 +1,6 @@
 # Alert outcomes
 
-60 resolved, 31 still open. Updated 2026-10-02 17:20 UTC.
+61 resolved, 31 still open. Updated 2026-10-02 18:24 UTC.
 
 
 Small samples mean little; wait for 30+ per row before changing rules.
@@ -10,7 +10,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / grade | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
-| breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
+| breakout / - | 8 | 25 | -0.25 | -2.0 | 1.04 |
 | grade-watch / B+ | 3 | 33 | -0.47 | -1.4 | 0.68 |
 | impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
 | impulse-add / - | 6 | 17 | -0.05 | -0.3 | 1.34 |
@@ -21,7 +21,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / va_fit | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
-| breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
+| breakout / - | 8 | 25 | -0.25 | -2.0 | 1.04 |
 | grade-watch / no fit | 3 | 33 | -0.47 | -1.4 | 0.68 |
 | impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
 | impulse-add / - | 6 | 17 | -0.05 | -0.3 | 1.34 |
@@ -31,7 +31,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / va_state | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
-| breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
+| breakout / - | 8 | 25 | -0.25 | -2.0 | 1.04 |
 | grade-watch / balance | 1 | 0 | -1.00 | -1.0 | 0.65 |
 | grade-watch / imbalance_down | 1 | 100 | +0.59 | +0.6 | 1.04 |
 | grade-watch / probe_down | 1 | 0 | -1.00 | -1.0 | 0.35 |
@@ -43,7 +43,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 
 | kind / target_src | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
-| breakout / - | 7 | 29 | -0.14 | -1.0 | 1.12 |
+| breakout / - | 8 | 25 | -0.25 | -2.0 | 1.04 |
 | grade-watch / fib | 1 | 0 | -1.00 | -1.0 | 0.65 |
 | grade-watch / level | 2 | 50 | -0.21 | -0.4 | 0.69 |
 | impulse / - | 27 | 7 | -0.78 | -21.0 | 0.76 |
@@ -55,7 +55,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 | kind / flow_vs | n | win % | avg R | total R | avg MFE R |
 |---|---|---|---|---|---|
 | breakout / heavy with | 4 | 0 | -1.00 | -4.0 | 0.47 |
-| breakout / neutral | 2 | 100 | +2.00 | +4.0 | 2.38 |
+| breakout / neutral | 3 | 67 | +1.00 | +3.0 | 1.74 |
 | breakout / with | 1 | 0 | -1.00 | -1.0 | 1.25 |
 | grade-watch / heavy with | 1 | 0 | -1.00 | -1.0 | 0.35 |
 | grade-watch / neutral | 1 | 0 | -1.00 | -1.0 | 0.65 |
@@ -79,7 +79,7 @@ Small samples mean little; wait for 30+ per row before changing rules.
 |---|---|---|---|---|---|
 | breakout / - | 2 | 0 | -1.00 | -2.0 | 0.50 |
 | breakout / in-against | 1 | 0 | -1.00 | -1.0 | 1.25 |
-| breakout / none | 4 | 50 | +0.50 | +2.0 | 1.41 |
+| breakout / none | 5 | 40 | +0.20 | +1.0 | 1.22 |
 | grade-watch / none | 3 | 33 | -0.47 | -1.4 | 0.68 |
 | impulse / - | 4 | 0 | -1.00 | -4.0 | 0.47 |
 | impulse / blocked | 5 | 20 | -0.40 | -2.0 | 0.93 |

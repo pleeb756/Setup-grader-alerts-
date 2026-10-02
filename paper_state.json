@@ -355,28 +355,6 @@
   {
    "kind": "impulse",
    "side": "long",
-   "stop": 85385.09669619966,
-   "target": 89114.70660760069,
-   "score": "-",
-   "key": "BTC|impulse|1790913600",
-   "coin": "BTC",
-   "t": 1790917200,
-   "entry": 86628.3,
-   "adx": 24.2,
-   "adx25": false,
-   "aligned": true,
-   "va": "imbalance_up",
-   "va_with": true,
-   "ob": "in-against",
-   "ob_ok": false,
-   "flow": "inflow",
-   "flow_with": true,
-   "solo": true,
-   "best": false
-  },
-  {
-   "kind": "impulse",
-   "side": "long",
    "stop": 176.58891802215766,
    "target": 205.60216395568466,
    "score": "-",
@@ -417,28 +395,6 @@
    "flow_with": false,
    "solo": false,
    "best": false
-  },
-  {
-   "kind": "breakout",
-   "side": "long",
-   "stop": 85146.12957865652,
-   "target": 87922.24084268697,
-   "score": "-",
-   "key": "BTC|breakout|1790913600",
-   "coin": "BTC",
-   "t": 1790928000,
-   "entry": 86071.5,
-   "adx": 27.0,
-   "adx25": true,
-   "aligned": true,
-   "va": "imbalance_up",
-   "va_with": true,
-   "ob": "in-against",
-   "ob_ok": false,
-   "flow": "inflow",
-   "flow_with": true,
-   "solo": true,
-   "best": true
   },
   {
    "kind": "breakout",
@@ -548,28 +504,6 @@
    "flow": "neutral",
    "flow_with": false,
    "solo": false,
-   "best": false
-  },
-  {
-   "kind": "impulse",
-   "side": "long",
-   "stop": 0.5650725512842832,
-   "target": 0.6050548974314336,
-   "score": "-",
-   "key": "WLD|impulse|1790946000",
-   "coin": "WLD",
-   "t": 1790949600,
-   "entry": 0.5784,
-   "adx": 19.9,
-   "adx25": false,
-   "aligned": true,
-   "va": "probe_up",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "outflow",
-   "flow_with": false,
-   "solo": true,
    "best": false
   },
   {
@@ -769,6 +703,28 @@
    "flow_with": true,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "grade",
+   "side": "long",
+   "stop": 83788.41988564236,
+   "target": 87389.26666666666,
+   "score": "B+",
+   "key": "BTC|grade|1790942400|long",
+   "coin": "BTC",
+   "t": 1790964000,
+   "entry": 84765.5,
+   "adx": 30.2,
+   "adx25": true,
+   "aligned": true,
+   "va": "imbalance_up",
+   "va_with": true,
+   "ob": "blocked",
+   "ob_ok": false,
+   "flow": "heavy outflow",
+   "flow_with": false,
+   "solo": true,
+   "best": true
   }
  ],
  "seen": {
@@ -845,6 +801,7 @@
   "Gold|grade|1790942400|short": 1790958071.0612106,
   "Silver|grade|1790942400|short": 1790958071.0612106,
   "Platinum|breakout|1790942400": 1790958071.0612106,
-  "Palladium|breakout|1790942400": 1790958071.0612106
+  "Palladium|breakout|1790942400": 1790958071.0612106,
+  "BTC|grade|1790942400|long": 1790965477.4870117
  }
 }

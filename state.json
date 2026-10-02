@@ -18,9 +18,9 @@
  "UNI_side": "long",
  "BTC": {
   "v": 2,
-  "tier": 0,
+  "tier": 1,
   "sent": {
-   "1": 1790607768.5097396
+   "1": 1790965435.2708979
   }
  },
  "ETH": {
@@ -545,22 +545,6 @@
    "ob": "none"
   },
   {
-   "coin": "WLD",
-   "kind": "breakout",
-   "side": "long",
-   "grade": "-",
-   "entry": 0.5751,
-   "stop": 0.5582883095279546,
-   "target": 0.6087233809440906,
-   "t": 1790958029.0903866,
-   "from_t": 1790956800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "none"
-  },
-  {
    "coin": "Gold",
    "kind": "grade-watch",
    "side": "short",
@@ -623,6 +607,22 @@
    "target_src": "",
    "flow": "heavy outflow",
    "ob": "near-with"
+  },
+  {
+   "coin": "BTC",
+   "kind": "grade-watch",
+   "side": "long",
+   "grade": "B+",
+   "entry": 84765.5,
+   "stop": 83788.41988564236,
+   "target": 87389.26666666666,
+   "t": 1790965435.2708979,
+   "from_t": 1790964000,
+   "va_state": "imbalance_up",
+   "va_fit": "fit",
+   "target_src": "level",
+   "flow": "heavy outflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -681,14 +681,14 @@
  },
  "Gold": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "1": 1790958029.0903866
   }
  },
  "Silver": {
   "v": 2,
-  "tier": 1,
+  "tier": 0,
   "sent": {
    "2": 1790593191.1233087,
    "1": 1790958029.0903866
