@@ -67,3 +67,6 @@ alert_utc,resolved_utc,coin,kind,side,grade,va_state,va_fit,target_src,entry,sto
 2026-10-02 16:20,2026-10-02 20:00,Silver,grade-watch,short,B+,probe_down,no fit,level,60.06999969482422,61.030166573938274,57.16999944051107,loss,-1.0,0.016,1.036,3.7,heavy outflow,none
 2026-10-02 16:20,2026-10-02 20:00,Platinum,breakout,short,-,,,,1690.9000244140625,1708.3696501331478,1655.9607729758918,loss,-1.0,0.08,1.236,3.7,heavy outflow,none
 2026-10-02 16:20,2026-10-02 20:00,Palladium,breakout,short,-,,,,1164.0,1174.6849577098742,1142.6300845802516,loss,-1.0,0.0,1.076,3.7,heavy outflow,near-with
+2026-10-02 12:24,2026-10-02 20:00,VVV,grade-watch,long,B+,probe_up,no fit,level,29.985,28.161651157895932,34.619,loss,-1.0,0.158,1.105,7.6,neutral,none
+2026-10-02 12:24,2026-10-02 20:00,VVV,breakout,long,-,,,,29.985,28.235492245614633,33.48401550877073,loss,-1.0,0.165,1.152,7.6,neutral,none
+2026-10-02 15:59,2026-10-02 20:00,Platinum,impulse,short,-,,,,1698.0,1713.4044448175505,1667.191110364899,loss,-1.0,0.552,1.006,4.0,heavy outflow,none
