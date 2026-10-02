@@ -617,28 +617,6 @@
    "best": true
   },
   {
-   "side": "long",
-   "stop": 59.90483326167784,
-   "kind": "impulse_fade",
-   "target": 60.2599983215332,
-   "score": "-",
-   "key": "Silver|fade|1790953200",
-   "coin": "Silver",
-   "t": 1790956800,
-   "entry": 60.154998779296875,
-   "adx": 26.2,
-   "adx25": true,
-   "aligned": false,
-   "va": "probe_down",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "heavy outflow",
-   "flow_with": false,
-   "solo": true,
-   "best": false
-  },
-  {
    "kind": "breakout",
    "side": "short",
    "stop": 60.70033179817753,
