@@ -259,3 +259,8 @@ utc,coin,side,met,price
 2026-10-02 05:00,BTC,impulse-long-muted,-,86628.3
 2026-10-02 05:00,SOL,impulse-long-muted,-,123.45
 2026-10-02 05:00,AAVE,impulse-long-muted,-,186.26
+2026-10-02 08:01,BTC,breakout-long-muted,-,86071.5
+2026-10-02 08:01,BTC,impulse-add-long-muted,-,86071.5
+2026-10-02 08:01,LTC,breakout-long,-,70.2
+2026-10-02 08:01,AAVE,breakout-long-muted,-,183.94
+2026-10-02 08:01,AAVE,impulse-add-long-muted,-,183.94

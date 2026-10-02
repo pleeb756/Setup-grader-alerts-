@@ -418,9 +418,10 @@
    "flow": "heavy inflow",
    "ob": "in-against",
    "level": 85604.0,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790913600,
+   "add_price": 86071.5
   },
   {
    "coin": "AAVE",
@@ -438,9 +439,90 @@
    "flow": "heavy inflow",
    "ob": "none",
    "level": 178.0,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add": "done",
+   "add_n": 1,
+   "add_seen": 1790913600,
+   "add_price": 183.94
+  },
+  {
+   "coin": "BTC",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 86071.5,
+   "stop": 85146.12957865652,
+   "target": 87922.24084268697,
+   "t": 1790928114.7766738,
+   "from_t": 1790928000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "in-against"
+  },
+  {
+   "coin": "BTC",
+   "kind": "impulse-add",
+   "side": "long",
+   "grade": "-",
+   "entry": 86071.5,
+   "stop": 85385.09669619966,
+   "target": 89114.70660760069,
+   "t": 1790928114.7766738,
+   "from_t": 1790928000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "inflow",
+   "ob": "in-against"
+  },
+  {
+   "coin": "LTC",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 70.2,
+   "stop": 68.79816800012325,
+   "target": 73.0036639997535,
+   "t": 1790928114.7766738,
+   "from_t": 1790928000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 183.94,
+   "stop": 174.9787048982928,
+   "target": 201.8625902034144,
+   "t": 1790928114.7766738,
+   "from_t": 1790928000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "none"
+  },
+  {
+   "coin": "AAVE",
+   "kind": "impulse-add",
+   "side": "long",
+   "grade": "-",
+   "entry": 183.94,
+   "stop": 176.58891802215766,
+   "target": 205.60216395568466,
+   "t": 1790928114.7766738,
+   "from_t": 1790928000,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -654,7 +736,7 @@
   "side": "long",
   "sent": 1790774555.82451
  },
- "AAVE_bo": 1790668880.9303176,
+ "AAVE_bo": 1790928114.7766738,
  "BNB_ms": {
   "bar": 1790784000,
   "side": "long",
@@ -695,5 +777,7 @@
   "bar": 1790884800,
   "side": "long",
   "sent": 1790900868.124045
- }
+ },
+ "BTC_bo": 1790928114.7766738,
+ "LTC_bo": 1790928114.7766738
 }

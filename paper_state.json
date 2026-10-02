@@ -527,6 +527,50 @@
    "flow_with": false,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "breakout",
+   "side": "long",
+   "stop": 85146.12957865652,
+   "target": 87922.24084268697,
+   "score": "-",
+   "key": "BTC|breakout|1790913600",
+   "coin": "BTC",
+   "t": 1790928000,
+   "entry": 86071.5,
+   "adx": 27.0,
+   "adx25": true,
+   "aligned": true,
+   "va": "imbalance_up",
+   "va_with": true,
+   "ob": "in-against",
+   "ob_ok": false,
+   "flow": "inflow",
+   "flow_with": true,
+   "solo": true,
+   "best": true
+  },
+  {
+   "kind": "breakout",
+   "side": "long",
+   "stop": 68.79816800012325,
+   "target": 73.0036639997535,
+   "score": "-",
+   "key": "LTC|breakout|1790913600",
+   "coin": "LTC",
+   "t": 1790928000,
+   "entry": 70.2,
+   "adx": 19.6,
+   "adx25": false,
+   "aligned": true,
+   "va": "balance",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "heavy inflow",
+   "flow_with": true,
+   "solo": false,
+   "best": false
   }
  ],
  "seen": {
@@ -583,6 +627,8 @@
   "SOL|impulse|1790913600": 1790917272.8945913,
   "SOL|fade|1790913600": 1790917272.8945913,
   "AAVE|impulse|1790913600": 1790917272.8945913,
-  "AAVE|fade|1790913600": 1790917272.8945913
+  "AAVE|fade|1790913600": 1790917272.8945913,
+  "BTC|breakout|1790913600": 1790928159.9148057,
+  "LTC|breakout|1790913600": 1790928159.9148057
  }
 }

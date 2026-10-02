@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-30 closed, 24 open. Updated 2026-10-02 07:53 UTC.
+30 closed, 26 open. Updated 2026-10-02 08:03 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -29,6 +29,8 @@ Open paper trades:
 - BTC impulse_fade short @ 86,628.30 (SL 87,084.70, TP 85,604.00) since 2026-10-02 05:00 UTC
 - AAVE impulse long @ 186.26 (SL 176.59, TP 205.60) since 2026-10-02 05:00 UTC
 - AAVE impulse_fade short @ 186.26 (SL 188.91, TP 178.00) since 2026-10-02 05:00 UTC
+- BTC breakout long @ 86,071.50 (SL 85,146.13, TP 87,922.24) since 2026-10-02 08:00 UTC
+- LTC breakout long @ 70.20 (SL 68.80, TP 73.00) since 2026-10-02 08:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
