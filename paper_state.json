@@ -595,26 +595,48 @@
    "best": false
   },
   {
-   "side": "short",
-   "stop": 62.642295676689194,
-   "kind": "impulse_fade",
-   "target": 61.91999816894531,
+   "kind": "impulse",
+   "side": "long",
+   "stop": 0.5650725512842832,
+   "target": 0.6050548974314336,
    "score": "-",
-   "key": "Silver|fade|1790942400",
-   "coin": "Silver",
-   "t": 1790946000,
-   "entry": 62.05500030517578,
-   "adx": 25.3,
-   "adx25": true,
+   "key": "WLD|impulse|1790946000",
+   "coin": "WLD",
+   "t": 1790949600,
+   "entry": 0.5784,
+   "adx": 19.9,
+   "adx25": false,
    "aligned": true,
-   "va": "balance",
+   "va": "probe_up",
    "va_with": false,
    "ob": "none",
    "ob_ok": true,
-   "flow": "neutral",
+   "flow": "outflow",
    "flow_with": false,
    "solo": true,
-   "best": true
+   "best": false
+  },
+  {
+   "side": "short",
+   "stop": 0.5933274487157169,
+   "kind": "impulse_fade",
+   "target": 0.5711,
+   "score": "-",
+   "key": "WLD|fade|1790946000",
+   "coin": "WLD",
+   "t": 1790949600,
+   "entry": 0.5784,
+   "adx": 19.9,
+   "adx25": false,
+   "aligned": false,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -679,6 +701,8 @@
   "VVV|breakout|1790928000": 1790942407.0630784,
   "VVV|grade|1790928000|long": 1790942407.0630784,
   "Silver|impulse|1790942400": 1790947344.0248713,
-  "Silver|fade|1790942400": 1790947344.0248713
+  "Silver|fade|1790942400": 1790947344.0248713,
+  "WLD|impulse|1790946000": 1790949645.7834935,
+  "WLD|fade|1790946000": 1790949645.7834935
  }
 }
