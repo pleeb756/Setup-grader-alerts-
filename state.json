@@ -523,6 +523,26 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "none"
+  },
+  {
+   "coin": "VVV",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 29.439,
+   "stop": 28.537938132254034,
+   "target": 31.241123735491932,
+   "t": 1790932866.6957932,
+   "from_t": 1790931600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 28.813,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -696,9 +716,9 @@
   "sent": 1790607768.5097396
  },
  "VVV_imp": {
-  "bar": 1790604000,
-  "side": "short",
-  "sent": 1790607768.5097396
+  "bar": 1790928000,
+  "side": "long",
+  "sent": 1790932866.6957932
  },
  "ADA_imp": {
   "bar": 1790604000,

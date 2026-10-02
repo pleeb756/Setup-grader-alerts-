@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-30 closed, 26 open. Updated 2026-10-02 09:00 UTC.
+31 closed, 27 open. Updated 2026-10-02 09:22 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -14,7 +14,6 @@ Open paper trades:
 - BNB shift long @ 766.50 (SL 753.17, TP 806.48) since 2026-09-29 12:00 UTC
 - XRP shift long @ 1.52 (SL 1.47, TP 1.67) since 2026-09-29 12:00 UTC
 - BTC shift long @ 84,324.20 (SL 83,075.30, TP 88,070.90) since 2026-09-29 12:00 UTC
-- ETH shift short @ 2,673.60 (SL 2,732.05, TP 2,498.26) since 2026-09-29 16:00 UTC
 - Palladium grade short @ 1,229.00 (SL 1,265.97, TP 1,142.17) since 2026-09-29 19:00 UTC
 - LINK shift short @ 14.67 (SL 15.40, TP 12.37) since 2026-09-29 23:00 UTC
 - Gold shift long @ 4,218.30 (SL 4,172.44, TP 4,355.88) since 2026-09-30 12:00 UTC
@@ -31,21 +30,23 @@ Open paper trades:
 - AAVE impulse_fade short @ 186.26 (SL 188.91, TP 178.00) since 2026-10-02 05:00 UTC
 - BTC breakout long @ 86,071.50 (SL 85,146.13, TP 87,922.24) since 2026-10-02 08:00 UTC
 - LTC breakout long @ 70.20 (SL 68.80, TP 73.00) since 2026-10-02 08:00 UTC
+- VVV impulse long @ 29.44 (SL 28.54, TP 31.24) since 2026-10-02 09:00 UTC
+- VVV impulse_fade short @ 29.44 (SL 30.20, TP 28.81) since 2026-10-02 09:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
 
-## ALL (30 signals)
+## ALL (31 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 30 / 17% / -0.74 / -22.3 | 30 / 30% / -0.68 / -20.3 | 30 / 37% / -0.49 / -14.6 |
+| all | 31 / 16% / -0.76 / -23.5 | 31 / 29% / -0.69 / -21.5 | 31 / 35% / -0.51 / -15.7 |
 | adx25 | 12 / 8% / -0.87 / -10.5 | 12 / 8% / -0.97 / -11.7 | 12 / 33% / -0.52 / -6.3 |
 | aligned | 14 / 14% / -0.76 / -10.6 | 14 / 21% / -0.75 / -10.5 | 14 / 36% / -0.45 / -6.3 |
 | va_with | 3 / 0% / -1.26 / -3.8 | 3 / 67% / -0.25 / -0.7 | 3 / 33% / -0.67 / -2.0 |
-| ob_ok | 22 / 23% / -0.60 / -13.2 | 22 / 36% / -0.58 / -12.7 | 22 / 50% / -0.26 / -5.8 |
-| flow_with | 11 / 18% / -0.66 / -7.2 | 11 / 36% / -0.57 / -6.2 | 11 / 36% / -0.51 / -5.6 |
-| solo | 16 / 19% / -0.65 / -10.4 | 16 / 31% / -0.64 / -10.2 | 16 / 31% / -0.55 / -8.8 |
+| ob_ok | 23 / 22% / -0.62 / -14.3 | 23 / 35% / -0.60 / -13.8 | 23 / 48% / -0.30 / -6.9 |
+| flow_with | 12 / 17% / -0.70 / -8.4 | 12 / 33% / -0.61 / -7.4 | 12 / 33% / -0.56 / -6.7 |
+| solo | 17 / 18% / -0.68 / -11.6 | 17 / 29% / -0.67 / -11.3 | 17 / 29% / -0.58 / -9.9 |
 | best | 2 / 50% / +0.26 / +0.5 | 2 / 50% / -0.48 / -1.0 | 2 / 50% / -0.40 / -0.8 |
 
 ## impulse (11 signals)
@@ -87,17 +88,17 @@ Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30
 | solo | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.27 / -1.3 |
 | best | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.40 / -1.4 | 1 / 0% / -1.27 / -1.3 |
 
-## shift (4 signals)
+## shift (5 signals)
 
 | filter | plan | partial | wide |
 |---|---|---|---|
-| all | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.04 / -4.2 |
+| all | 5 / 0% / -1.08 / -5.4 | 5 / 0% / -1.08 / -5.4 | 5 / 0% / -1.05 / -5.3 |
 | adx25 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.04 / -4.2 |
 | aligned | - | - | - |
 | va_with | - | - | - |
-| ob_ok | - | - | - |
-| flow_with | 2 / 0% / -1.04 / -2.1 | 2 / 0% / -1.04 / -2.1 | 2 / 0% / -1.03 / -2.1 |
-| solo | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.06 / -4.3 | 4 / 0% / -1.04 / -4.2 |
+| ob_ok | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.13 / -1.1 | 1 / 0% / -1.09 / -1.1 |
+| flow_with | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.07 / -3.2 | 3 / 0% / -1.05 / -3.1 |
+| solo | 5 / 0% / -1.08 / -5.4 | 5 / 0% / -1.08 / -5.4 | 5 / 0% / -1.05 / -5.3 |
 | best | - | - | - |
 
 ## grade (1 signals)
@@ -113,5 +114,5 @@ Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30
 | solo | - | - | - |
 | best | - | - | - |
 
-All signals, partial management: profit factor 0.09, max drawdown 19.3R ($39).
+All signals, partial management: profit factor 0.09, max drawdown 20.4R ($41).
 
