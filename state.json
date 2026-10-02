@@ -179,22 +179,6 @@
    "flow": "inflow"
   },
   {
-   "coin": "SOL",
-   "kind": "shift",
-   "side": "short",
-   "grade": "5/7",
-   "entry": 119.8,
-   "stop": 123.23317951612924,
-   "target": 109.50046145161227,
-   "t": 1790568033.1011684,
-   "from_t": 1790568000,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "blocked"
-  },
-  {
    "coin": "ADA",
    "kind": "shift",
    "side": "short",
@@ -307,42 +291,6 @@
    "ob": "none"
   },
   {
-   "coin": "AAVE",
-   "kind": "breakout",
-   "side": "long",
-   "grade": "-",
-   "entry": 163.75,
-   "stop": 154.8130522003899,
-   "target": 181.6238955992202,
-   "t": 1790668880.9303176,
-   "from_t": 1790668800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "neutral",
-   "ob": "none"
-  },
-  {
-   "coin": "AAVE",
-   "kind": "impulse",
-   "side": "long",
-   "grade": "-",
-   "entry": 163.75,
-   "stop": 156.28652610019495,
-   "target": 178.6769477996101,
-   "t": 1790668880.9303176,
-   "from_t": 1790668800,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy inflow",
-   "ob": "none",
-   "level": 157.57,
-   "add": "cancelled",
-   "add_n": 3,
-   "add_seen": 1790697600
-  },
-  {
    "coin": "Palladium",
    "kind": "grade-watch",
    "side": "short",
@@ -439,22 +387,6 @@
    "ob": "none"
   },
   {
-   "coin": "WLD",
-   "kind": "shift",
-   "side": "short",
-   "grade": "5/7",
-   "entry": 0.4881,
-   "stop": 0.5271147555124659,
-   "target": 0.3710557334626021,
-   "t": 1790870376.723778,
-   "from_t": 1790870400,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy outflow",
-   "ob": "in-against"
-  },
-  {
    "coin": "NEAR",
    "kind": "shift",
    "side": "short",
@@ -469,6 +401,66 @@
    "target_src": "",
    "flow": "neutral",
    "ob": "blocked"
+  },
+  {
+   "coin": "BTC",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 86628.3,
+   "stop": 85385.09669619966,
+   "target": 89114.70660760069,
+   "t": 1790917234.8192377,
+   "from_t": 1790917200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "in-against",
+   "level": 85604.0,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "SOL",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 123.45,
+   "stop": 122.25284832091691,
+   "target": 125.84430335816619,
+   "t": 1790917234.8192377,
+   "from_t": 1790917200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 122.79,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
+  },
+  {
+   "coin": "AAVE",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 186.26,
+   "stop": 176.58891802215766,
+   "target": 205.60216395568466,
+   "t": 1790917234.8192377,
+   "from_t": 1790917200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 178.0,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -579,9 +571,9 @@
   "sent": 1790913653.7052126
  },
  "SOL_imp": {
-  "bar": 1790769600,
+  "bar": 1790913600,
   "side": "long",
-  "sent": 1790774555.82451
+  "sent": 1790917234.8192377
  },
  "SUI_imp": {
   "bar": 1790492400,
@@ -657,9 +649,9 @@
   "sent": 1790607768.5097396
  },
  "AAVE_imp": {
-  "bar": 1790665200,
+  "bar": 1790913600,
   "side": "long",
-  "sent": 1790668880.9303176
+  "sent": 1790917234.8192377
  },
  "Platinum_imp": {
   "bar": 1790604000,
@@ -705,9 +697,9 @@
   "sent": 1790771318.5609062
  },
  "BTC_imp": {
-  "bar": 1790769600,
+  "bar": 1790913600,
   "side": "long",
-  "sent": 1790774555.82451
+  "sent": 1790917234.8192377
  },
  "DOGE_imp": {
   "bar": 1790769600,

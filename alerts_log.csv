@@ -256,3 +256,6 @@ utc,coin,side,met,price
 2026-10-02 00:27,Platinum,shift-long-muted,5,1736.199951171875
 2026-10-02 04:00,HYPE,shift-long-muted,6,88.91
 2026-10-02 04:36,LTC,shift-long-muted,5,68.84
+2026-10-02 05:00,BTC,impulse-long-muted,-,86628.3
+2026-10-02 05:00,SOL,impulse-long-muted,-,123.45
+2026-10-02 05:00,AAVE,impulse-long-muted,-,186.26
