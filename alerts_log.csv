@@ -273,3 +273,10 @@ utc,coin,side,met,price
 2026-10-02 15:59,Silver,breakout-short,-,60.154998779296875
 2026-10-02 15:59,Silver,impulse-short-muted,-,60.154998779296875
 2026-10-02 15:59,Platinum,impulse-short-muted,-,1698.0
+2026-10-02 16:20,XRP,shift-short-muted,5,1.50623
+2026-10-02 16:20,VVV,impulse-add-long-muted,-,29.351
+2026-10-02 16:20,WLD,breakout-long,-,0.5751
+2026-10-02 16:20,Gold,short,B+ 4/5 wait muted,4156.10009765625
+2026-10-02 16:20,Silver,short,B+ 4/5 wait muted,60.06999969482422
+2026-10-02 16:20,Platinum,breakout-short,-,1690.9000244140625
+2026-10-02 16:20,Palladium,breakout-short-muted,-,1164.0
