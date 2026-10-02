@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-25 closed, 22 open. Updated 2026-10-01 23:57 UTC.
+25 closed, 23 open. Updated 2026-10-02 00:28 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -27,6 +27,7 @@ Open paper trades:
 - WLD shift short @ 0.48810 (SL 0.52711, TP 0.37106) since 2026-10-01 16:00 UTC
 - Palladium breakout short @ 1,182.00 (SL 1,192.42, TP 1,161.17) since 2026-10-01 16:00 UTC
 - ZEC impulse short @ 1,342.15 (SL 1,375.19, TP 1,276.07) since 2026-10-01 17:00 UTC
+- SOL shift long @ 118.39 (SL 115.27, TP 127.76) since 2026-10-02 00:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 

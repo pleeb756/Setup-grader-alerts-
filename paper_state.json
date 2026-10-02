@@ -483,6 +483,28 @@
    "flow_with": true,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "long",
+   "stop": 115.26763530438612,
+   "target": 127.75709408684166,
+   "score": "5/7",
+   "key": "SOL|shift|1790884800|long",
+   "coin": "SOL",
+   "t": 1790899200,
+   "entry": 118.39,
+   "adx": 19.0,
+   "adx25": false,
+   "aligned": true,
+   "va": "balance",
+   "va_with": false,
+   "ob": "near-with",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -532,6 +554,7 @@
   "WLD|shift|1790856000|short": 1790870416.465065,
   "Palladium|breakout|1790856000": 1790870416.465065,
   "ZEC|impulse|1790870400": 1790874117.154406,
-  "ZEC|fade|1790870400": 1790874117.154406
+  "ZEC|fade|1790870400": 1790874117.154406,
+  "SOL|shift|1790884800|long": 1790900903.8240366
  }
 }
