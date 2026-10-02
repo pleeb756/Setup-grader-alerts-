@@ -541,8 +541,40 @@
    "ob": "none",
    "level": 28.813,
    "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add_n": 1,
+   "add_seen": 1790928000
+  },
+  {
+   "coin": "VVV",
+   "kind": "grade-watch",
+   "side": "long",
+   "grade": "B+",
+   "entry": 29.985,
+   "stop": 28.161651157895932,
+   "target": 34.619,
+   "t": 1790943881.821534,
+   "from_t": 1790942400,
+   "va_state": "probe_up",
+   "va_fit": "no fit",
+   "target_src": "level",
+   "flow": "neutral",
+   "ob": "none"
+  },
+  {
+   "coin": "VVV",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 29.985,
+   "stop": 28.235492245614633,
+   "target": 33.48401550877073,
+   "t": 1790943881.821534,
+   "from_t": 1790942400,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "neutral",
+   "ob": "none"
   }
  ],
  "HYPE": {
@@ -572,8 +604,10 @@
  },
  "VVV": {
   "v": 2,
-  "tier": 0,
-  "sent": {}
+  "tier": 1,
+  "sent": {
+   "1": 1790943881.821534
+  }
  },
  "ADA": {
   "v": 2,
@@ -794,10 +828,11 @@
   "sent": 1790774555.82451
  },
  "Platinum_ms": {
-  "bar": 1790884800,
-  "side": "long",
-  "sent": 1790900868.124045
+  "bar": 1790928000,
+  "side": "short",
+  "sent": 1790943881.821534
  },
  "BTC_bo": 1790928114.7766738,
- "LTC_bo": 1790928114.7766738
+ "LTC_bo": 1790928114.7766738,
+ "VVV_bo": 1790943881.821534
 }
