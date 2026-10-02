@@ -593,28 +593,6 @@
    "flow_with": false,
    "solo": true,
    "best": false
-  },
-  {
-   "side": "short",
-   "stop": 0.5933274487157169,
-   "kind": "impulse_fade",
-   "target": 0.5711,
-   "score": "-",
-   "key": "WLD|fade|1790946000",
-   "coin": "WLD",
-   "t": 1790949600,
-   "entry": 0.5784,
-   "adx": 19.9,
-   "adx25": false,
-   "aligned": false,
-   "va": "probe_up",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "outflow",
-   "flow_with": true,
-   "solo": true,
-   "best": false
   }
  ],
  "seen": {
