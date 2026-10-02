@@ -423,26 +423,6 @@
    "add_seen": 0
   },
   {
-   "coin": "SOL",
-   "kind": "impulse",
-   "side": "long",
-   "grade": "-",
-   "entry": 123.45,
-   "stop": 122.25284832091691,
-   "target": 125.84430335816619,
-   "t": 1790917234.8192377,
-   "from_t": 1790917200,
-   "va_state": "",
-   "va_fit": "",
-   "target_src": "",
-   "flow": "heavy inflow",
-   "ob": "none",
-   "level": 122.79,
-   "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
-  },
-  {
    "coin": "AAVE",
    "kind": "impulse",
    "side": "long",
