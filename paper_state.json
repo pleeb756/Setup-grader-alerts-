@@ -529,28 +529,6 @@
    "best": false
   },
   {
-   "side": "short",
-   "stop": 124.1571516790831,
-   "kind": "impulse_fade",
-   "target": 122.79,
-   "score": "-",
-   "key": "SOL|fade|1790913600",
-   "coin": "SOL",
-   "t": 1790917200,
-   "entry": 123.45,
-   "adx": 20.8,
-   "adx25": false,
-   "aligned": false,
-   "va": "probe_up",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "neutral",
-   "flow_with": false,
-   "solo": false,
-   "best": false
-  },
-  {
    "kind": "impulse",
    "side": "long",
    "stop": 176.58891802215766,
