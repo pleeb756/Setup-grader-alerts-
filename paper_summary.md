@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-32 closed, 26 open. Updated 2026-10-02 11:50 UTC.
+32 closed, 28 open. Updated 2026-10-02 12:00 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -31,6 +31,8 @@ Open paper trades:
 - LTC breakout long @ 70.20 (SL 68.80, TP 73.00) since 2026-10-02 08:00 UTC
 - VVV impulse long @ 29.44 (SL 28.54, TP 31.24) since 2026-10-02 09:00 UTC
 - VVV impulse_fade short @ 29.44 (SL 30.20, TP 28.81) since 2026-10-02 09:00 UTC
+- VVV breakout long @ 29.98 (SL 28.24, TP 33.48) since 2026-10-02 12:00 UTC
+- VVV grade long @ 29.98 (SL 28.16, TP 34.62) since 2026-10-02 12:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 

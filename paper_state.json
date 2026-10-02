@@ -571,6 +571,50 @@
    "flow_with": true,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "breakout",
+   "side": "long",
+   "stop": 28.235492245614633,
+   "target": 33.48401550877073,
+   "score": "-",
+   "key": "VVV|breakout|1790928000",
+   "coin": "VVV",
+   "t": 1790942400,
+   "entry": 29.985,
+   "adx": 22.4,
+   "adx25": false,
+   "aligned": true,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
+  },
+  {
+   "kind": "grade",
+   "side": "long",
+   "stop": 28.161651157895932,
+   "target": 34.619,
+   "score": "B+",
+   "key": "VVV|grade|1790928000|long",
+   "coin": "VVV",
+   "t": 1790942400,
+   "entry": 29.985,
+   "adx": 22.4,
+   "adx25": false,
+   "aligned": true,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": false,
+   "best": false
   }
  ],
  "seen": {
@@ -631,6 +675,8 @@
   "BTC|breakout|1790913600": 1790928159.9148057,
   "LTC|breakout|1790913600": 1790928159.9148057,
   "VVV|impulse|1790928000": 1790932902.449023,
-  "VVV|fade|1790928000": 1790932902.449023
+  "VVV|fade|1790928000": 1790932902.449023,
+  "VVV|breakout|1790928000": 1790942407.0630784,
+  "VVV|grade|1790928000|long": 1790942407.0630784
  }
 }
