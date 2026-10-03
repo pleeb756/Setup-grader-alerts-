@@ -615,6 +615,50 @@
    "flow_with": false,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "impulse",
+   "side": "long",
+   "stop": 782.2569627926644,
+   "target": 799.7560744146714,
+   "score": "-",
+   "key": "BNB|impulse|1791046800",
+   "coin": "BNB",
+   "t": 1791050400,
+   "entry": 788.09,
+   "adx": 16.5,
+   "adx25": false,
+   "aligned": true,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "in-against",
+   "ob_ok": false,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
+  },
+  {
+   "side": "short",
+   "stop": 793.0230372073356,
+   "kind": "impulse_fade",
+   "target": 784.18,
+   "score": "-",
+   "key": "BNB|fade|1791046800",
+   "coin": "BNB",
+   "t": 1791050400,
+   "entry": 788.09,
+   "adx": 16.5,
+   "adx25": false,
+   "aligned": false,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "in-with",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -707,6 +751,8 @@
   "ADA|shift|1790956800|short": 1790971214.8205113,
   "BTC|shift|1791000000|short": 1791016561.3796241,
   "WLD|impulse|1791021600": 1791025590.2173967,
-  "WLD|fade|1791021600": 1791025590.2173967
+  "WLD|fade|1791021600": 1791025590.2173967,
+  "BNB|impulse|1791046800": 1791052111.0337324,
+  "BNB|fade|1791046800": 1791052111.0337324
  }
 }

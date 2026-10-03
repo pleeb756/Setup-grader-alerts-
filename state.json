@@ -522,6 +522,42 @@
    "target_src": "",
    "flow": "heavy inflow",
    "ob": "near-with"
+  },
+  {
+   "coin": "BTC",
+   "kind": "trend",
+   "side": "long",
+   "grade": "20ema",
+   "entry": 84854.2,
+   "stop": 83664.6455655135,
+   "target": 86638.53165172973,
+   "t": 1791052073.9084072,
+   "from_t": 1791043200,
+   "va_state": "balance",
+   "va_fit": "no fit",
+   "target_src": "trail",
+   "flow": "outflow",
+   "ob": "blocked",
+   "atr": 784.217737945933,
+   "pushed": true
+  },
+  {
+   "coin": "SOL",
+   "kind": "trend",
+   "side": "long",
+   "grade": "20ema",
+   "entry": 119.69,
+   "stop": 116.64537831939793,
+   "target": 124.25693252090309,
+   "t": 1791052073.9084072,
+   "from_t": 1791043200,
+   "va_state": "balance",
+   "va_fit": "no fit",
+   "target_src": "trail",
+   "flow": "outflow",
+   "ob": "none",
+   "atr": 1.8984867224082937,
+   "pushed": true
   }
  ],
  "HYPE": {
@@ -789,5 +825,49 @@
   "side": "short",
   "sent": 1790956761.7838347
  },
- "Platinum_bo": 1790958029.0903866
+ "Platinum_bo": 1790958029.0903866,
+ "ETH_watch": {
+  "side": "long",
+  "sent": 1791052073.9084072
+ },
+ "SUI_watch": {
+  "side": "long",
+  "sent": 1791052073.9084072
+ },
+ "LTC_watch": {
+  "side": "long",
+  "sent": 1791052073.9084072
+ },
+ "WLD_watch": {
+  "side": "long",
+  "sent": 1791052073.9084072
+ },
+ "AAVE_watch": {
+  "side": "long",
+  "sent": 1791052073.9084072
+ },
+ "Gold_watch": {
+  "side": "short",
+  "sent": 1791052073.9084072
+ },
+ "Silver_watch": {
+  "side": "short",
+  "sent": 1791052073.9084072
+ },
+ "Platinum_watch": {
+  "side": "short",
+  "sent": 1791052073.9084072
+ },
+ "Palladium_watch": {
+  "side": "short",
+  "sent": 1791052073.9084072
+ },
+ "BTC_tp": {
+  "bar": 1791028800,
+  "sent": 1791052073.9084072
+ },
+ "SOL_tp": {
+  "bar": 1791028800,
+  "sent": 1791052073.9084072
+ }
 }

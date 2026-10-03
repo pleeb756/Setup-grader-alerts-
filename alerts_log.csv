@@ -304,3 +304,14 @@ utc,coin,side,met,price
 2026-10-03 08:35,BTC,shift-short-muted,5,84542.0
 2026-10-03 11:05,WLD,impulse-long-muted,-,0.5982
 2026-10-03 13:39,WLD,breakout-long,-,0.6041
+2026-10-03 18:27,ETH,watch-long,20ema,2681.1
+2026-10-03 18:27,SUI,watch-long,20ema,1.1769
+2026-10-03 18:27,LTC,watch-long,20ema,69.6
+2026-10-03 18:27,WLD,watch-long,20ema,0.5977
+2026-10-03 18:27,AAVE,watch-long,retest,178.9
+2026-10-03 18:27,Gold,watch-short,20ema,4162.2998046875
+2026-10-03 18:27,Silver,watch-short,20ema,60.415000915527344
+2026-10-03 18:27,Platinum,watch-short,20ema,1700.0
+2026-10-03 18:27,Palladium,watch-short,20ema,1172.199951171875
+2026-10-03 18:27,BTC,trend-long,20ema,84854.2
+2026-10-03 18:27,SOL,trend-long,20ema,119.69
