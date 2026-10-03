@@ -507,6 +507,22 @@
    "target_src": "",
    "flow": "heavy outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "VVV",
+   "kind": "shift",
+   "side": "short",
+   "grade": "6/7",
+   "entry": 27.77,
+   "stop": 29.47685900479371,
+   "target": 22.64942298561887,
+   "t": 1790995443.7365236,
+   "from_t": 1790985600,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "outflow",
+   "ob": "blocked"
   }
  ],
  "HYPE": {
@@ -631,9 +647,9 @@
   "sent": 1790967706.350695
  },
  "VVV_ms": {
-  "bar": 1790769600,
-  "side": "long",
-  "sent": 1790784148.9126585
+  "bar": 1790971200,
+  "side": "short",
+  "sent": 1790995443.7365236
  },
  "WLD_bo": 1790958029.0903866,
  "LTC_imp": {
