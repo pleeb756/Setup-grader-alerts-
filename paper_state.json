@@ -549,6 +549,28 @@
    "flow_with": true,
    "solo": false,
    "best": false
+  },
+  {
+   "kind": "shift",
+   "side": "short",
+   "stop": 85854.5042305095,
+   "target": 80604.48730847152,
+   "score": "5/7",
+   "key": "BTC|shift|1791000000|short",
+   "coin": "BTC",
+   "t": 1791014400,
+   "entry": 84542.0,
+   "adx": 26.4,
+   "adx25": true,
+   "aligned": false,
+   "va": "balance",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "outflow",
+   "flow_with": true,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -638,6 +660,7 @@
   "ADA|impulse|1790964000": 1790967743.0361834,
   "ADA|fade|1790964000": 1790967743.0361834,
   "ETH|shift|1790956800|short": 1790971214.8205113,
-  "ADA|shift|1790956800|short": 1790971214.8205113
+  "ADA|shift|1790956800|short": 1790971214.8205113,
+  "BTC|shift|1791000000|short": 1791016561.3796241
  }
 }

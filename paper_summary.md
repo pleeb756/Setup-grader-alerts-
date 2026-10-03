@@ -2,7 +2,7 @@
 
 Risk $2/trade, fees 12 bps/side, slippage 5 bps. R is net of costs. Win = net R > 0.
 
-62 closed, 25 open. Updated 2026-10-03 08:21 UTC.
+62 closed, 26 open. Updated 2026-10-03 08:36 UTC.
 
 Open paper trades:
 - LTC shift short @ 69.21 (SL 72.15, TP 60.39) since 2026-09-29 00:00 UTC
@@ -30,6 +30,7 @@ Open paper trades:
 - kSHIB impulse short @ 0.00558 (SL 0.00571, TP 0.00532) since 2026-10-02 19:00 UTC
 - ETH shift short @ 2,667.79 (SL 2,726.09, TP 2,492.88) since 2026-10-02 20:00 UTC
 - ADA shift short @ 0.23953 (SL 0.25115, TP 0.20469) since 2026-10-02 20:00 UTC
+- BTC shift short @ 84,542.00 (SL 85,854.50, TP 80,604.49) since 2026-10-03 08:00 UTC
 
 Cells: n / win% / avg R / total R. Look for rows that stay positive with n >= 30.
 
