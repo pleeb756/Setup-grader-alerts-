@@ -1,50 +1,47 @@
 """
-A+ Setup Grader - alert runner for GitHub Actions.
-Grades each coin with the same rules as the browser grader, using closed
-Kraken candles: five scored checks (level, confirmations, R:R, volume, clean
-price action), daily trend as context only, and the RSI re-entry gate deciding
-Actionable vs Wait. Sends a phone push (ntfy) when a coin grades B+ or better
-("setup graded, waiting on RSI") or turns Actionable (grade plus RSI gate).
-Also flags 4H breakouts, 1H impulse breakouts (one outsized, high-volume bar that
-closes through the recent range, caught without waiting for the 4H close), and
-momentum shifts, where 5m and 15m flip against the 4H trend with divergence and
-money-flow confluence pointing to a 4H cross.
+A+ Setup Grader - alert runner for GitHub Actions (v3: trend-pullback engine).
 
-Scaled impulse entries: an impulse alert is a STARTER (half size), with the stop for the
-full position set below the broken level. The second half is signalled (✅ ADD) on the
-first closed 4H bar within IMP_ADD_BARS that closes beyond the level at a price no worse
-than the starter entry. A 4H close back inside the range, or no pullback in time, cancels
-the add. Starter and add are tracked separately as "impulse" and "impulse-add".
+v3 replaces the breakout / impulse / momentum-shift / pullback-grade alerts. Their tracked
+outcomes (80 trades, 9% wins, -56.7R) showed entries after the move was spent and stops
+inside normal noise. The one live setup is now a trend pullback:
 
-Value area: each grade is tagged with the market state from a 4H volume profile
-(balance, imbalance up/down, or an unaccepted probe) and whether the setup fits
-that state. Info only unless VA_GATE=1, which also requires a fit for Actionable.
+  1. Daily trend: close above the daily 50 EMA, 20 EMA above the 50, and the 50 rising
+     (mirror for shorts). No daily trend, no trade.
+  2. 4H stack: 4H 20 EMA on the trend side of the 4H 50 EMA.
+  3. Not choppy: 4H choppiness index <= CHOP_GATE and 4H ADX >= ADX_MIN.
+  4. Pullback: within the last PB_BARS 4H bars price came back to the 4H 20 EMA, or retested
+     a 20-bar range level it broke in the last RETEST_WITHIN bars. A close more than
+     PB_FLOOR_ATR beyond the 4H 50 EMA means the trend broke and cancels the setup.
+  5. Trigger: a closed 4H reclaim candle (closes in trend direction, beyond the prior bar's
+     extreme and the 20 EMA, in the outer half of its range). In the zone without a trigger
+     sends a WATCH push instead.
+  6. Vetoes: entry more than MAX_EXT_ATR from the pullback zone (chasing), stop wider than
+     MAX_STOP_ATR, 4H RSI overheated, heavy money flow already in the trade direction
+     (the old outcomes' worst bucket), or perp funding crowded on the trade side.
 
-Money flow: every alert carries a Flow line from the last closed 4H bar. Direction
-comes from CMF (with OBV vs its EMA as a cross-check); HEAVY means that bar's volume
-was FLOW_VOL_MULT x the 20-bar average and it closed in the direction of the flow.
-Impulse alerts use 1H flow instead, since the 4H bar holding the impulse hasn't closed.
-Info only, logged to outcomes.csv so it can be judged like the value-area tag.
+Stops sit beyond the pullback's swing extreme plus STOP_BUF_ATR, never closer than
+MIN_STOP_ATR x 4H ATR. Size each trade to a fixed dollar risk (set RISK_USD to see the
+quantity in the push). Exits: half off at TP1_R, stop to entry, and the runner trails a
+chandelier stop TRAIL_ATR x 4H ATR behind the best price since entry. The runner sends
+pushes for TP1, each stop move of TRAIL_PUSH_ATR or more, and the close.
 
-Order blocks (info only): 4H zones from the last opposite-colored candle before a
-displacement candle (body >= OB_DISP_ATR x ATR) that closed through it. Zones stay live
-until a 4H close through their far side, and retire after OB_MAX_TESTS separate
-revisits (a zone price keeps returning to is a range, not an order block). Each alert
-gets an OB line and an ob tag
-(in-with, in-against, blocked, near-with, none) logged to outcomes.csv, so whether
-order blocks add an edge can be judged from results before they touch the grade.
+Funding comes from Kraken Futures public historical funding (relative rate, annualized).
+Metals and any coin without a Kraken perp simply skip that check.
 
-Push rules (from the 30-day paper backtest, 240 simulated trades): only breakouts showed
-an edge, and only when the entry was not into an opposing order block and it was the
-first breakout of its direction in the run. So by default only those breakouts push to
-the phone, with "hold to TP" (partials cut breakout winners). Impulses (-0.50R/trade),
-momentum shifts and grades are still computed, logged ("-muted" in alerts_log.csv) and
-tracked in outcomes.csv, but not pushed. Env toggles: IMP_PUSH, MS_PUSH, GRADE_PUSH
-(1 = push again), BO_REQUIRE_OB, BO_SOLO (0 = drop that breakout filter).
+At most MAX_PUSH_PER_SIDE entries per direction push per run (strongest ADX first); in a
+broad move the rest are the same market bet. Muted entries are still tracked.
 
-Outcomes: every graded or momentum-shift alert with a stop and target is tracked
-on closed 1H bars until stop, target, or MAX_HOLD_HRS, then written to
-outcomes.csv and summarized in outcomes_summary.md. Run with --report to print it.
+Outcomes: trend trades are replayed on closed 1H bars with the same TP1 + trail rules and
+written to outcomes.csv (kind "trend", grade = pullback zone, target = TP1). Older rows and
+any still-open legacy trades are kept and resolved with their original fixed targets.
+
+Backtest: `python grader.py --backtest` replays the last BT_DAYS of 4H bars with fees and
+slippage and compares three exit plans on the same entries: plan (TP1 + trail), fixed2R
+(whole position to 2R), and trail_only (no partial). Report goes to the Actions summary.
+
+The legacy signal functions (grade, breakout, impulse, momentum_shift, order blocks,
+value area, money flow) stay in this file because papertrade.py imports them; they no
+longer send alerts or track outcomes here.
 """
 import json, math, os, time, sys
 from datetime import datetime, timezone
@@ -66,68 +63,86 @@ WATCHLIST = {  # display name -> data source (Kalshi perps only)
     "Gold": "yf:GC=F", "Silver": "yf:SI=F", "Platinum": "yf:PL=F", "Palladium": "yf:PA=F",
 }
 # Kalshi quotes kSHIB per 1,000 SHIB; scale Kraken prices so alerts match the app.
-# Grades are unaffected: every check uses ratios, so scaling price changes nothing.
 PRICE_MULT = {"SHIBUSD": 1000}
-MIN_RR = 2.0            # minimum reward:risk
-BO_LOOKBACK = 20        # 4H bars for the breakout range
-BO_VOL_MULT = 1.5       # breakout bar volume vs 20-bar average
-BO_COOLDOWN_HRS = 12
-BO_RSI_MAX = float(os.environ.get("BO_RSI_MAX", "85"))   # 4H RSI cap for breakout longs (shorts mirror: 100 - this)
-BO_STOP_ATR = 0.5       # breakout stop: this many 4H ATRs back inside the broken level
-BO_TARGET_R = 2.0       # breakout order TP in R
-# Impulse breakouts — one outsized 1H bar through the range, alerted without waiting on the 4H close
-IMP_LOOKBACK = int(os.environ.get("IMP_LOOKBACK", "48"))        # 1H bars for the range (48 = 2 days)
-IMP_ATR_MULT = float(os.environ.get("IMP_ATR_MULT", "2.0"))     # bar range vs 1H ATR before the bar
-IMP_VOL_MULT = float(os.environ.get("IMP_VOL_MULT", "3.0"))     # bar volume vs 20-bar 1H average
-IMP_CLOSE_POS = 0.6     # close in the outer 40% of the bar (not a wick that gave it all back)
-IMP_TARGET_R = float(os.environ.get("IMP_TARGET_R", "2.0"))     # impulse order TP in R
-IMP_EXT_ATR = 1.5       # warn when the close is this many 4H ATRs past the broken level
-IMP_STOP_ATR = 0.25     # full-position stop: this many 4H ATRs beyond the broken level
-IMP_ADD_BARS = int(os.environ.get("IMP_ADD_BARS", "3"))  # 4H closes to wait for the add (3 = 12h)
-IMP_COOLDOWN_HRS = int(os.environ.get("IMP_COOLDOWN_HRS", "6"))
-# Momentum shift settings — lower timeframes flip first, 4H confirmed as about to follow
-MS_MIN = int(os.environ.get("MS_MIN", "5"))              # confluence factors needed (of 7)
-MS_MAX_BARS = float(os.environ.get("MS_MAX_BARS", "6"))  # projected 4H bars until the EMA cross
+
+# ----- trend-pullback engine (live alerts) -----
+D_SLOPE_BARS = 5                                              # daily 50 EMA must rise over this many days
+ADX_MIN = float(os.environ.get("ADX_MIN", "20"))              # 4H ADX floor
+CHOP_GATE = float(os.environ.get("CHOP_GATE", "61.8"))        # 4H choppiness ceiling
+PB_BARS = int(os.environ.get("PB_BARS", "6"))                 # 4H bars to look back for the pullback
+PB_TOUCH_ATR = 0.25          # a low within this many ATR of the 20 EMA (or retest level) counts as a touch
+PB_FLOOR_ATR = 0.5           # a close this many ATR beyond the 50 EMA = trend broken
+RETEST_RANGE = 20            # 4H bars that define a broken range level
+RETEST_WITHIN = 12           # the break must be this recent (4H bars)
+MAX_EXT_ATR = float(os.environ.get("MAX_EXT_ATR", "1.0"))     # entry this far past the 20 EMA = chasing
+STOP_BUF_ATR = 0.25          # stop buffer beyond the pullback swing
+MIN_STOP_ATR = float(os.environ.get("MIN_STOP_ATR", "1.5"))   # stop never closer than this
+MAX_STOP_ATR = float(os.environ.get("MAX_STOP_ATR", "3.0"))   # skip if the structure stop is wider
+TP1_R = float(os.environ.get("TP1_R", "1.5"))                 # half off here, stop to entry
+TRAIL_ATR = float(os.environ.get("TRAIL_ATR", "3.0"))         # chandelier distance for the runner
+TRAIL_PUSH_ATR = 1.0         # push a stop move once the trail has moved this many ATR
+RSI_HOT = float(os.environ.get("RSI_HOT", "75"))              # 4H RSI veto (shorts: 100 - this)
+FUND_MAX_APR = float(os.environ.get("FUND_MAX_APR", "30"))    # funding %/yr on your side = crowded
+RISK_USD = float(os.environ.get("RISK_USD", "0"))             # >0 shows position size in pushes
+TREND_PUSH = os.environ.get("TREND_PUSH", "1") == "1"
+WATCH_PUSH = os.environ.get("WATCH_PUSH", "1") == "1"
+MAX_PUSH_PER_SIDE = int(os.environ.get("MAX_PUSH_PER_SIDE", "2"))
+WATCH_COOLDOWN_HRS = int(os.environ.get("WATCH_COOLDOWN_HRS", "12"))
+
+# ----- backtest -----
+BT_DAYS = int(os.environ.get("BT_DAYS", "90"))
+BT_FEE_BPS = float(os.environ.get("BT_FEE_BPS", "12"))        # per side
+BT_SLIP_BPS = float(os.environ.get("BT_SLIP_BPS", "5"))       # entry and stop fills
+BT_MODES = ("plan", "fixed2R", "trail_only")
+
+# ----- legacy signal settings (used by papertrade.py's baseline) -----
+MIN_RR = 2.0
+BO_LOOKBACK = 20
+BO_VOL_MULT = 1.5
+BO_RSI_MAX = float(os.environ.get("BO_RSI_MAX", "85"))
+BO_STOP_ATR = 0.5
+BO_TARGET_R = 2.0
+IMP_LOOKBACK = int(os.environ.get("IMP_LOOKBACK", "48"))
+IMP_ATR_MULT = float(os.environ.get("IMP_ATR_MULT", "2.0"))
+IMP_VOL_MULT = float(os.environ.get("IMP_VOL_MULT", "3.0"))
+IMP_CLOSE_POS = 0.6
+IMP_TARGET_R = float(os.environ.get("IMP_TARGET_R", "2.0"))
+IMP_STOP_ATR = 0.25
+MS_MIN = int(os.environ.get("MS_MIN", "5"))
+MS_MAX_BARS = float(os.environ.get("MS_MAX_BARS", "6"))
 MS_ATR_MULT = float(os.environ.get("MS_ATR_MULT", "1.5"))
-MS_COOLDOWN_HRS = int(os.environ.get("MS_COOLDOWN_HRS", "8"))
-COOLDOWN_HRS = 4        # don't repeat the same tier for a coin within this window
-STATE_V = 2             # bump when grading rules change so old tiers reset
+
+STATE_V = 3             # v3 = trend-pullback engine
 STATE_FILE = Path("state.json")
 LOG_FILE = Path("alerts_log.csv")
 OUT_FILE = Path("outcomes.csv")
 SUMMARY_FILE = Path("outcomes_summary.md")
 METALS_FILE = Path("metals.json")   # metal candles for the browser grader (browsers can't read Yahoo)
 
-# Value area (auction market theory) settings
-VA_BARS = int(os.environ.get("VA_BARS", "42"))        # 4H bars in the profile (42 = 7 days)
-VA_ACCEPT = int(os.environ.get("VA_ACCEPT", "3"))     # 4H closes outside value needed for acceptance
-VA_PCT = 0.70                                         # share of volume inside the value area
+# Value area (auction market theory) settings - info only
+VA_BARS = int(os.environ.get("VA_BARS", "42"))
+VA_ACCEPT = int(os.environ.get("VA_ACCEPT", "3"))
+VA_PCT = 0.70
 VA_BINS = 60
-VA_GATE = os.environ.get("VA_GATE", "0") == "1"       # 1 = Actionable also requires a state fit
+VA_GATE = os.environ.get("VA_GATE", "0") == "1"
 
-# Money flow (info only): direction from CMF/OBV, intensity from 4H volume vs its average
-FLOW_VOL_MULT = float(os.environ.get("FLOW_VOL_MULT", "1.5"))  # 4H volume this many x avg = heavy
-FLOW_CMF_MIN = 0.05       # |CMF| under this reads as neutral
-FLOW_SLOPE_BARS = 3       # CMF rising/falling vs this many 4H bars ago
+# Money flow: direction from CMF/OBV, intensity from 4H volume vs its average
+FLOW_VOL_MULT = float(os.environ.get("FLOW_VOL_MULT", "1.5"))
+FLOW_CMF_MIN = 0.05
+FLOW_SLOPE_BARS = 3
 
-# Order blocks (info only): last opposite candle before a 4H displacement candle
-OB_LOOKBACK = int(os.environ.get("OB_LOOKBACK", "120"))       # 4H bars scanned (120 = 20 days)
-OB_DISP_ATR = float(os.environ.get("OB_DISP_ATR", "1.5"))     # displacement body vs prior 4H ATR
-OB_SEARCH = 5           # bars back from the displacement to find the opposite candle
-OB_NEAR_ATR = 1.0       # a supporting zone within this many 4H ATRs behind entry counts as near
-OB_TOL_ATR = 0.1        # tolerance when deciding whether entry sits inside a zone
-OB_MAX_TESTS = int(os.environ.get("OB_MAX_TESTS", "3"))       # retire a zone after this many revisits
+# Order blocks (info only)
+OB_LOOKBACK = int(os.environ.get("OB_LOOKBACK", "120"))
+OB_DISP_ATR = float(os.environ.get("OB_DISP_ATR", "1.5"))
+OB_SEARCH = 5
+OB_NEAR_ATR = 1.0
+OB_TOL_ATR = 0.1
+OB_MAX_TESTS = int(os.environ.get("OB_MAX_TESTS", "3"))
 
 # Outcome tracking
 MAX_HOLD_HRS = int(os.environ.get("MAX_HOLD_HRS", "336"))  # 14 days, then close at market
 
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
-# Which alert types reach the phone (see "Push rules" above). Muted types still log and track.
-IMP_PUSH = os.environ.get("IMP_PUSH", "0") == "1"
-MS_PUSH = os.environ.get("MS_PUSH", "0") == "1"
-GRADE_PUSH = os.environ.get("GRADE_PUSH", "0") == "1"
-BO_REQUIRE_OB = os.environ.get("BO_REQUIRE_OB", "1") == "1"   # skip breakouts into an opposing OB
-BO_SOLO = os.environ.get("BO_SOLO", "1") == "1"               # one breakout push per direction per run
 LOCAL_TZ = ZoneInfo(os.environ.get("ALERT_TZ", "America/Los_Angeles"))  # times shown in alerts
 
 # ---------- data ----------
@@ -726,34 +741,6 @@ def impulse(h1, h4):
             "ext": ext, "rsi4h": float(rsi(h4.c).iloc[-1]), "bar": int(last.t),
             "from_t": int(last.t) + 3600}
 
-def add_check(tr, h4):
-    """Decide the second half of a scaled impulse entry from newly closed 4H bars.
-    Returns ("add", bar), ("cancel", reason) or None (keep waiting). Updates tr in place."""
-    L = tr["side"] == "long"
-    d = 1 if L else -1
-    lvl, entry = tr["level"], tr["entry"]
-    seen = tr.get("add_seen", 0)
-    # 4H bars closing after the impulse bar (a 4H bar that closes with it is the same price)
-    bars = h4[(h4.t + 4 * 3600 > tr["from_t"]) & (h4.t > seen)]
-    for b in bars.itertuples():
-        tr["add_seen"] = int(b.t)
-        tr["add_n"] = tr.get("add_n", 0) + 1
-        if (b.c - lvl) * d <= 0:
-            return "cancel", f"4H closed {fmt(b.c)}, back inside the range (level {fmt(lvl)})"
-        if (b.c - entry) * d <= 0:
-            return "add", b
-        if tr["add_n"] >= IMP_ADD_BARS:
-            return "cancel", (f"no pullback to the starter entry {fmt(entry)} "
-                              f"within {IMP_ADD_BARS} 4H closes")
-    return None
-
-
-def scaled_rr(side, e1, e2, stop, target):
-    """Average entry and reward:risk of the full position after the add."""
-    avg = (e1 + e2) / 2
-    risk, reward = abs(avg - stop), abs(target - avg)
-    return avg, (reward / risk if risk > 0 else NAN)
-
 # ---------- order blocks (info only) ----------
 def order_blocks(h4):
     """Live 4H order blocks. Bullish: last red candle before a green displacement candle that
@@ -982,6 +969,260 @@ def momentum_shift(h4, m15, m5):
             "div": bull_div if d == 1 else bear_div, "bar": int(last.t),
             "from_t": int(last.t) + 4 * 3600}
 
+
+# ---------- perp funding (Kraken Futures, public) ----------
+FUND_URL = "https://futures.kraken.com/derivatives/api/v3/historical-funding-rates"
+FUND_ALIASES = {"XBT": ["XBT", "BTC"], "XDG": ["XDG", "DOGE"], "SHIB": ["SHIB", "1000SHIB"]}
+_fund_cache = {}
+
+
+def funding_history(coin, pair):
+    """Hourly relative funding rates for the coin's Kraken perp, or None (metals, no perp,
+    or the request failed). Columns: t (unix), rel (fraction per funding period)."""
+    if pair.startswith("yf:"):
+        return None
+    if pair in _fund_cache:
+        return _fund_cache[pair]
+    base = pair[:-3] if pair.endswith("USD") else pair
+    names = FUND_ALIASES.get(base, [base])
+    out = None
+    for b in names:
+        try:
+            r = requests.get(FUND_URL, params={"symbol": f"PF_{b}USD"}, timeout=20)
+            rates = (r.json() or {}).get("rates") or []
+            if not rates:
+                continue
+            df = pd.DataFrame(rates)
+            if "relativeFundingRate" not in df or "timestamp" not in df:
+                continue
+            df["t"] = pd.to_datetime(df["timestamp"], utc=True).map(lambda x: int(x.timestamp()))
+            df["rel"] = pd.to_numeric(df["relativeFundingRate"], errors="coerce")
+            out = df[["t", "rel"]].dropna().sort_values("t").reset_index(drop=True)
+            if len(out) >= 2:
+                break
+            out = None
+        except Exception:
+            continue
+    _fund_cache[pair] = out
+    return out
+
+
+def funding_apr(df, T):
+    """Annualized funding in % at time T (positive = longs pay shorts). None if unknown."""
+    if df is None:
+        return None
+    sub = df[df.t <= T]
+    if len(sub) < 2:
+        return None
+    period = sub.t.iloc[-1] - sub.t.iloc[-2]
+    if period <= 0:
+        return None
+    apr = float(sub.rel.iloc[-1]) * (365 * 86400 / period) * 100
+    if not fin(apr) or abs(apr) > 2000:          # sanity guard against a units surprise
+        return None
+    return apr
+
+
+# ---------- trend-pullback engine ----------
+def adx(df, n=14):
+    """Wilder ADX on the last bar (same formula as papertrade.py)."""
+    h, l, c = (df[k].to_numpy(float) for k in ("h", "l", "c"))
+    if len(c) < 2 * n + 2:
+        return NAN
+    up = np.diff(h, prepend=np.nan)
+    dn = -np.diff(l, prepend=np.nan)
+    plus = np.where((up > dn) & (up > 0), up, 0.0)
+    minus = np.where((dn > up) & (dn > 0), dn, 0.0)
+    pc = np.concatenate(([np.nan], c[:-1]))
+    tr = np.nanmax(np.vstack([h - l, np.abs(h - pc), np.abs(l - pc)]), axis=0)
+    a = 1 / n
+    atr_ = pd.Series(tr).ewm(alpha=a, adjust=False).mean()
+    pdi = 100 * pd.Series(plus).ewm(alpha=a, adjust=False).mean() / atr_
+    mdi = 100 * pd.Series(minus).ewm(alpha=a, adjust=False).mean() / atr_
+    dx = 100 * (pdi - mdi).abs() / (pdi + mdi).replace(0, np.nan)
+    return float(dx.ewm(alpha=a, adjust=False).mean().iloc[-1])
+
+
+def daily_trend(d):
+    """+1 uptrend, -1 downtrend, 0 none. Close beyond the 50 EMA, 20 EMA beyond the 50,
+    and the 50 sloping the same way over D_SLOPE_BARS days."""
+    if len(d) < 60:
+        return 0
+    c = d.c
+    e20, e50 = ema(c, 20), ema(c, 50)
+    cn, f, s, s_old = c.iloc[-1], e20.iloc[-1], e50.iloc[-1], e50.iloc[-1 - D_SLOPE_BARS]
+    if cn > s and f > s and s > s_old:
+        return 1
+    if cn < s and f < s and s < s_old:
+        return -1
+    return 0
+
+
+def _retest(h, l, c, a, i, L):
+    """Most recent 20-bar range break in the trend direction within RETEST_WITHIN bars,
+    held on closes since and revisited. Returns (level, swing extreme since the break) or None."""
+    for j in range(i - 1, max(i - RETEST_WITHIN, RETEST_RANGE) - 1, -1):
+        lvl = h[j - RETEST_RANGE:j].max() if L else l[j - RETEST_RANGE:j].min()
+        broke = c[j] > lvl if L else c[j] < lvl
+        if not broke:
+            continue
+        after = slice(j + 1, i + 1)
+        held = (c[after] >= lvl - 0.5 * a[i]).all() if L else (c[after] <= lvl + 0.5 * a[i]).all()
+        touched = (l[after].min() <= lvl + PB_TOUCH_ATR * a[i]) if L \
+            else (h[after].max() >= lvl - PB_TOUCH_ATR * a[i])
+        if held and touched:
+            return lvl, (l[after].min() if L else h[after].max())
+        return None
+    return None
+
+
+def trend_setup(d, h4, fund=None):
+    """Evaluate the trend-pullback setup on the last closed 4H bar.
+
+    Returns None when there is no trend/stack/clean market, else a dict with status:
+      "veto"  - in a pullback with a trigger, but a veto rule failed (reason in "why")
+      "watch" - in the pullback zone, no trigger yet
+      "entry" - all rules pass; entry/stop/tp1 filled in
+    """
+    if len(h4) < 80 or len(d) < 60:
+        return None
+    s = daily_trend(d)
+    if s == 0:
+        return None
+    L = s == 1
+    side = "long" if L else "short"
+    o, h, l, c = (h4[k].to_numpy(float) for k in ("o", "h", "l", "c"))
+    e20 = ema(h4.c, 20).to_numpy()
+    e50 = ema(h4.c, 50).to_numpy()
+    a = atr(h4).to_numpy()
+    i = len(c) - 1
+    A = a[i]
+    if not fin(A) or A <= 0 or (e20[i] - e50[i]) * s <= 0:
+        return None                                       # 4H not stacked with the daily
+    ch = chop_js(_cols(h4))
+    ax = adx(h4)
+    if not (fin(ch) and fin(ax)) or ch > CHOP_GATE or ax < ADX_MIN:
+        return None                                       # choppy or no 4H trend strength
+
+    win = range(i - PB_BARS, i + 1)
+    if any((c[k] < e50[k] - PB_FLOOR_ATR * a[k]) if L else (c[k] > e50[k] + PB_FLOOR_ATR * a[k])
+           for k in win):
+        return None                                       # pullback broke the trend
+    touch_ema = any((l[k] <= e20[k] + PB_TOUCH_ATR * a[k]) if L else (h[k] >= e20[k] - PB_TOUCH_ATR * a[k])
+                    for k in win)
+    rt = None if touch_ema else _retest(h, l, c, a, i, L)
+    if not touch_ema and not rt:
+        return None
+    if touch_ema:
+        zone, zone_txt, ref = "20ema", "4H 20 EMA", float(e20[i])
+        swing = l[win.start:i + 1].min() if L else h[win.start:i + 1].max()
+    else:
+        zone, zone_txt, ref = "retest", f"retest of broken level {fmt(rt[0])}", float(rt[0])
+        swing = rt[1]
+
+    base = {"side": side, "zone": zone, "zone_txt": zone_txt, "adx": ax, "chop": ch,
+            "atr": float(A), "bar": int(h4.t.iloc[-1]), "from_t": int(h4.t.iloc[-1]) + 4 * 3600,
+            "ref": ref, "swing": float(swing), "fund": fund}
+
+    rng = h[i] - l[i]
+    pos = (c[i] - l[i]) / rng if rng > 0 else 0.5
+    trig = (c[i] > o[i] and pos >= 0.5 and c[i] > h[i - 1] and c[i] > e20[i]) if L \
+        else (c[i] < o[i] and pos <= 0.5 and c[i] < l[i - 1] and c[i] < e20[i])
+    stop_est = swing - s * STOP_BUF_ATR * A
+    if not trig:
+        trig_px = max(h[i], e20[i]) if L else min(l[i], e20[i])
+        return {**base, "status": "watch", "trigger": float(trig_px), "stop_est": float(stop_est)}
+
+    entry = float(c[i])
+    ext = (entry - ref) * s / A                           # distance from the zone it bounced off
+    rsi4 = float(rsi(h4.c).iloc[-1])
+    stop = stop_est
+    if (entry - stop) * s < MIN_STOP_ATR * A:
+        stop = entry - s * MIN_STOP_ATR * A
+    risk = (entry - stop) * s
+    base.update({"entry": entry, "stop": float(stop), "risk": float(risk), "ext": ext, "rsi4h": rsi4,
+                 "tp1": entry + s * TP1_R * risk})
+
+    why = None
+    if ext > MAX_EXT_ATR:
+        why = f"extended {ext:.1f} ATR past the {'20 EMA' if zone == '20ema' else 'retest level'}"
+    elif risk > MAX_STOP_ATR * A:
+        why = f"structure stop {risk / A:.1f} ATR away (max {MAX_STOP_ATR:g})"
+    elif (rsi4 > RSI_HOT) if L else (rsi4 < 100 - RSI_HOT):
+        why = f"4H RSI {rsi4:.0f} overheated"
+    else:
+        fl = flow_state(h4)
+        base["flow"] = fl
+        if fl["heavy"] and fl["dir"] == s:
+            why = "heavy money flow already with the trade (late entry)"
+        elif fund is not None and fund * s >= FUND_MAX_APR:
+            why = f"funding {fund:+.0f}%/yr, {side}s crowded"
+    if why:
+        return {**base, "status": "veto", "why": why}
+    return {**base, "status": "entry"}
+
+
+def manage(tr, bars, step, now=None, mode="plan", fee_bps=0.0, slip_bps=0.0):
+    """Replay closed bars after entry with the trade plan. Stop is checked first in every bar
+    (a stop and target in the same bar counts as the stop); the trail is raised after the bar
+    closes, so it applies from the next bar.
+
+    mode: plan (half at TP1_R, stop to entry, trail rest), fixed2R (all at 2R, no trail),
+          trail_only (no partial, trail everything).
+    Returns {done, outcome, r, mfe_r, mae_r, end_t, half, stop}. done=False while open."""
+    L = tr["side"] == "long"
+    s = 1 if L else -1
+    slip, fee = slip_bps / 1e4, fee_bps / 1e4
+    entry = tr["entry"] * (1 + s * slip)
+    stop = tr["stop"]
+    risk = (entry - stop) * s
+    A = tr["atr"]
+    if risk <= 0:
+        return {"done": True, "outcome": "invalid", "r": 0.0, "mfe_r": 0.0, "mae_r": 0.0,
+                "end_t": tr["from_t"], "half": False, "stop": stop}
+    tp1 = entry + s * TP1_R * risk
+    tgt2 = entry + s * 2.0 * risk
+    q, realized, half, best, mfe, mae = 1.0, 0.0, False, entry, 0.0, 0.0
+    outcome, end_t = None, None
+    for b in bars[bars.t >= tr["from_t"]].itertuples():
+        mfe = max(mfe, ((b.h - entry) if L else (entry - b.l)) / risk)
+        mae = max(mae, ((entry - b.l) if L else (b.h - entry)) / risk)
+        if (b.l <= stop) if L else (b.h >= stop):
+            px = stop * (1 - s * slip)
+            realized += q * (px - entry) * s / risk
+            q, end_t = 0.0, b.t + step
+            outcome = "stop"
+            break
+        if mode == "fixed2R":
+            if (b.h >= tgt2) if L else (b.l <= tgt2):
+                realized += q * 2.0
+                q, end_t, outcome = 0.0, b.t + step, "target"
+                break
+        else:
+            if mode == "plan" and not half and ((b.h >= tp1) if L else (b.l <= tp1)):
+                realized += 0.5 * TP1_R
+                q, half = 0.5, True
+                stop = max(stop, entry) if L else min(stop, entry)
+                if (b.l <= entry) if L else (b.h >= entry):      # same bar came back to entry
+                    realized += q * (entry * (1 - s * slip) - entry) * s / risk
+                    q, end_t, outcome = 0.0, b.t + step, "stop"
+                    break
+            best = max(best, b.h) if L else min(best, b.l)
+            trail = best - s * TRAIL_ATR * A
+            stop = max(stop, trail) if L else min(stop, trail)
+        if b.t + step - tr["from_t"] >= MAX_HOLD_HRS * 3600:
+            realized += q * (b.c * (1 - s * slip) - entry) * s / risk
+            q, end_t, outcome = 0.0, b.t + step, "time"
+            break
+    if outcome is None:
+        return {"done": False, "outcome": None, "r": realized, "mfe_r": mfe, "mae_r": mae,
+                "end_t": None, "half": half, "stop": stop}
+    realized -= 2 * fee * entry / risk                        # entry + exit fees, in R
+    label = "win" if realized > 0.05 else "loss" if realized < -0.05 else "breakeven"
+    return {"done": True, "outcome": label, "exit": outcome, "r": realized, "mfe_r": mfe,
+            "mae_r": mae, "end_t": int(end_t), "half": half, "stop": stop}
+
+
 # ---------- outcome tracking ----------
 OUT_COLS = ["alert_utc", "resolved_utc", "coin", "kind", "side", "grade", "va_state", "va_fit",
             "target_src", "entry", "stop", "target", "outcome", "r", "mfe_r", "mae_r", "hours",
@@ -989,7 +1230,7 @@ OUT_COLS = ["alert_utc", "resolved_utc", "coin", "kind", "side", "grade", "va_st
 
 
 def open_trade(state, coin, kind, side, grade_, entry, stop, target, from_t, now,
-               va_state="", va_fit="", target_src="", flow="", ob=""):
+               va_state="", va_fit="", target_src="", flow="", ob="", **extra):
     """Start tracking an alert. One open trade per coin and kind; skip if no stop/target."""
     if stop is None or target is None or not all(fin(x) for x in (entry, stop, target)):
         return
@@ -1002,11 +1243,11 @@ def open_trade(state, coin, kind, side, grade_, entry, stop, target, from_t, now
                    "entry": float(entry), "stop": float(stop), "target": float(target),
                    "t": now, "from_t": int(from_t), "va_state": va_state,
                    "va_fit": va_fit, "target_src": target_src or "", "flow": flow or "",
-                   "ob": ob or ""})
+                   "ob": ob or "", **extra})
 
 
 def walk_trade(tr, h1, now):
-    """Replay closed 1H bars after the alert. Stop and target in the same bar counts as a loss."""
+    """Legacy trades: replay closed 1H bars to a fixed stop or target."""
     L = tr["side"] == "long"
     entry, stop, target = tr["entry"], tr["stop"], tr["target"]
     risk = abs(entry - stop)
@@ -1037,14 +1278,58 @@ def walk_trade(tr, h1, now):
             tr.get("ob", "")]
 
 
+def trend_row(tr, res):
+    return [stamp(tr["t"]), stamp(res["end_t"]), tr["coin"], tr["kind"], tr["side"], tr["grade"],
+            tr.get("va_state", ""), tr.get("va_fit", ""), tr.get("target_src", ""),
+            tr["entry"], tr["stop"], tr["target"], res["outcome"], round(res["r"], 3),
+            round(res["mfe_r"], 3), round(res["mae_r"], 3),
+            round((res["end_t"] - tr["t"]) / 3600, 1), tr.get("flow", ""), tr.get("ob", "")]
+
+
 def resolve_trades(state, coin, h1, now):
-    rows, keep = [], []
+    """Resolve this coin's open trades. Trend trades also produce management pushes
+    (TP1 hit, trailing-stop moves, close). Returns (rows, messages, changed)."""
+    rows, msgs, keep, changed = [], [], [], False
     for tr in state.get("open", []):
-        row = walk_trade(tr, h1, now) if tr["coin"] == coin else None
-        (rows.append(row) if row else keep.append(tr))
-    if rows:
+        if tr["coin"] != coin:
+            keep.append(tr); continue
+        if tr["kind"] != "trend":
+            row = walk_trade(tr, h1, now)
+            if row:
+                rows.append(row); changed = True
+            else:
+                keep.append(tr)
+            continue
+        res = manage(tr, h1, 3600, now)
+        L = tr["side"] == "long"
+        s = 1 if L else -1
+        side, A, risk = tr["side"].upper(), tr["atr"], abs(tr["entry"] - tr["stop"])
+        loud = tr.get("pushed", False)
+        if res["done"]:
+            rows.append(trend_row(tr, res)); changed = True
+            how = {"stop": "stop/trail", "time": "max hold", "target": "target"}.get(res.get("exit"), "")
+            if loud:
+                msgs.append(f"🏁 TREND CLOSED: {coin} {side}\n"
+                            f"{res['outcome']} {res['r']:+.2f}R via {how} "
+                            f"(best {res['mfe_r']:.1f}R)")
+            continue
+        if res["half"] and not tr.get("tp1_sent"):
+            tr["tp1_sent"], tr["trail_sent"], changed = True, res["stop"], True
+            if loud:
+                msgs.append(f"🎯 TP1 HIT: {coin} {side}\n"
+                            f"Close half at {fmt(tr['target'])}; move SL to entry {fmt(tr['entry'])}\n"
+                            f"Runner trails {TRAIL_ATR:g}×ATR; SL now {fmt(res['stop'])}")
+        last = tr.get("trail_sent", tr["stop"])
+        if (res["stop"] - last) * s >= TRAIL_PUSH_ATR * A:
+            lock = (res["stop"] - tr["entry"]) * s / risk
+            tr["trail_sent"], changed = res["stop"], True
+            if loud:
+                msgs.append(f"{'⬆️' if L else '⬇️'} MOVE SL: {coin} {side} runner\n"
+                            f"New SL {fmt(res['stop'])} (was {fmt(last)}) | locks {lock:+.1f}R")
+        keep.append(tr)
+    if changed:
         state["open"] = keep
-    return rows
+    return rows, msgs, changed
 
 
 def expire_orphans(state, now):
@@ -1065,7 +1350,7 @@ def expire_orphans(state, now):
 
 
 def summarize(n_open=0):
-    """Win rate and expectancy by alert kind, grade, value-area fit and target source."""
+    """Win rate and expectancy by alert kind and tags. Trend rows are the v3 engine."""
     if not OUT_FILE.exists():
         return "No resolved alerts yet."
     df = pd.read_csv(OUT_FILE)
@@ -1077,6 +1362,7 @@ def summarize(n_open=0):
         df[col] = df[col].fillna("-").astype(str)
     if df.empty:
         return "No resolved alerts yet."
+    df["engine"] = np.where(df.kind == "trend", "v3 trend", "legacy")
 
     def flow_vs(r):
         f = r.flow
@@ -1086,8 +1372,11 @@ def summarize(n_open=0):
         return ("heavy " if f.startswith("heavy") else "") + w
     df["flow_vs"] = df.apply(flow_vs, axis=1)
 
-    def table(by):
-        g = df.groupby(by, dropna=False)
+    def table(by, sub=None):
+        x0 = df if sub is None else sub
+        if x0.empty:
+            return "_none yet_"
+        g = x0.groupby(by, dropna=False)
         rows = [f"| {' / '.join(by)} | n | win % | avg R | total R | avg MFE R |",
                 "|---|---|---|---|---|---|"]
         for k, x in g:
@@ -1096,15 +1385,17 @@ def summarize(n_open=0):
                         f"{x.r.mean():+.2f} | {x.r.sum():+.1f} | {x.mfe_r.mean():.2f} |")
         return "\n".join(rows)
 
+    tr = df[df.kind == "trend"]
     parts = [f"# Alert outcomes\n\n{len(df)} resolved, {n_open} still open. "
              f"Updated {stamp(time.time())} UTC.\n",
-             "Small samples mean little; wait for 30+ per row before changing rules.\n",
-             "## By kind and grade\n\n" + table(["kind", "grade"]),
-             "## By value-area fit\n\n" + table(["kind", "va_fit"]),
-             "## By value-area state\n\n" + table(["kind", "va_state"]),
-             "## By target source\n\n" + table(["kind", "target_src"]),
-             "## By money flow vs trade side\n\n" + table(["kind", "flow_vs"]),
-             "## By order block\n\n" + table(["kind", "ob"])]
+             "Small samples mean little; wait for 30+ per row before changing rules. "
+             "R is gross (no fees).\n",
+             "## By engine\n\n" + table(["engine"]),
+             "## v3 trend: by side and zone\n\n" + table(["side", "grade"], tr),
+             "## v3 trend: by order block\n\n" + table(["ob"], tr),
+             "## v3 trend: by value-area state\n\n" + table(["va_state"], tr),
+             "## v3 trend: by money flow vs trade side\n\n" + table(["flow_vs"], tr),
+             "## Legacy alerts (frozen)\n\n" + table(["kind", "grade"], df[df.kind != "trend"])]
     return "\n\n".join(parts) + "\n"
 
 
@@ -1112,6 +1403,10 @@ def report():
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     text = summarize(len(state.get("open", [])))
     print(text)
+    write_step_summary(text)
+
+
+def write_step_summary(text):
     step = os.environ.get("GITHUB_STEP_SUMMARY")
     if step:
         with open(step, "a") as f:
@@ -1127,7 +1422,7 @@ def send(msg, urgent=False):
                   timeout=20)
 
 def notify(msg, urgent=False, push=True):
-    """Push to the phone, or just print when this alert type is muted."""
+    """Push to the phone, or just print when this alert is muted."""
     if push:
         send(msg, urgent=urgent)
     else:
@@ -1146,36 +1441,48 @@ def local_time(ts, day=True):
     dt = datetime.fromtimestamp(ts, timezone.utc).astimezone(LOCAL_TZ)
     return dt.strftime("%a %-I:%M %p %Z" if day else "%-I:%M %p")
 
-def va_line(best):
-    va = best["va"]
-    tgt = " | target from fib ext." if best.get("target_src") == "fib" else ""
-    if va["state"] == "unknown":
-        return va["note"] + tgt
-    mark = "fits" if va["fit"] else "no fit"
-    return (f"{va['state'].replace('_', ' ')}, {mark} ({va['note']}) | "
-            f"VAL {fmt(va['val'])} POC {fmt(va['poc'])} VAH {fmt(va['vah'])}{tgt}")
 
-def kalshi_plan(side, entry, stop, target, partials=True):
-    """Kalshi takes one TP per order: the final target goes on the order, and each whole R
-    before it becomes a manual price alert for a partial close (the first also moves SL to entry).
-    partials=False (breakouts): the backtest showed partials cut the winners, so hold to TP."""
-    if stop is None or target is None or not all(fin(x) for x in (entry, stop, target)):
-        return "No valid plan (stop or target missing)"
-    risk = abs(entry - stop)
-    d = 1 if side == "long" else -1
-    total_r = abs(target - entry) / risk
-    lines = [f"Order: Entry {fmt(entry)} | SL {fmt(stop)} | TP {fmt(target)} ({total_r:.1f}R)"]
-    if not partials:
-        lines.append("Hold to TP (no partials; they cut breakout winners in the backtest)")
-        return "\n".join(lines)
-    alerts = []
-    for k in (1, 2):
-        if k < total_r - 0.25:                     # skip levels sitting on top of the TP
-            note = "take partial, move SL to entry" if k == 1 else "take partial"
-            alerts.append(f"{k}R {fmt(entry + d * k * risk)} ({note})")
-    if alerts:
-        lines.append("Price alerts: " + " | ".join(alerts))
+def fund_txt(apr):
+    if apr is None:
+        return "Funding: n/a"
+    if abs(apr) < 1:
+        return f"Funding: {apr:+.1f}%/yr (neutral)"
+    return f"Funding: {apr:+.0f}%/yr ({'longs' if apr > 0 else 'shorts'} pay)"
+
+
+def trend_msg(coin, s, fl, ob_txt, va, muted_note=""):
+    L = s["side"] == "long"
+    A, risk = s["atr"], s["risk"]
+    lines = [f"{'🟢📈' if L else '🔴📉'} TREND {s['side'].upper()}: {coin}{muted_note}",
+             f"Pullback to {s['zone_txt']}, 4H reclaim closed {fmt(s['entry'])}",
+             f"Order: Entry {fmt(s['entry'])} | SL {fmt(s['stop'])} "
+             f"({risk / A:.1f} ATR, {risk / s['entry'] * 100:.1f}%) | no TP on the order",
+             f"TP1 {fmt(s['tp1'])} ({TP1_R:g}R): close half, SL to entry (set a price alert)",
+             f"Runner: SL trails {TRAIL_ATR:g}×ATR ({fmt(TRAIL_ATR * A)}) behind the best price; "
+             f"moves get pushed"]
+    if RISK_USD > 0:
+        lines.append(f"Size: ${RISK_USD:g} risk → {RISK_USD / risk:.4g} units")
+    else:
+        lines.append(f"Size: your $ risk ÷ {fmt(risk)} = units")
+    lines += [f"Daily trend {'up' if L else 'down'} | 4H ADX {s['adx']:.0f} | Chop {s['chop']:.0f} | "
+              f"RSI 4H {s['rsi4h']:.0f} | {s['ext']:+.1f} ATR from the zone",
+              fund_txt(s["fund"]),
+              flow_line(fl, s["side"]),
+              ob_txt,
+              f"Value: {va['state'].replace('_', ' ')} (info)"]
     return "\n".join(lines)
+
+
+def watch_msg(coin, s, bar_close):
+    L = s["side"] == "long"
+    return (f"👀 TREND WATCH {s['side'].upper()}: {coin}\n"
+            f"Pulled back to {s['zone_txt']}; daily trend and 4H stack intact\n"
+            f"Trigger: a {'green' if L else 'red'} 4H close {'above' if L else 'below'} "
+            f"{fmt(s['trigger'])}\n"
+            f"Next 4H close {local_time(bar_close + 4 * 3600, day=False)} | "
+            f"plan SL ≈ {fmt(s['stop_est'])} or {MIN_STOP_ATR:g} ATR, whichever is wider\n"
+            f"4H ADX {s['adx']:.0f} | Chop {s['chop']:.0f} | {fund_txt(s['fund'])}\n"
+            f"Entry still has to pass the chase, RSI, flow and funding checks")
 
 
 def metal_rows(df, n):
@@ -1200,76 +1507,135 @@ def save_metals(markets):
                                       separators=(",", ":")))
 
 
-def backtest(bars=180):
-    """List every 4H breakout, 1H impulse and momentum shift in recent history (no alerts sent)."""
+# ---------- backtest (trend-pullback engine) ----------
+def bt_stats(r, hours=None):
+    r = pd.Series(r, dtype=float)
+    if r.empty:
+        return None
+    wins, losses = r[r > 0].sum(), -r[r < 0].sum()
+    eq = r.cumsum()
+    return {"n": len(r), "win": 100 * (r > 0).mean(), "avg": r.mean(), "tot": r.sum(),
+            "pf": wins / losses if losses > 0 else float("inf"),
+            "dd": float((eq.cummax() - eq).max()),
+            "hrs": float(pd.Series(hours).median()) if hours is not None and len(hours) else NAN}
+
+
+def bt_cell(st):
+    if not st:
+        return "-"
+    pf = "∞" if st["pf"] == float("inf") else f"{st['pf']:.2f}"
+    return f"{st['n']} / {st['win']:.0f}% / {st['avg']:+.2f} / {st['tot']:+.1f} / PF {pf}"
+
+
+def backtest(days=None):
+    """Replay the trend-pullback engine over the last BT_DAYS of 4H bars, one position per coin
+    at a time, with fees and slippage. Trades are walked on 4H bars (Kraken keeps only ~30 days
+    of 1H), so fills inside a bar are judged conservatively: stop before target."""
+    days = days or BT_DAYS
+    rows, vetoes, still_open = [], {}, 0
     for coin, pair in WATCHLIST.items():
         try:
-            d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
-            m15, m5 = candles(pair, 15), candles(pair, 5)
+            d, h4 = candles(pair, 1440), candles(pair, 240)
             time.sleep(1)
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
-        for i in range(max(60, len(h4) - bars), len(h4)):
+        fund = funding_history(coin, pair)
+        start = max(80, len(h4) - days * 6)
+        busy_until = 0
+        for i in range(start, len(h4) - 1):
+            close_t = int(h4.t.iloc[i]) + 4 * 3600
+            if close_t < busy_until:
+                continue
             sub = h4.iloc[:i + 1].reset_index(drop=True)
-            close_t = sub.t.iloc[-1] + 4 * 3600
             dd = d[d.t + 86400 <= close_t].reset_index(drop=True)
-            if len(dd) < 50:
+            try:
+                s = trend_setup(dd, sub, funding_apr(fund, close_t))
+            except Exception as e:
+                print(f"{coin} bar {i}: {e}"); continue
+            if not s:
                 continue
-            bo = breakout(dd, sub)
-            if bo:
-                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
-                print(f"{coin} {when} UTC  BREAKOUT {bo[0].upper():5} close {fmt(sub.c.iloc[-1])} "
-                      f"through {fmt(bo[1])}  vol {bo[3]:.1f}x  RSI 4H {bo[2]:.0f}")
-        for i in range(IMP_LOOKBACK + 40, len(h1)):
-            sub1 = h1.iloc[:i + 1].reset_index(drop=True)
-            close_t = sub1.t.iloc[-1] + 3600
-            sub4 = h4[h4.t + 4 * 3600 <= close_t].reset_index(drop=True)
-            if len(sub4) < 30:
+            if s["status"] == "veto":
+                k = s["why"].split(" ")[0]
+                vetoes[k] = vetoes.get(k, 0) + 1
                 continue
-            im = impulse(sub1, sub4)
-            if im:
-                when = time.strftime('%b %d %H:%M', time.gmtime(im["bar"]))
-                print(f"{coin} {when} UTC  IMPULSE  {im['side'].upper():5} close {fmt(im['entry'])} "
-                      f"through {fmt(im['level'])}  bar {im['size_x']:.1f}x ATR  vol {im['vol_x']:.1f}x  "
-                      f"ext {im['ext']:.1f} ATR")
-        found, last_side = 0, None
-        for i in range(max(60, len(h4) - bars), len(h4)):
-            sub = h4.iloc[:i + 1].reset_index(drop=True)
-            close_t = sub.t.iloc[-1] + 4 * 3600
-            c15 = m15[m15.t + 900 <= close_t].reset_index(drop=True)
-            c5 = m5[m5.t + 300 <= close_t].reset_index(drop=True)
-            if len(c15) < 30 or len(c5) < 30:
-                continue                      # 5m/15m history does not reach that far back
-            ms = momentum_shift(sub, c15, c5)
-            if ms and ms["score"] >= MS_MIN and ms["side"] != last_side:
-                found += 1
-                last_side = ms["side"]
-                when = time.strftime('%b %d %H:%M', time.gmtime(sub.t.iloc[-1]))
-                eta = f"{ms['eta']:.1f}" if ms["eta"] is not None else "-"
-                print(f"{coin} {when} UTC  {ms['side'].upper():5} {ms['score']}/7  "
-                      f"entry {fmt(ms['entry'])}  4H cross in ~{eta} bars  "
-                      f"MFI {ms['mfi']:.0f}  CMF {ms['cmf']:+.2f}"
-                      + ("  DIV" if ms["div"] else ""))
-        if not found:
-            print(f"{coin}: no momentum shifts (5m/15m history only reaches back ~2 days)")
+            if s["status"] != "entry":
+                continue
+            fwd = h4.iloc[i + 1:]
+            tr = {"side": s["side"], "entry": s["entry"], "stop": s["stop"], "atr": s["atr"],
+                  "from_t": close_t}
+            res = {m: manage(tr, fwd, 4 * 3600, mode=m, fee_bps=BT_FEE_BPS, slip_bps=BT_SLIP_BPS)
+                   for m in BT_MODES}
+            if not res["plan"]["done"]:
+                still_open += 1
+                busy_until = 10 ** 12
+                continue
+            ob_tag, _ = ob_info(order_blocks(sub), s["side"], s["entry"], s["tp1"], s["atr"])
+            row = {"coin": coin, "side": s["side"], "zone": s["zone"], "t": close_t,
+                   "time_utc": stamp(close_t), "entry": s["entry"], "stop": s["stop"],
+                   "adx": round(s["adx"], 1), "fund": s["fund"], "ob": ob_tag,
+                   "ob_ok": ob_tag not in ("in-against", "blocked")}
+            for m in BT_MODES:
+                rr = res[m]
+                row[f"{m}_r"] = round(rr["r"], 3) if rr["done"] else NAN
+                row[f"{m}_hrs"] = round((rr["end_t"] - close_t) / 3600, 1) if rr["done"] else NAN
+            row["mfe_r"] = round(res["plan"]["mfe_r"], 2)
+            rows.append(row)
+            busy_until = res["plan"]["end_t"]
+        print(f"{coin}: {sum(r['coin'] == coin for r in rows)} trades")
+
+    df = pd.DataFrame(rows)
+    out = ["# Trend-pullback backtest\n",
+           f"Last {days} days of 4H bars, {len(WATCHLIST)} markets, one position per market. "
+           f"Fees {BT_FEE_BPS:g} bps/side, slippage {BT_SLIP_BPS:g} bps on entries and stops. "
+           f"R is net. {still_open} trades still open at the end were left out.\n",
+           "Cells: n / win% / avg R / total R / profit factor. Look for rows that stay positive "
+           "with n >= 30, and compare against the legacy rows in paper_summary.md.\n"]
+    if df.empty:
+        out.append("No completed trades in the window.\n")
+    else:
+        df = df.sort_values("t")
+        out.append("## Exit plans on the same entries\n")
+        out.append("| plan | result | max DD (R) | median hours |")
+        out.append("|---|---|---|---|")
+        for m in BT_MODES:
+            st = bt_stats(df[f"{m}_r"].dropna(), df[f"{m}_hrs"].dropna())
+            out.append(f"| {m} | {bt_cell(st)} | {st['dd']:.1f} | {st['hrs']:.0f} |")
+        for col, title in (("side", "side"), ("zone", "pullback zone"), ("ob_ok", "order block ok"),
+                           ("coin", "market")):
+            out.append(f"\n## By {title} (plan exits)\n")
+            out.append(f"| {col} | result |")
+            out.append("|---|---|")
+            for k, x in df.groupby(col):
+                out.append(f"| {k} | {bt_cell(bt_stats(x['plan_r'].dropna()))} |")
+        fk = df["fund"].notna()
+        out.append(f"\nFunding known on {fk.sum()} of {len(df)} entries. "
+                   f"Average best excursion {df['mfe_r'].mean():.2f}R; "
+                   f"{100 * (df['mfe_r'] >= 1).mean():.0f}% reached +1R.\n")
+    if vetoes:
+        out.append("## Vetoed triggers\n")
+        out.append(" | ".join(f"{k}: {v}" for k, v in sorted(vetoes.items(), key=lambda x: -x[1])) + "\n")
+    text = "\n".join(out) + "\n"
+    print(text)
+    write_step_summary(text)
+    return df
+
 
 # ---------- one pass ----------
 def run_once():
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     now, changed, log, out_rows = time.time(), False, [], []
-    metals = {}
-    bo_sides_pushed = set()      # BO_SOLO: first breakout push per direction this run
+    metals, entries = {}, []
 
     for coin, pair in WATCHLIST.items():
         try:
             d, h4, h1 = candles(pair, 1440), candles(pair, 240), candles(pair, 60)
-            m15, m5 = candles(pair, 15), candles(pair, 5)
+            if pair.startswith("yf:"):
+                m15, m5 = candles(pair, 15), candles(pair, 5)
+                metals[coin] = {"d1": metal_rows(d, 400), "h1": metal_rows(h1, 720),
+                                "m15": metal_rows(m15, 300), "m5": metal_rows(m5, 300)}
             time.sleep(1)   # stay under Kraken's public rate limit
         except Exception as e:
             print(f"skip {coin}: {e}"); continue
-        if pair.startswith("yf:"):
-            metals[coin] = {"d1": metal_rows(d, 400), "h1": metal_rows(h1, 720),
-                            "m15": metal_rows(m15, 300), "m5": metal_rows(m5, 300)}
 
         try:
             fl = flow_state(h4)
@@ -1277,195 +1643,70 @@ def run_once():
             print(f"skip {coin} flow: {e}")
             fl = {"label": "unknown", "dir": 0, "heavy": False, "text": "unavailable"}
 
-        try:
-            obs, a4_now = order_blocks(h4), float(atr(h4).iloc[-1])
-        except Exception as e:
-            print(f"skip {coin} order blocks: {e}")
-            obs, a4_now = [], NAN
-
-        done = resolve_trades(state, coin, h1, now)
-        if done:
-            out_rows += done; changed = True
-            for row in done:
-                print(f"{coin}: {row[3]} {row[4]} resolved {row[12]} {row[13]:+.2f}R")
-
-        try:
-            best = grade(d, h4, h1)
-        except Exception as e:
-            print(f"skip {coin} grade: {e}"); best = None
-        if best:
-            ok_grade = best["grade"] in ("A+", "B+")
-            tier = 2 if best["action"] == "actionable" else 1 if ok_grade else 0
-            prev = state.get(coin, {})
-            if not isinstance(prev, dict) or prev.get("v") != STATE_V:
-                prev = {"tier": 0, "sent": {}}          # rules changed; start tiers fresh
-            sent = prev.get("sent", {})
-            print(f"{coin}: {best['side']} {best['grade']} {best['passed']}/5 {best['action']} tier {tier} "
-                  f"| {best['va']['state']} {'fit' if best['va']['fit'] else 'no fit'} | flow {fl['label']} "
-                  f"| OB {sum(z['side'] == 'bull' for z in obs)}d/{sum(z['side'] == 'bear' for z in obs)}s")
-
-            # alert on a move up into a tier, unless that tier already alerted within the cooldown
-            if tier > prev.get("tier", 0) and now - sent.get(str(tier), 0) > COOLDOWN_HRS * 3600:
-                label = "🚨 ACTIONABLE" if tier == 2 else "👀 Setup graded, waiting on RSI"
-                missing = [k for k, v in best["checks"].items() if not v]
-                ob_tag, ob_txt = ob_info(obs, best["side"], best["entry"], best["target"], a4_now)
-                msg = (f"{label}: {coin} {best['side'].upper()} {best['grade']} {best['passed']}/5\n"
-                       f"{kalshi_plan(best['side'], best['entry'], best['stop'], best['target'])}\n"
-                       f"RSI 4H {best['rsi4h']:.0f} / D {best['rsid']:.0f} | {best['gate_note']}\n"
-                       f"Level: {best['level_note']}\n"
-                       f"Volume: {best['vol_note']} | Chop {best['chop']:.0f} {best['chop_state']}\n"
-                       f"Value: {va_line(best)}\n"
-                       f"{flow_line(fl, best['side'])}\n"
-                       f"{ob_txt}\n"
-                       f"Trend {'with you' if best['trend_ok'] else 'not aligned'} (info only)"
-                       + (f"\nMissing: {', '.join(missing)}" if missing else ""))
-                notify(msg, urgent=(tier == 2), push=GRADE_PUSH)
-                log.append(f"{stamp(now)},{coin},{best['side']},{best['grade']} {best['passed']}/5 {best['action']}"
-                           f"{'' if GRADE_PUSH else ' muted'},{best['entry']}")
-                sent[str(tier)] = now
-                open_trade(state, coin, "grade-actionable" if tier == 2 else "grade-watch",
-                           best["side"], best["grade"], best["entry"], best["stop"], best["target"],
-                           best["from_t"], now, best["va"]["state"],
-                           "fit" if best["va"]["fit"] else "no fit", best["target_src"],
-                           fl["label"], ob_tag)
-            if tier != prev.get("tier", 0) or sent != prev.get("sent", {}) or prev.get("v") != STATE_V:
-                state[coin] = {"v": STATE_V, "tier": tier, "sent": sent}; changed = True
-
-        bo = breakout(d, h4)
-        if bo:
-            side, lvl, r, vx = bo
-            key = f"{coin}_bo"
-            last_bo = state.get(key, 0)
-            if now - last_bo > BO_COOLDOWN_HRS * 3600:
-                plan = breakout_plan(side, lvl, h4)
-                ob_tag, ob_txt = ob_info(obs, side, float(h4.c.iloc[-1]),
-                                         plan["target"] if plan else None, a4_now)
-                why_muted = []
-                if BO_REQUIRE_OB and ob_tag in ("in-against", "blocked"):
-                    why_muted.append(f"OB {ob_tag}")
-                if BO_SOLO and side in bo_sides_pushed:
-                    why_muted.append(f"not first {side} breakout this run")
-                push = not why_muted
-                if push:
-                    bo_sides_pushed.add(side)
-                notify(f"⚡ BREAKOUT: {coin} {side.upper()}\n"
-                       f"4H closed {fmt(h4.c.iloc[-1])} through {fmt(lvl)} ({BO_LOOKBACK}-bar range)\n"
-                       + (f"{kalshi_plan(side, plan['entry'], plan['stop'], plan['target'], partials=False)}\n"
-                          if plan else "")
-                       + f"Volume {vx:.1f}x avg | RSI 4H {r:.0f}\n"
-                       f"{flow_line(fl, side)}\n{ob_txt}", urgent=True, push=push)
-                if why_muted:
-                    print(f"{coin}: breakout {side} muted ({'; '.join(why_muted)})")
-                log.append(f"{stamp(now)},{coin},breakout-{side}{'' if push else '-muted'},-,{h4.c.iloc[-1]}")
-                state[key] = now; changed = True
-                if plan:
-                    open_trade(state, coin, "breakout", side, "-", plan["entry"], plan["stop"],
-                               plan["target"], plan["from_t"], now, flow=fl["label"], ob=ob_tag)
-            print(f"{coin}: breakout {side}")
-
-        im = impulse(h1, h4)
-        if im:
-            print(f"{coin}: impulse {im['side']} {im['size_x']:.1f}x ATR, vol {im['vol_x']:.1f}x")
-            key = f"{coin}_imp"
-            prev_im = state.get(key, {})
-            if not isinstance(prev_im, dict):
-                prev_im = {}
-            if (prev_im.get("bar") != im["bar"]
-                    and (prev_im.get("side") != im["side"]
-                         or now - prev_im.get("sent", 0) > IMP_COOLDOWN_HRS * 3600)):
-                try:
-                    fl1 = flow_state(h1)           # 1H flow includes the impulse bar itself
-                except Exception as e:
-                    print(f"skip {coin} 1H flow: {e}")
-                    fl1 = {"label": "unknown", "dir": 0, "heavy": False, "text": "unavailable"}
-                arrow = "🚀" if im["side"] == "long" else "💥"
-                ext_note = (f"\n⚠️ Extended: close is {im['ext']:.1f} 4H ATR past the level. "
-                            f"Consider a smaller starter; the add waits for the retest of {fmt(im['level'])}"
-                            if im["ext"] >= IMP_EXT_ATR else "")
-                better = "at or below" if im["side"] == "long" else "at or above"
-                ob_tag, ob_txt = ob_info(obs, im["side"], im["entry"], im["target"], a4_now)
-                notify(f"{arrow} IMPULSE BREAKOUT {im['side'].upper()}: {coin}\n"
-                     f"1H closed {fmt(im['entry'])} through {fmt(im['level'])} ({IMP_LOOKBACK}-bar range)\n"
-                     f"STARTER: HALF size. SL covers the full position\n"
-                     f"{kalshi_plan(im['side'], im['entry'], im['stop'], im['target'])}\n"
-                     f"Add plan: other half on a 4H close beyond {fmt(im['level'])}, "
-                     f"{better} {fmt(im['entry'])}, within {IMP_ADD_BARS * 4}h\n"
-                     f"Bar {im['size_x']:.1f}x ATR | Volume {im['vol_x']:.1f}x avg | RSI 4H {im['rsi4h']:.0f}\n"
-                     f"{flow_line(fl1, im['side'], '1H')}\n{ob_txt}"
-                     + ext_note, urgent=True, push=IMP_PUSH)
-                log.append(f"{stamp(now)},{coin},impulse-{im['side']}{'' if IMP_PUSH else '-muted'},-,{im['entry']}")
-                state[key] = {"bar": im["bar"], "side": im["side"], "sent": now}; changed = True
-                open_trade(state, coin, "impulse", im["side"], "-", im["entry"], im["stop"],
-                           im["target"], im["from_t"], now, flow=fl1["label"], ob=ob_tag)
-                for t in state.get("open", []):
-                    if t["coin"] == coin and t["kind"] == "impulse" and t["t"] == now:
-                        t.update({"level": im["level"], "add": "pending", "add_n": 0, "add_seen": 0})
-
-        # second half of a scaled impulse entry
-        for tr in state.get("open", []):
-            if tr["coin"] != coin or tr["kind"] != "impulse" or tr.get("add") != "pending":
-                continue
-            before = (tr.get("add_seen"), tr.get("add_n"))
-            res = add_check(tr, h4)
-            if (tr.get("add_seen"), tr.get("add_n")) != before:
-                changed = True
-            if not res:
-                continue
-            what, info = res
+        rows, msgs, ch = resolve_trades(state, coin, h1, now)
+        if ch:
             changed = True
-            if what == "add":
-                b = info
-                add_px = float(b.c)
-                avg, rr = scaled_rr(tr["side"], tr["entry"], add_px, tr["stop"], tr["target"])
-                tr["add"], tr["add_price"] = "done", add_px
-                ob_tag, ob_txt = ob_info(obs, tr["side"], add_px, tr["target"], a4_now)
-                notify(f"✅ ADD SECOND HALF: {coin} {tr['side'].upper()}\n"
-                     f"4H closed {fmt(add_px)} beyond {fmt(tr['level'])}: retest held\n"
-                     f"Add: {fmt(add_px)} | Avg entry {fmt(avg)}\n"
-                     f"Keep SL {fmt(tr['stop'])} | TP {fmt(tr['target'])} (full position {rr:.1f}R)\n"
-                     f"{flow_line(fl, tr['side'], '4H')}\n{ob_txt}", urgent=True, push=IMP_PUSH)
-                log.append(f"{stamp(now)},{coin},impulse-add-{tr['side']}{'' if IMP_PUSH else '-muted'},-,{add_px}")
-                open_trade(state, coin, "impulse-add", tr["side"], "-", add_px, tr["stop"],
-                           tr["target"], int(b.t) + 4 * 3600, now, flow=fl["label"], ob=ob_tag)
-                print(f"{coin}: impulse add at {fmt(add_px)}, avg {fmt(avg)}")
-            else:
-                tr["add"] = "cancelled"
-                notify(f"❌ NO ADD: {coin} {tr['side'].upper()}\n{info}\n"
-                       f"Starter only. Keep its SL {fmt(tr['stop'])}", push=IMP_PUSH)
-                log.append(f"{stamp(now)},{coin},impulse-noadd-{tr['side']}{'' if IMP_PUSH else '-muted'},-,-")
-                print(f"{coin}: impulse add cancelled ({info})")
+        out_rows += rows
+        for row in rows:
+            print(f"{coin}: {row[3]} {row[4]} resolved {row[12]} {row[13]:+.2f}R")
+        for m in msgs:
+            notify(m, urgent=False, push=TREND_PUSH)
+            log.append(f"{stamp(now)},{coin},trend-manage,{m.splitlines()[0].split(':')[0]},-")
 
-        ms = momentum_shift(h4, m15, m5)
-        if ms:
-            eta = f"{ms['eta']:.1f}" if ms["eta"] is not None else "-"
-            print(f"{coin}: shift {ms['side']} {ms['score']}/7, 4H cross in ~{eta} bars")
-            key = f"{coin}_ms"
-            prev_ms = state.get(key, {})
-            if not isinstance(prev_ms, dict):
-                prev_ms = {}
-            if (ms["score"] >= MS_MIN and prev_ms.get("bar") != ms["bar"]
-                    and (prev_ms.get("side") != ms["side"]
-                         or now - prev_ms.get("sent", 0) > MS_COOLDOWN_HRS * 3600)):
-                on = [k for k, v in ms["factors"].items() if v]
-                ob_tag, ob_txt = ob_info(obs, ms["side"], ms["entry"], ms["tps"][2], a4_now)
-                arrow = "🔼" if ms["side"] == "long" else "🔽"
-                bar_close = ms["bar"] + 4 * 3600
-                cross_at = (f" (~{local_time(bar_close + ms['eta'] * 4 * 3600)})"
-                            if ms["eta"] is not None else "")
-                notify(f"{arrow} MOMENTUM SHIFT {ms['side'].upper()}: {coin} {ms['score']}/7\n"
-                     f"5m+15m flipped, 4H cross in ~{eta} bars{cross_at}\n"
-                     f"4H bar closed {local_time(bar_close)} | next close "
-                     f"{local_time(bar_close + 4 * 3600, day=False)}\n"
-                     f"{kalshi_plan(ms['side'], ms['entry'], ms['stop'], ms['tps'][2])}\n"
-                     f"RSI 4H {ms['rsi4h']:.0f} | MFI {ms['mfi']:.0f}\n"
-                     f"{flow_line(fl, ms['side'])}\n{ob_txt}"
-                     + ("\nDivergence confirmed" if ms["div"] else "")
-                     + f"\nHave: {', '.join(on)}", urgent=True, push=MS_PUSH)
-                log.append(f"{stamp(now)},{coin},shift-{ms['side']}{'' if MS_PUSH else '-muted'},{ms['score']},{ms['entry']}")
-                state[key] = {"bar": ms["bar"], "side": ms["side"], "sent": now}; changed = True
-                # track to the order TP (TP3, 3R); MFE in the log shows how often 1R/2R were reached
-                open_trade(state, coin, "shift", ms["side"], f"{ms['score']}/7", ms["entry"],
-                           ms["stop"], ms["tps"][2], ms["from_t"], now, flow=fl["label"], ob=ob_tag)
+        try:
+            fund = funding_apr(funding_history(coin, pair), now)
+        except Exception as e:
+            print(f"{coin} funding: {e}"); fund = None
+        try:
+            s = trend_setup(d, h4, fund)
+        except Exception as e:
+            print(f"skip {coin} setup: {e}"); continue
+        ftxt = "n/a" if fund is None else f"{fund:+.0f}%/yr"
+        if not s:
+            print(f"{coin}: no setup (trend, 4H stack, chop or pullback) | funding {ftxt}")
+            continue
+        print(f"{coin}: {s['side']} {s['status']} via {s['zone']} | ADX {s['adx']:.0f} chop {s['chop']:.0f} "
+              f"| funding {ftxt}" + (f" | veto: {s['why']}" if s["status"] == "veto" else ""))
+
+        if s["status"] == "entry":
+            key = f"{coin}_tp"
+            if state.get(key, {}).get("bar") == s["bar"]:
+                continue                                  # this 4H bar was already handled
+            if any(t["coin"] == coin and t["kind"] == "trend" for t in state.get("open", [])):
+                print(f"{coin}: already in a trend trade, new trigger ignored")
+                state[key] = {"bar": s["bar"], "sent": now}; changed = True
+                continue
+            entries.append((coin, s, fl, h4))
+        elif s["status"] == "watch":
+            key = f"{coin}_watch"
+            prev = state.get(key, {})
+            if prev.get("side") != s["side"] or now - prev.get("sent", 0) > WATCH_COOLDOWN_HRS * 3600:
+                notify(watch_msg(coin, s, s["bar"]), push=WATCH_PUSH)
+                log.append(f"{stamp(now)},{coin},watch-{s['side']}{'' if WATCH_PUSH else '-muted'},"
+                           f"{s['zone']},{h4.c.iloc[-1]}")
+                state[key] = {"side": s["side"], "sent": now}; changed = True
+
+    # entries: strongest 4H trend first, at most MAX_PUSH_PER_SIDE pushes per direction
+    entries.sort(key=lambda x: -x[1]["adx"])
+    pushed = {"long": 0, "short": 0}
+    for coin, s, fl, h4 in entries:
+        push = TREND_PUSH and pushed[s["side"]] < MAX_PUSH_PER_SIDE
+        if push:
+            pushed[s["side"]] += 1
+        try:
+            obs = order_blocks(h4)
+        except Exception:
+            obs = []
+        ob_tag, ob_txt = ob_info(obs, s["side"], s["entry"], s["tp1"], s["atr"])
+        va = value_state(_cols(h4), s["entry"], s["side"] == "long")
+        note = "" if push or not TREND_PUSH else " (muted: same-direction cap)"
+        notify(trend_msg(coin, s, fl, ob_txt, va, note), urgent=True, push=push)
+        log.append(f"{stamp(now)},{coin},trend-{s['side']}{'' if push else '-muted'},{s['zone']},{s['entry']}")
+        state[f"{coin}_tp"] = {"bar": s["bar"], "sent": now}
+        open_trade(state, coin, "trend", s["side"], s["zone"], s["entry"], s["stop"], s["tp1"],
+                   s["from_t"], now, va["state"], "fit" if va["fit"] else "no fit", "trail",
+                   fl["label"], ob_tag, atr=s["atr"], pushed=push)
+        changed = True
 
     save_metals(metals)
     orphans = expire_orphans(state, now)
@@ -1486,18 +1727,19 @@ def run_once():
             if new_file: f.write(",".join(OUT_COLS) + "\n")
             f.write("\n".join(",".join(str(x) for x in r) for r in out_rows) + "\n")
         SUMMARY_FILE.write_text(summarize(len(state.get("open", []))))
-        n = sum(1 for _ in OUT_FILE.open()) - 1
+        n = int((pd.read_csv(OUT_FILE).kind == "trend").sum())
         milestone = n // 30 * 30
-        if milestone >= 30 and state.get("review_at", 0) < milestone:
-            send(f"📊 {n} alert outcomes logged. Review outcomes_summary.md "
-                 f"and decide on VA_GATE.")
-            state["review_at"] = milestone
+        if milestone >= 30 and state.get("review_trend_at", 0) < milestone:
+            send(f"📊 {n} trend-engine outcomes logged. Review outcomes_summary.md "
+                 f"against the backtest before changing any rule.")
+            state["review_trend_at"] = milestone
             STATE_FILE.write_text(json.dumps(state, indent=1))
     if log:
         new_file = not LOG_FILE.exists()
         with LOG_FILE.open("a") as f:
             if new_file: f.write("utc,coin,side,met,price\n")
             f.write("\n".join(log) + "\n")
+
 
 def main():
     if "--test" in sys.argv:
