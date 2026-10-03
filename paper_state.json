@@ -309,28 +309,6 @@
    "best": false
   },
   {
-   "kind": "grade",
-   "side": "long",
-   "stop": 28.161651157895932,
-   "target": 34.619,
-   "score": "B+",
-   "key": "VVV|grade|1790928000|long",
-   "coin": "VVV",
-   "t": 1790942400,
-   "entry": 29.985,
-   "adx": 22.4,
-   "adx25": false,
-   "aligned": true,
-   "va": "probe_up",
-   "va_with": false,
-   "ob": "none",
-   "ob_ok": true,
-   "flow": "neutral",
-   "flow_with": false,
-   "solo": false,
-   "best": false
-  },
-  {
    "kind": "impulse",
    "side": "short",
    "stop": 1713.4044448175505,
