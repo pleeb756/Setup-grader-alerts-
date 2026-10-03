@@ -486,6 +486,26 @@
    "target_src": "",
    "flow": "outflow",
    "ob": "blocked"
+  },
+  {
+   "coin": "WLD",
+   "kind": "impulse",
+   "side": "long",
+   "grade": "-",
+   "entry": 0.5982,
+   "stop": 0.580466911032225,
+   "target": 0.6336661779355498,
+   "t": 1791025556.2283337,
+   "from_t": 1791025200,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "none",
+   "level": 0.5873,
+   "add": "pending",
+   "add_n": 0,
+   "add_seen": 0
   }
  ],
  "HYPE": {
@@ -673,9 +693,9 @@
   "sent": 1790967706.350695
  },
  "WLD_imp": {
-  "bar": 1790946000,
+  "bar": 1791021600,
   "side": "long",
-  "sent": 1790949602.7231836
+  "sent": 1791025556.2283337
  },
  "AAVE_imp": {
   "bar": 1790913600,

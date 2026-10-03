@@ -571,6 +571,50 @@
    "flow_with": true,
    "solo": true,
    "best": false
+  },
+  {
+   "kind": "impulse",
+   "side": "long",
+   "stop": 0.580466911032225,
+   "target": 0.6336661779355498,
+   "score": "-",
+   "key": "WLD|impulse|1791021600",
+   "coin": "WLD",
+   "t": 1791025200,
+   "entry": 0.5982,
+   "adx": 23.9,
+   "adx25": false,
+   "aligned": true,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
+  },
+  {
+   "side": "short",
+   "stop": 0.613933088967775,
+   "kind": "impulse_fade",
+   "target": 0.5873,
+   "score": "-",
+   "key": "WLD|fade|1791021600",
+   "coin": "WLD",
+   "t": 1791025200,
+   "entry": 0.5982,
+   "adx": 23.9,
+   "adx25": false,
+   "aligned": false,
+   "va": "probe_up",
+   "va_with": false,
+   "ob": "none",
+   "ob_ok": true,
+   "flow": "neutral",
+   "flow_with": false,
+   "solo": true,
+   "best": false
   }
  ],
  "seen": {
@@ -661,6 +705,8 @@
   "ADA|fade|1790964000": 1790967743.0361834,
   "ETH|shift|1790956800|short": 1790971214.8205113,
   "ADA|shift|1790956800|short": 1790971214.8205113,
-  "BTC|shift|1791000000|short": 1791016561.3796241
+  "BTC|shift|1791000000|short": 1791016561.3796241,
+  "WLD|impulse|1791021600": 1791025590.2173967,
+  "WLD|fade|1791021600": 1791025590.2173967
  }
 }
