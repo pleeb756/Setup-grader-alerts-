@@ -504,8 +504,24 @@
    "ob": "none",
    "level": 0.5873,
    "add": "pending",
-   "add_n": 0,
-   "add_seen": 0
+   "add_n": 1,
+   "add_seen": 1791014400
+  },
+  {
+   "coin": "WLD",
+   "kind": "breakout",
+   "side": "long",
+   "grade": "-",
+   "entry": 0.6041,
+   "stop": 0.5725778347741322,
+   "target": 0.6671443304517356,
+   "t": 1791034779.1398547,
+   "from_t": 1791028800,
+   "va_state": "",
+   "va_fit": "",
+   "target_src": "",
+   "flow": "heavy inflow",
+   "ob": "near-with"
   }
  ],
  "HYPE": {
@@ -634,7 +650,7 @@
   "side": "short",
   "sent": 1790995443.7365236
  },
- "WLD_bo": 1790958029.0903866,
+ "WLD_bo": 1791034779.1398547,
  "LTC_imp": {
   "bar": 1790553600,
   "side": "short",
