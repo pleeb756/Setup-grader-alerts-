@@ -53,7 +53,7 @@ jobs:
           # Alpaca PAPER account (leave the secrets unset to turn paper trading off)
           APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
           APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
-          PAPER_RISK_PCT: "0.5"    # % of paper equity lost at a full stop
+          PAPER_RISK_PCT: "2"      # % of paper equity lost at a full stop ($40 on $2,000)
           PAPER_MAX_OPEN: "15"
           FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |
