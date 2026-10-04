@@ -594,6 +594,24 @@
    "ob": "in-against",
    "atr": 1.496391131296621,
    "pushed": true
+  },
+  {
+   "coin": "SUI",
+   "kind": "trend",
+   "side": "long",
+   "grade": "20ema",
+   "entry": 1.1842,
+   "stop": 1.1078704648362843,
+   "target": 1.2986943027455733,
+   "t": 1791086251.2561715,
+   "from_t": 1791072000,
+   "va_state": "balance",
+   "va_fit": "no fit",
+   "target_src": "trail",
+   "flow": "outflow",
+   "ob": "none",
+   "atr": 0.03771814065486273,
+   "pushed": true
   }
  ],
  "HYPE": {
@@ -925,5 +943,9 @@
  "LTC_tp": {
   "bar": 1791057600,
   "sent": 1791074683.9189484
+ },
+ "SUI_tp": {
+  "bar": 1791057600,
+  "sent": 1791086251.2561715
  }
 }
