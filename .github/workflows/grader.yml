@@ -1,8 +1,10 @@
-name: Setup grader alerts
+name: Swing grader alerts
 
 on:
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    # 20:35 and 21:35 UTC = 4:35 PM ET in summer (EDT) and winter (EST).
+    # The script only scans once per trading day, after 4:20 PM ET.
+    - cron: "35 20,21 * * 1-5"
   workflow_dispatch:
     inputs:
       test:
@@ -10,15 +12,15 @@ on:
         type: boolean
         default: false
       backtest:
-        description: "List past momentum shifts (no alerts)"
+        description: "Backtest both setups over 10 years (no alerts)"
         type: boolean
         default: false
       report:
-        description: "Print alert outcome stats (no alerts)"
+        description: "Print swing outcome stats (no alerts)"
         type: boolean
         default: false
-      paper_backtest:
-        description: "Paper trader: replay the last 30 days of signals and report (no alerts)"
+      force:
+        description: "Scan now, ignoring the after-close time gate"
         type: boolean
         default: false
 
@@ -32,7 +34,7 @@ concurrency:
 jobs:
   grade:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -44,50 +46,22 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Run grader
-        if: ${{ !inputs.paper_backtest }}
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          MS_MIN: "5"
-          MS_MAX_BARS: "6"
-          MS_COOLDOWN_HRS: "8"
-          VA_GATE: "0"          # set to "1" to require a value-area fit for Actionable
-          MAX_HOLD_HRS: "336"
+          RISK_USD: "0"          # set to e.g. "50" to see share sizes in the pushes
+          FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |
           python grader.py \
             ${{ inputs.test && '--test' || '' }} \
             ${{ inputs.backtest && '--backtest' || '' }} \
             ${{ inputs.report && '--report' || '' }}
 
-      - name: Paper trader
-        if: ${{ !inputs.test && !inputs.backtest && !inputs.report && !inputs.paper_backtest }}
-        continue-on-error: true
-        env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # checkpoint reminder pushes
-          MS_MIN: "5"
-          MS_MAX_BARS: "6"
-          PT_RISK_USD: "2"      # dollars lost at a full stop, per paper trade
-          PT_FEE_BPS: "12"      # Kalshi fee per side
-          PT_SLIP_BPS: "5"
-        run: python papertrade.py --live
-
-      - name: Paper backtest
-        if: ${{ inputs.paper_backtest }}
-        env:
-          MS_MIN: "5"
-          MS_MAX_BARS: "6"
-          PT_RISK_USD: "2"
-          PT_FEE_BPS: "12"
-          PT_SLIP_BPS: "5"
-          PT_DAYS: "30"
-        run: python papertrade.py --backtest
-
-      - name: Save alert state
-        if: ${{ always() && !inputs.backtest && !inputs.test && !inputs.report }}
+      - name: Save state and reports
+        if: ${{ always() && !inputs.test && !inputs.report }}
         run: |
           git config user.name grader-bot
           git config user.email grader-bot@users.noreply.github.com
-          git add state.json alerts_log.csv
-          for f in outcomes.csv outcomes_summary.md metals.json paper_state.json paper_trades.csv paper_summary.md backtest_report.md backtest_trades.csv; do [ -f "$f" ] && git add "$f"; done; true
-          git diff --staged --quiet || git commit -m "Update alert state"
+          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv; do [ -f "$f" ] && git add "$f"; done; true
+          git diff --staged --quiet || git commit -m "Update swing grader"
           git pull --rebase --autostash || true
           git push || true
