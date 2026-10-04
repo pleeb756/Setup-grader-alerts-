@@ -321,3 +321,11 @@ utc,coin,side,met,price
 2026-10-04 00:44,AAVE,trend-long,retest,181.42
 2026-10-04 00:44,LTC,trend-long,20ema,70.28
 2026-10-04 03:57,SUI,trend-long,20ema,1.1842
+2026-10-04 11:34,SUI,watch-long,20ema,1.1809
+2026-10-04 11:34,LTC,watch-long,20ema,70.53
+2026-10-04 11:34,WLD,watch-long,retest,0.5908
+2026-10-04 11:34,AAVE,watch-long,retest,182.6
+2026-10-04 11:34,Gold,watch-short,20ema,4162.2998046875
+2026-10-04 11:34,Silver,watch-short,20ema,60.415000915527344
+2026-10-04 11:34,Platinum,watch-short,20ema,1700.0
+2026-10-04 11:34,Palladium,watch-short,20ema,1172.199951171875
