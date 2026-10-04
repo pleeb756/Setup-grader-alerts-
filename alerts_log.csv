@@ -315,3 +315,8 @@ utc,coin,side,met,price
 2026-10-03 18:27,Palladium,watch-short,20ema,1172.199951171875
 2026-10-03 18:27,BTC,trend-long,20ema,84854.2
 2026-10-03 18:27,SOL,trend-long,20ema,119.69
+2026-10-04 00:44,BTC,watch-long,20ema,84740.0
+2026-10-04 00:44,SOL,watch-long,20ema,119.58
+2026-10-04 00:44,BNB,watch-long,20ema,787.2
+2026-10-04 00:44,AAVE,trend-long,retest,181.42
+2026-10-04 00:44,LTC,trend-long,20ema,70.28

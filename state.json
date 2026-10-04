@@ -558,6 +558,42 @@
    "ob": "none",
    "atr": 1.8984867224082937,
    "pushed": true
+  },
+  {
+   "coin": "AAVE",
+   "kind": "trend",
+   "side": "long",
+   "grade": "retest",
+   "entry": 181.42,
+   "stop": 174.0740907848148,
+   "target": 192.43886382277776,
+   "t": 1791074683.9189484,
+   "from_t": 1791072000,
+   "va_state": "balance",
+   "va_fit": "no fit",
+   "target_src": "trail",
+   "flow": "inflow",
+   "ob": "none",
+   "atr": 4.897272810123449,
+   "pushed": true
+  },
+  {
+   "coin": "LTC",
+   "kind": "trend",
+   "side": "long",
+   "grade": "20ema",
+   "entry": 70.28,
+   "stop": 68.03541330305507,
+   "target": 73.6468800454174,
+   "t": 1791074683.9189484,
+   "from_t": 1791072000,
+   "va_state": "balance",
+   "va_fit": "fit",
+   "target_src": "trail",
+   "flow": "inflow",
+   "ob": "in-against",
+   "atr": 1.496391131296621,
+   "pushed": true
   }
  ],
  "HYPE": {
@@ -869,5 +905,25 @@
  "SOL_tp": {
   "bar": 1791028800,
   "sent": 1791052073.9084072
+ },
+ "BTC_watch": {
+  "side": "long",
+  "sent": 1791074683.9189484
+ },
+ "SOL_watch": {
+  "side": "long",
+  "sent": 1791074683.9189484
+ },
+ "BNB_watch": {
+  "side": "long",
+  "sent": 1791074683.9189484
+ },
+ "AAVE_tp": {
+  "bar": 1791057600,
+  "sent": 1791074683.9189484
+ },
+ "LTC_tp": {
+  "bar": 1791057600,
+  "sent": 1791074683.9189484
  }
 }
