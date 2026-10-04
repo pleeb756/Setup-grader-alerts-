@@ -49,6 +49,12 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           RISK_USD: "0"          # set to e.g. "50" to see share sizes in the pushes
+          PUSH_SETUPS: "breakout"  # pullback signals are tracked silently
+          # Alpaca PAPER account (leave the secrets unset to turn paper trading off)
+          APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
+          APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
+          PAPER_RISK_PCT: "0.5"    # % of paper equity lost at a full stop
+          PAPER_MAX_OPEN: "15"
           FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |
           python grader.py \
@@ -61,7 +67,7 @@ jobs:
         run: |
           git config user.name grader-bot
           git config user.email grader-bot@users.noreply.github.com
-          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv; do [ -f "$f" ] && git add "$f"; done; true
+          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv paper_swing_trades.csv paper_swing_equity.csv; do [ -f "$f" ] && git add "$f"; done; true
           git diff --staged --quiet || git commit -m "Update swing grader"
           git pull --rebase --autostash || true
           git push || true
