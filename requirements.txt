@@ -1,2 +1,4 @@
 requests
 pandas
+numpy
+yfinance>=0.2.54
