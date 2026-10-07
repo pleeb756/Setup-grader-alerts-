@@ -59,6 +59,7 @@ jobs:
           PAPER_MAX_OPEN: "15"     # open breakout positions
           PAPER_PB_RISK_PCT: "2"   # pullbacks: % of paper equity lost at a full stop
           PAPER_PB_MAX_OPEN: "10"  # open pullback positions
+          PAPER_MAX_POS_PCT: "35"  # cap on one position's size, % of paper equity
           FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |
           python grader.py \
