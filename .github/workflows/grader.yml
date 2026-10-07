@@ -51,12 +51,14 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           RISK_USD: "0"          # set to e.g. "50" to see share sizes in the pushes
-          PUSH_SETUPS: "breakout,pullback"  # paper trading stays breakout-only
+          PUSH_SETUPS: "breakout,pullback"
           # Alpaca PAPER account (leave the secrets unset to turn paper trading off)
           APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
           APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
           PAPER_RISK_PCT: "2"      # % of paper equity lost at a full stop ($40 on $2,000)
-          PAPER_MAX_OPEN: "15"
+          PAPER_MAX_OPEN: "15"     # open breakout positions
+          PAPER_PB_RISK_PCT: "2"   # pullbacks: % of paper equity lost at a full stop
+          PAPER_PB_MAX_OPEN: "10"  # open pullback positions
           FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |
           python grader.py \
