@@ -110,47 +110,56 @@
    "sym": "JNJ",
    "setup": "pullback",
    "signal_date": "2026-10-02",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 5.139638167448515,
    "base_low": 258.3299865722656,
    "pivot": 278.8900146484375,
-   "close": 256.0299987792969
-  },
-  {
-   "sym": "KO",
-   "setup": "pullback",
-   "signal_date": "2026-10-02",
-   "status": "pending",
-   "pushed": false,
-   "atr": 1.2155025023369515,
-   "base_low": 85.72000122070312,
-   "pivot": 89.82401078563296,
-   "close": 85.6500015258789
+   "close": 256.0299987792969,
+   "entry_open": 256.0,
+   "stop0": 243.2789045813787,
+   "entry_date": "2026-10-05"
   },
   {
    "sym": "PFE",
    "setup": "pullback",
    "signal_date": "2026-10-02",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 0.5145262503377913,
    "base_low": 27.25,
    "pivot": 29.209999084472656,
-   "close": 27.799999237060547
+   "close": 27.799999237060547,
+   "entry_open": 27.649999618530273,
+   "stop0": 26.37750899249506,
+   "entry_date": "2026-10-05"
   },
   {
    "sym": "LLY",
    "setup": "pullback",
    "signal_date": "2026-10-02",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 31.912520756219926,
    "base_low": 1113.2900390625,
    "pivot": 1215.0,
-   "close": 1142.8499755859375
+   "close": 1142.8499755859375,
+   "entry_open": 1150.760009765625,
+   "stop0": 1071.554087879958,
+   "entry_date": "2026-10-05"
+  },
+  {
+   "sym": "INTC",
+   "setup": "pullback",
+   "signal_date": "2026-10-06",
+   "status": "pending",
+   "pushed": true,
+   "atr": 6.006541718113378,
+   "base_low": 94.5199966430664,
+   "pivot": 127.44000244140625,
+   "close": 112.5
   }
  ],
  "regime": true,
- "last_run": "2026-10-04"
+ "last_run": "2026-10-06"
 }
