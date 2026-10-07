@@ -44,6 +44,7 @@ Known limits: today's popular list didn't exist years ago (survivorship bias, so
 optimistic), and old earnings dates aren't available, so the backtest can't skip earnings.
 """
 import json, math, os, sys
+from concurrent.futures import ThreadPoolExecutor
 import datetime as dt
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -105,6 +106,7 @@ PAPER_MAX_POS_PCT = float(os.environ.get("PAPER_MAX_POS_PCT", "20")) # cap on on
 PAPER_MAX_OPEN = int(os.environ.get("PAPER_MAX_OPEN", "15"))
 
 BT_YEARS = int(os.environ.get("BT_YEARS", "10"))
+UNIVERSE_DAYS = 7              # reuse a Robinhood universe this many days
 RUN_AFTER_ET = (16, 20)        # daily bar is final by then
 
 SETUPS = ("pullback", "breakout")
@@ -148,15 +150,18 @@ def robinhood_top100():
         r = requests.get("https://api.robinhood.com/midlands/tags/tag/100-most-popular/",
                          headers=UA, timeout=15)
         r.raise_for_status()
-        syms = []
+        urls = r.json().get("instruments", [])
         with requests.Session() as sess:
-            for url in r.json().get("instruments", []):
+            def lookup(url):
                 try:
                     inst = sess.get(url, headers=UA, timeout=10).json()
                     if inst.get("tradeable") and inst.get("symbol"):
-                        syms.append(inst["symbol"].replace(".", "-"))
+                        return inst["symbol"].replace(".", "-")
                 except Exception:
                     pass
+                return None
+            with ThreadPoolExecutor(max_workers=16) as ex:
+                syms = [x for x in ex.map(lookup, urls) if x]
         if len(syms) >= 50:
             return syms, "robinhood"
     except Exception as e:
@@ -166,8 +171,12 @@ def robinhood_top100():
 
 def get_universe(state, today):
     u = state.get("universe", {})
-    if u.get("date") == str(today) and u.get("symbols"):
-        return u["symbols"], u["source"]
+    if u.get("symbols") and u.get("date"):
+        age = (today - dt.date.fromisoformat(u["date"])).days
+        # a fallback list is only reused the same day, so Robinhood is retried tomorrow
+        max_age = UNIVERSE_DAYS if u.get("source") == "robinhood" else 1
+        if 0 <= age < max_age:
+            return u["symbols"], u["source"]
     syms, src = robinhood_top100()
     state["universe"] = {"date": str(today), "source": src, "symbols": syms}
     print(f"Universe: {len(syms)} symbols from {src}")

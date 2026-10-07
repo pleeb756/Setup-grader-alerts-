@@ -2,9 +2,9 @@ name: Swing grader alerts
 
 on:
   schedule:
-    # 20:35 and 21:35 UTC = 4:35 PM ET in summer (EDT) and winter (EST).
+    # 21:35 UTC = 5:35 PM ET in summer (EDT), 4:35 PM ET in winter (EST).
     # The script only scans once per trading day, after 4:20 PM ET.
-    - cron: "35 20,21 * * 1-5"
+    - cron: "35 21 * * 1-5"
   workflow_dispatch:
     inputs:
       test:
@@ -34,22 +34,24 @@ concurrency:
 jobs:
   grade:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: ${{ inputs.backtest && 40 || 8 }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
 
-      - run: pip install -r requirements.txt
+      - run: pip install --quiet --disable-pip-version-check -r requirements.txt
 
       - name: Run grader
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           RISK_USD: "0"          # set to e.g. "50" to see share sizes in the pushes
-          PUSH_SETUPS: "breakout"  # pullback signals are tracked silently
+          PUSH_SETUPS: "breakout,pullback"  # paper trading stays breakout-only
           # Alpaca PAPER account (leave the secrets unset to turn paper trading off)
           APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
           APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
