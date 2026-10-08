@@ -7,3 +7,10 @@ date,sym,setup,event,price
 2026-10-06,INTC,pullback,signal,112.5
 2026-10-07,LLY,pullback,closed +0.27R,1173.0332
 2026-10-07,QCOM,pullback,signal,177.1199951171875
+2026-10-08,JNJ,pullback,closed -0.00R,256.0919
+2026-10-08,PFE,pullback,closed +0.17R,27.8860
+2026-10-08,SPMO,pullback,signal,150.83999633789062
+2026-10-08,HOOD,pullback,signal,107.01000213623047
+2026-10-08,VEA,pullback,signal,69.86000061035156
+2026-10-08,VXUS,pullback,signal-muted,84.0999984741211
+2026-10-08,EMXC,pullback,signal-muted,98.22000122070312

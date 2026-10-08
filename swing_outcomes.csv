@@ -1,3 +1,5 @@
 signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days,reason,mfe_r,mae_r
 2026-10-02,2026-10-05,2026-10-06,KO,pullback,False,85.9129,82.8742,86.5567,0.212,0.749,2,closed above 5-day average,0.22,0.26
 2026-10-02,2026-10-05,2026-10-07,LLY,pullback,False,1151.3354,1071.5541,1173.0332,0.272,1.885,3,closed above 5-day average,0.32,0.15
+2026-10-02,2026-10-05,2026-10-08,JNJ,pullback,False,256.128,243.2789,256.0919,-0.003,-0.014,4,closed above 5-day average,0.35,0.39
+2026-10-02,2026-10-05,2026-10-08,PFE,pullback,False,27.6638,26.3775,27.886,0.173,0.803,4,closed above 5-day average,0.39,0.42
