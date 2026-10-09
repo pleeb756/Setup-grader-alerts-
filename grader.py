@@ -34,7 +34,7 @@ queues a day limit buy at the max-gap price (an open above it never fills = the 
 pullback it queues a market buy for the open. Both carry an attached stop, sized to lose
 PAPER_RISK_PCT (pullbacks: PAPER_PB_RISK_PCT) of equity at the stop and capped by buying power.
 Each evening after that it places the GTC stop (and for breakouts the TP1 half-sell) from the
-actual fill, raises the stop along the 3-ATR trail, queues a market sell when the plan exits, and
+actual fill, raises the stop along the TRAIL_ATR trail, queues a market sell when the plan exits, and
 logs closed trades to paper_swing_trades.csv and equity to paper_swing_equity.csv. Breakouts and
 pullbacks have separate open-position caps (PAPER_MAX_OPEN / PAPER_PB_MAX_OPEN). One summary push
 per evening.
@@ -81,7 +81,7 @@ BO_MAX_GAP = float(os.environ.get("BO_MAX_GAP", "0.05"))
 BO_MAX_LOSS = float(os.environ.get("BO_MAX_LOSS", "0.08"))
 BO_MIN_STOP_ATR = 1.0
 BO_TP1_R = float(os.environ.get("BO_TP1_R", "2.0"))
-TRAIL_ATR = float(os.environ.get("TRAIL_ATR", "3.0"))
+TRAIL_ATR = float(os.environ.get("TRAIL_ATR", "4.0"))   # 4 beat 3 in the 10-yr exit-variant backtest
 BO_MAX_DAYS = int(os.environ.get("BO_MAX_DAYS", "60"))
 
 SLIP_BPS = float(os.environ.get("SLIP_BPS", "5"))         # per fill; Robinhood has no stock commission
@@ -440,18 +440,16 @@ def backtest():
 # The first row of each setup is the live rule.
 EXIT_VARIANTS = {
     "breakout": [
-        ("LIVE: half at 2R, trail 3 ATR", {}),
-        ("half at 3R, trail 3 ATR", {"tp1_r": 3.0}),
-        ("half at 4R, trail 3 ATR", {"tp1_r": 4.0}),
-        ("no half-sell, trail 3 ATR", {"tp1_r": 0}),
-        ("no half-sell, trail 4 ATR", {"tp1_r": 0, "trail": 4.0}),
+        ("LIVE: half at 2R, trail 4 ATR", {}),
+        ("old live: half at 2R, trail 3 ATR", {"trail": 3.0}),
+        ("half at 2R, trail 5 ATR", {"trail": 5.0}),
         ("half at 2R, trail 2 ATR", {"trail": 2.0}),
-        ("half at 2R, trail 4 ATR", {"trail": 4.0}),
-        ("half at 2R, trail 3, lock +0.5R at +1R", {"lock_at": 1.0, "lock_to": 0.5}),
-        ("half at 3R, trail 3, lock +0.5R at +1R", {"tp1_r": 3.0, "lock_at": 1.0, "lock_to": 0.5}),
-        ("no half-sell, trail 3, lock +0.5R at +1R", {"tp1_r": 0, "lock_at": 1.0, "lock_to": 0.5}),
-        ("no half-sell, trail 3, breakeven at +1R", {"tp1_r": 0, "lock_at": 1.0, "lock_to": 0.0}),
-        ("no half-sell, trail 4, lock +1R at +2R", {"tp1_r": 0, "trail": 4.0, "lock_at": 2.0, "lock_to": 1.0}),
+        ("half at 3R, trail 4 ATR", {"tp1_r": 3.0}),
+        ("no half-sell, trail 3 ATR", {"tp1_r": 0, "trail": 3.0}),
+        ("no half-sell, trail 4 ATR", {"tp1_r": 0}),
+        ("no half-sell, trail 5 ATR", {"tp1_r": 0, "trail": 5.0}),
+        ("half at 2R, trail 4, lock +0.5R at +1R", {"lock_at": 1.0, "lock_to": 0.5}),
+        ("no half-sell, trail 4, lock +1R at +2R", {"tp1_r": 0, "lock_at": 2.0, "lock_to": 1.0}),
     ],
     "pullback": [
         ("LIVE: sell after close above 5-day avg", {}),
