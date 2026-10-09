@@ -14,3 +14,6 @@ date,sym,setup,event,price
 2026-10-08,VEA,pullback,signal,69.86000061035156
 2026-10-08,VXUS,pullback,signal-muted,84.0999984741211
 2026-10-08,EMXC,pullback,signal-muted,98.22000122070312
+2026-10-09,TSM,pullback,signal,453.30999755859375
+2026-10-09,NVDA,pullback,signal,229.27999877929688
+2026-10-09,AMD,pullback,signal,608.0999755859375
