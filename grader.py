@@ -275,11 +275,21 @@ def initial_stop(setup, entry, atr_, base_low):
     return stop
 
 
-def simulate(setup, entry_open, stop, atr_, bars, slip_bps=SLIP_BPS):
+def simulate(setup, entry_open, stop, atr_, bars, slip_bps=SLIP_BPS, x=None):
     """Walk daily bars starting with the entry day (filled at its open).
     Stops are checked before targets in each bar; a gap below the stop fills at the open.
     Exit signals found at a close fill at the next open. Returns a result dict; done=False
-    while the trade is still open (with the current stop and any exit due tomorrow)."""
+    while the trade is still open (with the current stop and any exit due tomorrow).
+    x: optional exit-rule overrides used only by the backtest's exit-variant table
+    (tp1_r: 0 = no half-sell; trail: ATR multiple; lock_at/lock_to: once the high reaches
+    lock_at R, the stop rises to entry + lock_to R from the next bar; pb_mode: "sma5" or
+    "trail"; max_days). Live trading always uses the defaults."""
+    x = x or {}
+    tp1_r = x.get("tp1_r", BO_TP1_R)
+    trail = x.get("trail", TRAIL_ATR)
+    lock_at, lock_to = x.get("lock_at"), x.get("lock_to", 0.0)
+    pb_mode = x.get("pb_mode", "sma5")
+    max_days = x.get("max_days", BO_MAX_DAYS if setup == "breakout" else PB_MAX_DAYS)
     slip = slip_bps / 1e4
     entry = entry_open * (1 + slip)
     risk = entry - stop
@@ -291,7 +301,7 @@ def simulate(setup, entry_open, stop, atr_, bars, slip_bps=SLIP_BPS):
         return {**base, "done": True, "r": 0.0, "reason": "invalid", "days": 0, "exit_px": entry,
                 "exit_date": dates[0] if len(dates) else None, "mfe": 0.0, "mae": 0.0,
                 "half": False, "ret_pct": 0.0}
-    tp1 = entry + BO_TP1_R * risk
+    tp1 = entry + tp1_r * risk if tp1_r else float("inf")
     q, real, half, best, mfe, mae, pend = 1.0, 0.0, False, entry, 0.0, 0.0, None
 
     def done(k, px, reason):
@@ -319,13 +329,22 @@ def simulate(setup, entry_open, stop, atr_, bars, slip_bps=SLIP_BPS):
                 if l <= entry and k > 0:
                     return done(k, entry * (1 - slip), "TP1 then back to entry")
             best = max(best, h)
-            stop = max(stop, best - TRAIL_ATR * atr_)
-            if k + 1 >= BO_MAX_DAYS:
+            stop = max(stop, best - trail * atr_)
+            if lock_at is not None and mfe >= lock_at:
+                stop = max(stop, entry + lock_to * risk)
+            if k + 1 >= max_days:
                 pend = "max hold"
         else:
-            if np.isfinite(S5[k]) and c > S5[k]:
+            if pb_mode == "trail":
+                best = max(best, h)
+                stop = max(stop, best - trail * atr_)
+                if lock_at is not None and mfe >= lock_at:
+                    stop = max(stop, entry + lock_to * risk)
+                if k + 1 >= max_days:
+                    pend = "time stop"
+            elif np.isfinite(S5[k]) and c > S5[k]:
                 pend = "closed above 5-day average"
-            elif k + 1 >= PB_MAX_DAYS:
+            elif k + 1 >= max_days:
                 pend = "time stop"
     return {**base, "done": False, "r": real, "half": half, "stop": stop, "pending_exit": pend,
             "mfe": mfe, "mae": mae, "days": len(O), "tp1": tp1}
@@ -366,13 +385,14 @@ def backtest():
     spy = data.get("SPY")
     if spy is None:
         raise SystemExit("SPY data missing")
-    rows, gaps, open_end = [], 0, 0
+    rows, gaps, open_end, prepped = [], 0, 0, {}
     for sym in syms:
         df = data.get(sym)
         if df is None:
             continue
         df = add_ind(df.copy(), spy)
         drift = float(df.Close.pct_change().mean())
+        prepped[sym] = (df, drift)
         O = df.Open.to_numpy(float)
         A = df.atr.to_numpy(float)
         BL = df.base_low.to_numpy(float)
@@ -410,9 +430,81 @@ def backtest():
     t = pd.DataFrame(rows)
     t.to_csv(BT_TRADES, index=False)
     text = bt_report(t, len(data) - 1, src, gaps, open_end)
+    text += exit_variants_report(prepped)
     BT_FILE.write_text(text)
     print(text)
     step_summary(text)
+
+
+# Exit rules compared side by side (regime filter on, same entries and initial stops).
+# The first row of each setup is the live rule.
+EXIT_VARIANTS = {
+    "breakout": [
+        ("LIVE: half at 2R, trail 3 ATR", {}),
+        ("half at 3R, trail 3 ATR", {"tp1_r": 3.0}),
+        ("half at 4R, trail 3 ATR", {"tp1_r": 4.0}),
+        ("no half-sell, trail 3 ATR", {"tp1_r": 0}),
+        ("no half-sell, trail 4 ATR", {"tp1_r": 0, "trail": 4.0}),
+        ("half at 2R, trail 2 ATR", {"trail": 2.0}),
+        ("half at 2R, trail 4 ATR", {"trail": 4.0}),
+        ("half at 2R, trail 3, lock +0.5R at +1R", {"lock_at": 1.0, "lock_to": 0.5}),
+        ("half at 3R, trail 3, lock +0.5R at +1R", {"tp1_r": 3.0, "lock_at": 1.0, "lock_to": 0.5}),
+        ("no half-sell, trail 3, lock +0.5R at +1R", {"tp1_r": 0, "lock_at": 1.0, "lock_to": 0.5}),
+        ("no half-sell, trail 3, breakeven at +1R", {"tp1_r": 0, "lock_at": 1.0, "lock_to": 0.0}),
+        ("no half-sell, trail 4, lock +1R at +2R", {"tp1_r": 0, "trail": 4.0, "lock_at": 2.0, "lock_to": 1.0}),
+    ],
+    "pullback": [
+        ("LIVE: sell after close above 5-day avg", {}),
+        ("let it run: trail 2.5 ATR, max 20 days", {"pb_mode": "trail", "trail": 2.5, "max_days": 20}),
+        ("let it run: trail 2.5, lock +0.25R at +0.5R, max 20 days",
+         {"pb_mode": "trail", "trail": 2.5, "lock_at": 0.5, "lock_to": 0.25, "max_days": 20}),
+    ],
+}
+
+
+def exit_variants_report(prepped):
+    out = ["\n## Exit variants (regime filter on)\n",
+           "Same signals, entries and starting stops; only the exit changes. Stop raises (trail, lock) "
+           "take effect the next day, like the evening stop updates in paper trading. Look for a row that "
+           "beats LIVE on total R **and** holds up in both halves, not just the biggest number.\n",
+           "| setup | exit rule | result | avg % / trade | vs drift % | avg days | max DD (R) | 1st half | 2nd half |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    for setup, variants in EXIT_VARIANTS.items():
+        for label, x in variants:
+            rows = []
+            for sym, (df, drift) in prepped.items():
+                O = df.Open.to_numpy(float)
+                A = df.atr.to_numpy(float)
+                BL = df.base_low.to_numpy(float)
+                PV = df.base_hi.to_numpy(float)
+                REG = df.regime.to_numpy(bool)
+                sig = df[f"sig_{setup}"].to_numpy(bool)
+                busy = -1
+                for i in np.flatnonzero(sig):
+                    if i <= busy or i + 1 >= len(df) or not REG[i]:
+                        continue
+                    o = O[i + 1]
+                    if setup == "breakout" and o > PV[i] * (1 + BO_MAX_GAP):
+                        continue
+                    stop = initial_stop(setup, o * (1 + SLIP_BPS / 1e4), A[i], BL[i])
+                    res = simulate(setup, o, stop, A[i], df.iloc[i + 1:], x=x)
+                    if not res["done"]:
+                        break
+                    rows.append({"entry_date": df.index[i + 1].date(), "exit_date": res["exit_date"].date(),
+                                 "r": res["r"], "ret_pct": res["ret_pct"], "days": res["days"],
+                                 "excess": res["ret_pct"] - drift * res["days"] * 100})
+                    busy = i + res["days"]
+            v = pd.DataFrame(rows)
+            if v.empty:
+                out.append(f"| {setup} | {label} | - | | | | | | |"); continue
+            v = v.sort_values("exit_date")
+            st = stats(v.r, v.days)
+            mid = v.entry_date.min() + (v.entry_date.max() - v.entry_date.min()) / 2
+            out.append(f"| {setup} | {label} | {cell(st)} | {v.ret_pct.mean():+.2f} | {v.excess.mean():+.2f} | "
+                       f"{st['days']:.1f} | {st['dd']:.1f} | {cell(stats(v[v.entry_date <= mid].r))} | "
+                       f"{cell(stats(v[v.entry_date > mid].r))} |")
+            print(f"exit variant done: {setup} / {label}")
+    return "\n".join(out) + "\n"
 
 
 def bt_report(t, n_syms, src, gaps, open_end):
