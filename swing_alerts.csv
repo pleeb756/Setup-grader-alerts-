@@ -19,3 +19,26 @@ date,sym,setup,event,price
 2026-10-09,AMD,pullback,signal,608.0999755859375
 2026-10-12,DAL,pullback,signal,80.11000061035156
 2026-10-12,MU,pullback,signal,989.0399780273438
+2026-10-15,INTC,pullback,closed -1.22R,93.5132
+2026-10-15,QCOM,pullback,closed -0.05R,173.5432
+2026-10-15,SPMO,pullback,closed -1.01R,145.8375
+2026-10-15,HOOD,pullback,closed -0.13R,107.1464
+2026-10-15,VXUS,pullback,closed -0.35R,83.7981
+2026-10-15,EMXC,pullback,closed -1.51R,92.6501
+2026-10-15,TSM,pullback,closed -1.36R,414.9624
+2026-10-15,NVDA,pullback,closed -1.01R,214.5371
+2026-10-15,AMD,pullback,closed -1.02R,539.3502
+2026-10-15,SPMO,pullback,signal,144.17999267578125
+2026-10-15,TSM,pullback,signal,422.25
+2026-10-15,VGT,pullback,signal,122.33999633789062
+2026-10-15,EMXC,pullback,signal-muted,94.05999755859375
+2026-10-15,QQQ,pullback,signal-muted,728.0
+2026-10-15,QQQM,pullback,signal-muted,299.7900085449219
+2026-10-15,VONG,pullback,signal-muted,127.88999938964844
+2026-10-15,BE,pullback,signal-muted,236.3000030517578
+2026-10-15,MRVL,pullback,signal-muted,241.24000549316406
+2026-10-15,CRWD,pullback,signal-muted,244.57000732421875
+2026-10-15,INTC,pullback,signal-muted,95.37000274658203
+2026-10-15,NVDA,pullback,signal-muted,217.22999572753906
+2026-10-15,VWO,pullback,signal-muted,58.790000915527344
+2026-10-15,AMD,pullback,signal-muted,562.22998046875
