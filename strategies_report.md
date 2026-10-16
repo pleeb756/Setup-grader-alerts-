@@ -8,8 +8,8 @@ Calmar = growth per year ÷ worst drop (higher = more growth per unit of pain).
 
 | strategy | ending $ | growth / yr | worst drop | worst year | 1st half / yr | 2nd half / yr | Calmar |
 |---|---|---|---|---|---|---|---|
-| Stock momentum, top 3, no SPY filter | $2,777,618 | +106.5% | -68% | -14% | +174.5% | +55.0% | 1.56 |
-| Stock momentum, top 3 (popular list) | $448,120 | +72.0% | -74% | -25% | +165.7% | +11.1% | 0.98 |
+| Stock momentum, top 3, no SPY filter | $2,777,617 | +106.5% | -68% | -14% | +174.5% | +55.0% | 1.56 |
+| Stock momentum, top 3 (popular list) | $448,119 | +72.0% | -74% | -25% | +165.7% | +11.1% | 0.98 |
 | Stock momentum, top 5 (popular list) | $278,016 | +63.8% | -60% | -25% | +107.3% | +29.4% | 1.06 |
 | 50% TQQQ trend + 50% stock momentum top 5 | $158,148 | +54.9% | -50% | -28% | +78.3% | +34.2% | 1.10 |
 | TQQQ buy & hold (3x, no filter) | $60,541 | +40.8% | -82% | -79% | +68.0% | +17.3% | 0.50 |
