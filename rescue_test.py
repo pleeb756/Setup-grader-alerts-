@@ -1,21 +1,25 @@
 """
-"Never sell at a loss" test: what if losing trades were held until they got back to +RESCUE_PCT?
+"Never sell at a loss" test: what if losing trades were held until they got back to +RESCUE_PCT,
+and then either sold there or allowed to ride?
 
-Rule tested: each setup runs its normal plan, but any exit that would close at a loss (initial
-stop, trailing stop below entry, gap through the stop, time stop, a pullback's 5-day exit while
-underwater) is skipped. The position is held until price reaches entry +RESCUE_PCT (long) or
-entry -RESCUE_PCT (short), and filled there (or at the open if it gaps past). Exits that are
-already profitable happen as before. Trades still underwater on the last day are marked at the
-last close and reported as "still stuck", never dropped.
+Rule tested (long setups only: a short held against you has no ceiling): each setup runs its
+normal plan, but any exit that would close below the entry (initial stop, trailing stop below
+entry, gap through the stop, time stop, a pullback's 5-day exit while underwater) is skipped.
+The position is held until price reaches entry +RESCUE_PCT. Three versions from there:
+  sell    sell at +RESCUE_PCT (or at the open if it gaps past)
+  ride5   set the stop at +RESCUE_PCT, then trail it TRAIL_ATR x ATR behind the highest high
+  ride0   same, but the first stop is breakeven
+Exits that are already profitable happen as before. Trades still underwater on the last day are
+marked at the last close and reported as "still stuck", never dropped.
 
-Same signals, entries and one-position-per-stock rule as the main backtest. While a rescued
-trade is stuck, that stock can't take a new signal for the same setup (as live would work).
+Same signals, entries and one-position-per-stock rule as the main backtest; every version uses the
+same trade list. While a rescued trade is open, that stock can't take a new signal for the setup.
 
 Portfolio view: $START_USD account, each trade sized as the live plan sizes it (1% of equity at the
-original stop distance, max 35% of equity, cash only), so the cost of money tied up in stuck
-trades shows up as skipped signals.
+original stop distance, max 35% of equity, cash only), marked to market daily, so the worst drop
+includes open losses and money tied up in stuck trades shows up as skipped signals.
 
-Writes rescue_report.md.   python rescue_test.py
+Writes rescue_report.md and rescue_trades.csv.   python rescue_test.py
 """
 import datetime as dt
 import os
