@@ -12,7 +12,7 @@ on:
         type: boolean
         default: false
       backtest:
-        description: "Backtest both setups over 10 years (no alerts)"
+        description: "Backtest all four setups (long + short) over 10 years (no alerts)"
         type: boolean
         default: false
       report:
@@ -34,7 +34,7 @@ concurrency:
 jobs:
   grade:
     runs-on: ubuntu-24.04
-    timeout-minutes: ${{ inputs.backtest && 40 || 8 }}
+    timeout-minutes: ${{ inputs.backtest && 60 || 8 }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -51,16 +51,22 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           RISK_USD: "0"          # set to e.g. "50" to see share sizes in the pushes
-          PUSH_SETUPS: "breakout,pullback"
+          # setups: pullback, breakout (long) and short_bounce, breakdown (short)
+          # Pullbacks are off for pushes and paper trading: 10-yr backtest edge was below
+          # buy-and-hold drift (+0.04R, -0.12% vs drift, 109R max drawdown) and the first 7
+          # paper pullbacks all lost. They're still tracked silently in swing_outcomes.csv.
+          PUSH_SETUPS: "breakout"
+          PAPER_SETUPS: "breakout,short_bounce,breakdown"
+          SHORT_REGIME: "any"    # "any" = shorts in any market, "bear" = only while SPY is below its 200-day
           # Alpaca PAPER account (leave the secrets unset to turn paper trading off)
           APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
           APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
-          # Pullbacks are out of paper trading: 10-yr backtest edge was below buy-and-hold drift
-          # (+0.04R, -0.12% vs drift, 109R max drawdown) and the first 7 paper pullbacks all lost.
-          # They are still tracked in swing_outcomes.csv. Add ",pullback" back to re-enable.
-          PAPER_SETUPS: "breakout"
-          PAPER_RISK_PCT: "2"      # % of paper equity lost at a full stop ($40 on $2,000)
+          PAPER_RISK_PCT: "2"      # breakouts: % of paper equity lost at a full stop ($40 on $2,000)
           PAPER_MAX_OPEN: "15"     # open breakout positions
+          PAPER_SB_RISK_PCT: "1"   # short bounces: % of paper equity lost at a full stop (untested, so smaller)
+          PAPER_SB_MAX_OPEN: "5"   # open short-bounce positions
+          PAPER_BD_RISK_PCT: "1"   # breakdowns: % of paper equity lost at a full stop (untested, so smaller)
+          PAPER_BD_MAX_OPEN: "10"  # open breakdown positions
           PAPER_MAX_POS_PCT: "35"  # cap on one position's size, % of paper equity
           FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |

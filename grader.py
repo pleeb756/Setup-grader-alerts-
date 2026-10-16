@@ -1,17 +1,23 @@
 """
-Swing Setup Grader - Robinhood stocks (v4: replaces the crypto perps grader).
+Swing Setup Grader - Robinhood stocks (v5: long AND short setups).
 
-Scans Robinhood's "100 Most Popular" stocks once a day after the close and pushes two kinds
-of long swing setups to your phone through ntfy. Signals use the finished daily bar; the
-plan is always "buy at tomorrow's open".
+Scans Robinhood's "100 Most Popular" stocks once a day after the close and pushes swing setups
+to your phone through ntfy. Signals use the finished daily bar; the plan is always "enter at
+tomorrow's open". Four setups, two per direction, each a mirror image of the other:
 
-PULLBACK (short-term dip in an uptrend)
+LONG PULLBACK (short-term dip in an uptrend)
   - Stock above its 200-day average, and 50-day above 200-day.
   - 2-day RSI at or below PB_RSI2_MAX (a sharp 1-3 day dip).
   - Stop PB_STOP_ATR x ATR(14) below the fill. Exit at the next open after a close above
     the 5-day average, or after PB_MAX_DAYS sessions.
 
-BREAKOUT (leader breaking out of a tight base)
+SHORT BOUNCE (short-term rally in a downtrend)
+  - Stock below its 200-day average, and 50-day below 200-day.
+  - 2-day RSI at or above SB_RSI2_MIN (a sharp 1-3 day pop).
+  - Stop PB_STOP_ATR x ATR above the fill. Cover at the next open after a close below the
+    5-day average, or after PB_MAX_DAYS sessions.
+
+LONG BREAKOUT (leader breaking out of a tight base)
   - Close > 50-day > 150-day > 200-day, the 200-day rising, within 25% of the 52-week high,
     and beating SPY over the last 6 months.
   - The prior BASE_LEN days formed a base no deeper than BASE_MAX_DEPTH.
@@ -21,30 +27,45 @@ BREAKOUT (leader breaking out of a tight base)
   - Stop at the base low, capped at BO_MAX_LOSS below the fill and at least 1 ATR away.
     Half off at BO_TP1_R, stop to breakeven, runner trails TRAIL_ATR x ATR behind the high.
 
-Both need the market regime on: SPY above its 200-day average. When SPY drops below it, no new
-entries are sent (one push when the regime flips). Every signal of both setups is tracked in
-swing_outcomes.csv, but only PUSH_SETUPS (default: breakout) go to the phone: the top
-MAX_PUSH_PER_SETUP a day, with a share size (set RISK_USD), an options idea (about 0.60-delta
-call, debit spread when implied vol is rich vs realized) and an earnings warning. Pushed trades
-get follow-ups for the fill, TP1, stop raises, sell signals and closes.
+SHORT BREAKDOWN (laggard breaking down out of a tight base)
+  - Close < 50-day < 150-day < 200-day, the 200-day falling, within 35% of the 52-week low,
+    and lagging SPY over the last 6 months.
+  - Same tight base; today closed below the base low for the first time, on BO_VOL_MULT x
+    average volume, in the lower half of the day's range.
+  - Skip if tomorrow opens more than BO_MAX_GAP below the base low (chasing).
+  - Stop at the base high, capped at BO_MAX_LOSS above the fill and at least 1 ATR away.
+    Cover half at BO_TP1_R, stop to breakeven, runner trails TRAIL_ATR x ATR above the low.
+
+Market regime: long setups need SPY above its 200-day. Short setups follow SHORT_REGIME:
+"any" (default) runs them in any market, "bear" only when SPY is below its 200-day.
+Robinhood can't short shares, so for real money a short signal means buying puts; the push
+includes a put idea (about 0.60 delta, or a debit spread when implied vol is rich).
+
+Every signal is tracked in swing_outcomes.csv; only PUSH_SETUPS go to the phone (the top
+MAX_PUSH_PER_SETUP a day per setup), with a share size (set RISK_USD), an options idea and an
+earnings warning. Pushed trades get follow-ups for the fill, TP1, stop moves, exits and closes.
 
 PAPER TRADING (Alpaca): with APCA_API_KEY_ID / APCA_API_SECRET_KEY set, every PAPER_SETUPS signal
-also goes to an Alpaca PAPER account (live URLs are refused). The evening of a breakout signal it
-queues a day limit buy at the max-gap price (an open above it never fills = the chase rule); for a
-pullback it queues a market buy for the open. Both carry an attached stop, sized to lose
-PAPER_RISK_PCT (pullbacks: PAPER_PB_RISK_PCT) of equity at the stop and capped by buying power.
-Each evening after that it places the GTC stop (and for breakouts the TP1 half-sell) from the
-actual fill, raises the stop along the TRAIL_ATR trail, queues a market sell when the plan exits, and
-logs closed trades to paper_swing_trades.csv and equity to paper_swing_equity.csv. Breakouts and
-pullbacks have separate open-position caps (PAPER_MAX_OPEN / PAPER_PB_MAX_OPEN). One summary push
-per evening.
+also goes to an Alpaca PAPER account (live URLs are refused). Breakouts/breakdowns queue a day
+limit order at the max-gap price (an open past it never fills = the chase rule); pullbacks and
+bounces queue a market order for the open. Every entry carries an attached stop and is sized to
+lose that setup's risk % of equity at the stop, capped by PAPER_MAX_POS_PCT and buying power.
+Shorts need an account with shorting enabled (Alpaca requires $2,000+ equity) and an
+easy-to-borrow stock; otherwise they're skipped with a note. Only one paper position per symbol
+at a time (Alpaca nets positions by symbol). Each evening it places the GTC stop (and the TP1
+half order for breakouts/breakdowns) from the actual fill, moves the stop along the trail,
+queues a market exit when the plan exits, and logs closed trades to paper_swing_trades.csv and
+equity to paper_swing_equity.csv. One summary push per evening.
+If a setup is taken out of PAPER_SETUPS, its unfilled entry orders are cancelled on the next run;
+positions that already filled keep being managed until they exit.
 
 Backtest: `python grader.py --backtest` replays BT_YEARS of daily history for the current list
-with both setups, reports each by year and by first half vs second half, compares with and
+with all four setups, reports each by year and by first half vs second half, compares with and
 without the regime filter, and checks returns against each stock's own drift. Results are
 committed as swing_backtest.md and swing_bt_trades.csv.
-Known limits: today's popular list didn't exist years ago (survivorship bias, so results run
-optimistic), and old earnings dates aren't available, so the backtest can't skip earnings.
+Known limits: today's popular list didn't exist years ago (survivorship bias: longs look
+optimistic, shorts look pessimistic), old earnings dates aren't available, and short borrow
+fees and hard-to-borrow recalls aren't modeled.
 """
 import json, math, os, sys
 from concurrent.futures import ThreadPoolExecutor
@@ -65,18 +86,20 @@ RISK_USD = float(os.environ.get("RISK_USD", "0"))        # $ lost at a full stop
 
 MIN_PRICE = 10
 MIN_DOLLAR_VOL = 50e6          # 20-day average dollar volume
-REGIME_SMA = 200               # SPY must close above this average for new entries
+REGIME_SMA = 200               # SPY must close above this average for new long entries
 
-# pullback
+# pullback (long) and bounce (short)
 PB_RSI2_MAX = float(os.environ.get("PB_RSI2_MAX", "10"))
+SB_RSI2_MIN = float(os.environ.get("SB_RSI2_MIN", str(100 - PB_RSI2_MAX)))
 PB_STOP_ATR = float(os.environ.get("PB_STOP_ATR", "2.5"))
 PB_MAX_DAYS = int(os.environ.get("PB_MAX_DAYS", "10"))
 
-# breakout
+# breakout (long) and breakdown (short)
 BASE_LEN = int(os.environ.get("BASE_LEN", "20"))
 BASE_MAX_DEPTH = float(os.environ.get("BASE_MAX_DEPTH", "0.12"))
 BO_VOL_MULT = float(os.environ.get("BO_VOL_MULT", "1.5"))
-BO_NEAR_HIGH = 0.75            # close at least 75% of the 52-week high
+BO_NEAR_HIGH = 0.75            # breakout: close at least 75% of the 52-week high
+BD_NEAR_LOW = 1.35             # breakdown: close no more than 35% above the 52-week low
 BO_MAX_GAP = float(os.environ.get("BO_MAX_GAP", "0.05"))
 BO_MAX_LOSS = float(os.environ.get("BO_MAX_LOSS", "0.08"))
 BO_MIN_STOP_ATR = 1.0
@@ -84,37 +107,57 @@ BO_TP1_R = float(os.environ.get("BO_TP1_R", "2.0"))
 TRAIL_ATR = float(os.environ.get("TRAIL_ATR", "4.0"))   # 4 beat 3 in the 10-yr exit-variant backtest
 BO_MAX_DAYS = int(os.environ.get("BO_MAX_DAYS", "60"))
 
+# shorts: "any" = run in any market, "bear" = only while SPY is below its 200-day
+SHORT_REGIME = os.environ.get("SHORT_REGIME", "any").strip().lower()
+
 SLIP_BPS = float(os.environ.get("SLIP_BPS", "5"))         # per fill; Robinhood has no stock commission
 MAX_PUSH_PER_SETUP = int(os.environ.get("MAX_PUSH_PER_SETUP", "3"))
-TRAIL_PUSH_ATR = 1.0           # push a stop raise once the trail moves this many ATR
+TRAIL_PUSH_ATR = 1.0           # push a stop move once the trail moves this many ATR
 
-# options idea
-OPT_DTE = {"pullback": (21, 45, 30), "breakout": (30, 75, 45)}   # min, max, target
+# options idea (keyed by setup kind: pb = pullback/bounce, bo = breakout/breakdown)
+OPT_DTE = {"pb": (21, 45, 30), "bo": (30, 75, 45)}   # min, max, target
 TARGET_DELTA = 0.60
 MIN_OI = 500
 MAX_SPREAD = 0.10
 IV_RICH = 1.3                  # ATM IV / 20-day realized vol above this -> debit spread
 RISK_FREE = 0.04
-EARN_WARN_DAYS = {"pullback": 14, "breakout": 30}
+EARN_WARN_DAYS = {"pb": 14, "bo": 30}
 
-# which setups push to the phone (the other is tracked silently), and paper trading
-PUSH_SETUPS = tuple(x for x in os.environ.get("PUSH_SETUPS", "breakout").split(",") if x)
-PAPER_SETUPS = tuple(x for x in os.environ.get("PAPER_SETUPS", "breakout,pullback").split(",") if x)
+SETUPS = ("pullback", "breakout", "short_bounce", "breakdown")
+SIGN = {"pullback": 1, "breakout": 1, "short_bounce": -1, "breakdown": -1}
+KIND = {"pullback": "pb", "breakout": "bo", "short_bounce": "pb", "breakdown": "bo"}
+ABBR = {"pullback": "pb", "breakout": "bo", "short_bounce": "sb", "breakdown": "bd"}
+
+# which setups push to the phone (the rest are tracked silently), and paper trading
+PUSH_SETUPS = tuple(x.strip() for x in os.environ.get("PUSH_SETUPS", "breakout").split(",") if x.strip())
+PAPER_SETUPS = tuple(x.strip() for x in os.environ.get("PAPER_SETUPS", ",".join(SETUPS)).split(",")
+                     if x.strip())
 ALPACA_KEY = os.environ.get("APCA_API_KEY_ID", "")
 ALPACA_SECRET = os.environ.get("APCA_API_SECRET_KEY", "")
 ALPACA_URL = os.environ.get("ALPACA_BASE_URL", "https://paper-api.alpaca.markets").rstrip("/")
 PAPER = bool(ALPACA_KEY and ALPACA_SECRET) and "paper-api" in ALPACA_URL   # never a live account
-PAPER_RISK_PCT = float(os.environ.get("PAPER_RISK_PCT", "0.5"))      # % of equity lost at a full stop
+PAPER_RISK_PCT = float(os.environ.get("PAPER_RISK_PCT", "0.5"))      # breakouts: % of equity lost at a full stop
 PAPER_MAX_POS_PCT = float(os.environ.get("PAPER_MAX_POS_PCT", "20")) # cap on one position's size
 PAPER_MAX_OPEN = int(os.environ.get("PAPER_MAX_OPEN", "15"))           # breakouts
 PAPER_PB_RISK_PCT = float(os.environ.get("PAPER_PB_RISK_PCT", str(PAPER_RISK_PCT)))
 PAPER_PB_MAX_OPEN = int(os.environ.get("PAPER_PB_MAX_OPEN", "10"))
+PAPER_RISK = {
+    "breakout": PAPER_RISK_PCT,
+    "pullback": PAPER_PB_RISK_PCT,
+    "short_bounce": float(os.environ.get("PAPER_SB_RISK_PCT", str(PAPER_PB_RISK_PCT))),
+    "breakdown": float(os.environ.get("PAPER_BD_RISK_PCT", str(PAPER_RISK_PCT))),
+}
+PAPER_CAP = {
+    "breakout": PAPER_MAX_OPEN,
+    "pullback": PAPER_PB_MAX_OPEN,
+    "short_bounce": int(os.environ.get("PAPER_SB_MAX_OPEN", "5")),
+    "breakdown": int(os.environ.get("PAPER_BD_MAX_OPEN", "10")),
+}
 
 BT_YEARS = int(os.environ.get("BT_YEARS", "10"))
 UNIVERSE_DAYS = 7              # reuse a Robinhood universe this many days
 RUN_AFTER_ET = (16, 20)        # daily bar is final by then
 
-SETUPS = ("pullback", "breakout")
 ET = ZoneInfo("America/New_York")
 STATE_FILE = Path("swing_state.json")
 ALERTS_FILE = Path("swing_alerts.csv")
@@ -132,6 +175,32 @@ ABNB PYPL XYZ SHOP BABA DKNG NKE WMT COST JPM V MA XOM CVX BA DAL UAL NCLH RCL P
 SMCI ARM MU TSM QCOM ORCL CRM ADBE IBM CSCO RBLX AFRM UPST SNOW NET CRWD PANW ZM ROKU
 PINS SPOT LYFT CHWY WBD CMG MCD PEP VZ TGT HD LOW LLY NVO MRNA JNJ ABBV UNH CVS OXY
 SOUN RKLB ASTS IONQ HIMS""".split()
+
+
+# ---------------- direction helpers ----------------
+def tighter(d, a, b):
+    """The tighter of two stop levels (higher for a long, lower for a short)."""
+    return max(a, b) if d > 0 else min(a, b)
+
+
+def setup_allowed(setup, regime):
+    """Longs need SPY above its 200-day; shorts follow SHORT_REGIME."""
+    if SIGN[setup] > 0:
+        return bool(regime)
+    return SHORT_REGIME != "bear" or not regime
+
+
+def chased(setup, o, pivot):
+    """True when tomorrow's open ran too far past the base (breakouts and breakdowns only)."""
+    if setup == "breakout":
+        return o > pivot * (1 + BO_MAX_GAP)
+    if setup == "breakdown":
+        return o < pivot * (1 - BO_MAX_GAP)
+    return False
+
+
+def base_hi_of(tr):
+    return tr.get("base_hi", tr["pivot"])      # older trades stored the base high as the pivot
 
 
 # ---------------- state ----------------
@@ -228,16 +297,18 @@ def hv20(close):
 
 
 def add_ind(df, spy):
-    """Indicators and both signal columns. Every column uses only that day and earlier."""
+    """Indicators and all four signal columns. Every column uses only that day and earlier."""
     c = df.Close
     df["sma5"] = c.rolling(5).mean()
     df["sma50"] = c.rolling(50).mean()
     df["sma150"] = c.rolling(150).mean()
     df["sma200"] = c.rolling(200).mean()
     df["sma200_up"] = df.sma200 > df.sma200.shift(20)
+    df["sma200_dn"] = df.sma200 < df.sma200.shift(20)
     df["atr"] = atr(df)
     df["rsi2"] = rsi(c, 2)
     df["hi252"] = df.High.rolling(252, min_periods=200).max()
+    df["lo252"] = df.Low.rolling(252, min_periods=200).min()
     df["vol50"] = df.Volume.rolling(50).mean().shift(1)
     df["dv20"] = (c * df.Volume).rolling(20).mean()
     df["base_hi"] = df.High.rolling(BASE_LEN).max().shift(1)
@@ -250,50 +321,67 @@ def add_ind(df, spy):
     df["rs"] = c / c.shift(126) - spy_c / spy_c.shift(126)
 
     liquid = (c >= MIN_PRICE) & (df.dv20 >= MIN_DOLLAR_VOL)
-    df["sig_pullback"] = liquid & (c > df.sma200) & (df.sma50 > df.sma200) & (df.rsi2 <= PB_RSI2_MAX)
-
     depth = (df.base_hi - df.base_low) / df.base_hi
     df["depth"] = depth
-    trend = (c > df.sma50) & (df.sma50 > df.sma150) & (df.sma150 > df.sma200) & df.sma200_up
-    first = c.shift(1) <= df.base_hi.shift(1)
     df["vx"] = df.Volume / df.vol50
-    df["sig_breakout"] = (liquid & trend & (c >= BO_NEAR_HIGH * df.hi252) & (df.rs > 0)
-                          & (depth <= BASE_MAX_DEPTH) & (c > df.base_hi) & first
+
+    # long side
+    df["sig_pullback"] = liquid & (c > df.sma200) & (df.sma50 > df.sma200) & (df.rsi2 <= PB_RSI2_MAX)
+    trend_up = (c > df.sma50) & (df.sma50 > df.sma150) & (df.sma150 > df.sma200) & df.sma200_up
+    first_up = c.shift(1) <= df.base_hi.shift(1)
+    df["sig_breakout"] = (liquid & trend_up & (c >= BO_NEAR_HIGH * df.hi252) & (df.rs > 0)
+                          & (depth <= BASE_MAX_DEPTH) & (c > df.base_hi) & first_up
                           & (df.vx >= BO_VOL_MULT) & (df.pos >= 0.5))
-    for k in ("sig_pullback", "sig_breakout", "regime", "sma200_up"):
+
+    # short side (mirror images)
+    df["sig_short_bounce"] = liquid & (c < df.sma200) & (df.sma50 < df.sma200) & (df.rsi2 >= SB_RSI2_MIN)
+    trend_dn = (c < df.sma50) & (df.sma50 < df.sma150) & (df.sma150 < df.sma200) & df.sma200_dn
+    first_dn = c.shift(1) >= df.base_low.shift(1)
+    df["sig_breakdown"] = (liquid & trend_dn & (c <= BD_NEAR_LOW * df.lo252) & (df.rs < 0)
+                           & (depth <= BASE_MAX_DEPTH) & (c < df.base_low) & first_dn
+                           & (df.vx >= BO_VOL_MULT) & (df.pos <= 0.5))
+
+    for k in [f"sig_{s}" for s in SETUPS] + ["regime", "sma200_up", "sma200_dn"]:
         df[k] = df[k].fillna(False).astype(bool)
     return df
 
 
 # ---------------- trade rules ----------------
-def initial_stop(setup, entry, atr_, base_low):
-    if setup == "pullback":
-        return entry - PB_STOP_ATR * atr_
-    stop = max(base_low, entry * (1 - BO_MAX_LOSS))
-    if entry - stop < BO_MIN_STOP_ATR * atr_:
-        stop = entry - BO_MIN_STOP_ATR * atr_
+def initial_stop(setup, entry, atr_, base_low, base_hi=None):
+    d = SIGN[setup]
+    if KIND[setup] == "pb":
+        return entry - d * PB_STOP_ATR * atr_
+    if d > 0:
+        stop = max(base_low, entry * (1 - BO_MAX_LOSS))
+    else:
+        stop = min(base_hi, entry * (1 + BO_MAX_LOSS))
+    if d * (entry - stop) < BO_MIN_STOP_ATR * atr_:
+        stop = entry - d * BO_MIN_STOP_ATR * atr_
     return stop
 
 
 def simulate(setup, entry_open, stop, atr_, bars, slip_bps=SLIP_BPS, x=None):
-    """Walk daily bars starting with the entry day (filled at its open).
-    Stops are checked before targets in each bar; a gap below the stop fills at the open.
+    """Walk daily bars starting with the entry day (filled at its open), long or short.
+    Stops are checked before targets in each bar; a gap through the stop fills at the open.
     Exit signals found at a close fill at the next open. Returns a result dict; done=False
     while the trade is still open (with the current stop and any exit due tomorrow).
     x: optional exit-rule overrides used only by the backtest's exit-variant table
-    (tp1_r: 0 = no half-sell; trail: ATR multiple; lock_at/lock_to: once the high reaches
-    lock_at R, the stop rises to entry + lock_to R from the next bar; pb_mode: "sma5" or
-    "trail"; max_days). Live trading always uses the defaults."""
+    (tp1_r: 0 = no half exit; trail: ATR multiple; lock_at/lock_to: once the best excursion
+    reaches lock_at R, the stop moves to entry + lock_to R from the next bar; pb_mode: "sma5"
+    or "trail"; max_days). Live trading always uses the defaults."""
     x = x or {}
+    d = SIGN[setup]
+    bo = KIND[setup] == "bo"
     tp1_r = x.get("tp1_r", BO_TP1_R)
     trail = x.get("trail", TRAIL_ATR)
     lock_at, lock_to = x.get("lock_at"), x.get("lock_to", 0.0)
     pb_mode = x.get("pb_mode", "sma5")
-    max_days = x.get("max_days", BO_MAX_DAYS if setup == "breakout" else PB_MAX_DAYS)
+    max_days = x.get("max_days", BO_MAX_DAYS if bo else PB_MAX_DAYS)
     slip = slip_bps / 1e4
-    entry = entry_open * (1 + slip)
-    risk = entry - stop
+    entry = entry_open * (1 + d * slip)
+    risk = d * (entry - stop)
     O, H, L, C = (bars[k].to_numpy(float) for k in ("Open", "High", "Low", "Close"))
+    FAV, ADV = (H, L) if d > 0 else (L, H)
     S5 = bars["sma5"].to_numpy(float) if "sma5" in bars else np.full(len(O), np.nan)
     dates = bars.index
     base = {"entry": entry, "risk": risk, "stop0": stop}
@@ -301,49 +389,50 @@ def simulate(setup, entry_open, stop, atr_, bars, slip_bps=SLIP_BPS, x=None):
         return {**base, "done": True, "r": 0.0, "reason": "invalid", "days": 0, "exit_px": entry,
                 "exit_date": dates[0] if len(dates) else None, "mfe": 0.0, "mae": 0.0,
                 "half": False, "ret_pct": 0.0}
-    tp1 = entry + tp1_r * risk if tp1_r else float("inf")
+    tp1 = entry + d * tp1_r * risk if tp1_r else d * float("inf")
     q, real, half, best, mfe, mae, pend = 1.0, 0.0, False, entry, 0.0, 0.0, None
 
     def done(k, px, reason):
-        r = real + q * (px - entry) / risk
+        r = real + q * d * (px - entry) / risk
         return {**base, "done": True, "r": r, "reason": reason, "days": k + 1, "exit_px": px,
                 "exit_date": dates[k], "mfe": mfe, "mae": mae, "half": half,
                 "ret_pct": r * risk / entry * 100}
 
     for k in range(len(O)):
-        o, h, l, c = O[k], H[k], L[k], C[k]
+        o, fav, adv, c = O[k], FAV[k], ADV[k], C[k]
         if pend:
-            return done(k, o * (1 - slip), pend)
-        mfe = max(mfe, (h - entry) / risk)
-        mae = max(mae, (entry - l) / risk)
-        if k > 0 and o <= stop:
-            return done(k, o * (1 - slip), "gapped below stop")
-        if l <= stop:
-            return done(k, stop * (1 - slip), "trailing stop" if stop > base["stop0"] + 1e-9 else "stop")
-        if setup == "breakout":
-            if not half and h >= tp1:
-                px = max(tp1, o) if k > 0 else tp1
-                real += 0.5 * (px - entry) / risk
+            return done(k, o * (1 - d * slip), pend)
+        mfe = max(mfe, d * (fav - entry) / risk)
+        mae = max(mae, d * (entry - adv) / risk)
+        if k > 0 and d * (o - stop) <= 0:
+            return done(k, o * (1 - d * slip), "gapped below stop" if d > 0 else "gapped above stop")
+        if d * (adv - stop) <= 0:
+            moved = d * (stop - base["stop0"]) > 1e-9
+            return done(k, stop * (1 - d * slip), "trailing stop" if moved else "stop")
+        if bo:
+            if not half and d * (fav - tp1) >= 0:
+                px = o if k > 0 and d * (o - tp1) > 0 else tp1
+                real += 0.5 * d * (px - entry) / risk
                 q, half = 0.5, True
-                stop = max(stop, entry)
-                if l <= entry and k > 0:
-                    return done(k, entry * (1 - slip), "TP1 then back to entry")
-            best = max(best, h)
-            stop = max(stop, best - trail * atr_)
+                stop = tighter(d, stop, entry)
+                if k > 0 and d * (adv - entry) <= 0:
+                    return done(k, entry * (1 - d * slip), "TP1 then back to entry")
+            best = tighter(d, best, fav)
+            stop = tighter(d, stop, best - d * trail * atr_)
             if lock_at is not None and mfe >= lock_at:
-                stop = max(stop, entry + lock_to * risk)
+                stop = tighter(d, stop, entry + d * lock_to * risk)
             if k + 1 >= max_days:
                 pend = "max hold"
         else:
             if pb_mode == "trail":
-                best = max(best, h)
-                stop = max(stop, best - trail * atr_)
+                best = tighter(d, best, fav)
+                stop = tighter(d, stop, best - d * trail * atr_)
                 if lock_at is not None and mfe >= lock_at:
-                    stop = max(stop, entry + lock_to * risk)
+                    stop = tighter(d, stop, entry + d * lock_to * risk)
                 if k + 1 >= max_days:
                     pend = "time stop"
-            elif np.isfinite(S5[k]) and c > S5[k]:
-                pend = "closed above 5-day average"
+            elif np.isfinite(S5[k]) and d * (c - S5[k]) > 0:
+                pend = "closed above 5-day average" if d > 0 else "closed below 5-day average"
             elif k + 1 >= max_days:
                 pend = "time stop"
     return {**base, "done": False, "r": real, "half": half, "stop": stop, "pending_exit": pend,
@@ -378,6 +467,14 @@ def max_concurrent(t):
     return best
 
 
+def setup_arrays(df, setup):
+    """Arrays the backtest loops need for one setup."""
+    pivot = df.base_low if setup == "breakdown" else df.base_hi
+    return (df.Open.to_numpy(float), df.atr.to_numpy(float), df.base_low.to_numpy(float),
+            df.base_hi.to_numpy(float), pivot.to_numpy(float), df.regime.to_numpy(bool),
+            df[f"sig_{setup}"].to_numpy(bool))
+
+
 def backtest():
     syms, src = robinhood_top100()
     print(f"Backtest universe: {len(syms)} symbols from {src}, {BT_YEARS} years")
@@ -393,25 +490,21 @@ def backtest():
         df = add_ind(df.copy(), spy)
         drift = float(df.Close.pct_change().mean())
         prepped[sym] = (df, drift)
-        O = df.Open.to_numpy(float)
-        A = df.atr.to_numpy(float)
-        BL = df.base_low.to_numpy(float)
-        PV = df.base_hi.to_numpy(float)
-        REG = df.regime.to_numpy(bool)
         for setup in SETUPS:
-            sig = df[f"sig_{setup}"].to_numpy(bool)
+            d = SIGN[setup]
+            O, A, BL, BH, PV, REG, sig = setup_arrays(df, setup)
             for variant in ("filtered", "unfiltered"):
                 busy = -1
                 for i in np.flatnonzero(sig):
                     if i <= busy or i + 1 >= len(df):
                         continue
-                    if variant == "filtered" and not REG[i]:
+                    if variant == "filtered" and not setup_allowed(setup, REG[i]):
                         continue
                     o = O[i + 1]
-                    if setup == "breakout" and o > PV[i] * (1 + BO_MAX_GAP):
+                    if chased(setup, o, PV[i]):
                         gaps += variant == "filtered"
                         continue
-                    stop = initial_stop(setup, o * (1 + SLIP_BPS / 1e4), A[i], BL[i])
+                    stop = initial_stop(setup, o * (1 + d * SLIP_BPS / 1e4), A[i], BL[i], BH[i])
                     res = simulate(setup, o, stop, A[i], df.iloc[i + 1:])
                     if not res["done"]:
                         open_end += variant == "filtered"
@@ -424,7 +517,8 @@ def backtest():
                                  "r": round(res["r"], 3), "ret_pct": round(res["ret_pct"], 3),
                                  "days": res["days"], "reason": res["reason"],
                                  "mfe_r": round(res["mfe"], 2), "mae_r": round(res["mae"], 2),
-                                 "excess_pct": round(res["ret_pct"] - drift * res["days"] * 100, 3)})
+                                 # a short profits from the stock falling, so its drift is subtracted inverted
+                                 "excess_pct": round(res["ret_pct"] - d * drift * res["days"] * 100, 3)})
                     busy = i + res["days"]
         print(f"{sym}: done")
     t = pd.DataFrame(rows)
@@ -457,40 +551,46 @@ EXIT_VARIANTS = {
         ("let it run: trail 2.5, lock +0.25R at +0.5R, max 20 days",
          {"pb_mode": "trail", "trail": 2.5, "lock_at": 0.5, "lock_to": 0.25, "max_days": 20}),
     ],
+    "short_bounce": [
+        ("LIVE: cover after close below 5-day avg", {}),
+        ("let it run: trail 2.5 ATR, max 20 days", {"pb_mode": "trail", "trail": 2.5, "max_days": 20}),
+    ],
+    "breakdown": [
+        ("LIVE: half at 2R, trail 4 ATR", {}),
+        ("half at 2R, trail 3 ATR", {"trail": 3.0}),
+        ("no half-cover, trail 4 ATR", {"tp1_r": 0}),
+        ("half at 2R, trail 4, lock +0.5R at +1R", {"lock_at": 1.0, "lock_to": 0.5}),
+    ],
 }
 
 
 def exit_variants_report(prepped):
     out = ["\n## Exit variants (regime filter on)\n",
-           "Same signals, entries and starting stops; only the exit changes. Stop raises (trail, lock) "
+           "Same signals, entries and starting stops; only the exit changes. Stop moves (trail, lock) "
            "take effect the next day, like the evening stop updates in paper trading. Look for a row that "
            "beats LIVE on total R **and** holds up in both halves, not just the biggest number.\n",
            "| setup | exit rule | result | avg % / trade | vs drift % | avg days | max DD (R) | 1st half | 2nd half |",
            "|---|---|---|---|---|---|---|---|---|"]
     for setup, variants in EXIT_VARIANTS.items():
+        d = SIGN[setup]
         for label, x in variants:
             rows = []
             for sym, (df, drift) in prepped.items():
-                O = df.Open.to_numpy(float)
-                A = df.atr.to_numpy(float)
-                BL = df.base_low.to_numpy(float)
-                PV = df.base_hi.to_numpy(float)
-                REG = df.regime.to_numpy(bool)
-                sig = df[f"sig_{setup}"].to_numpy(bool)
+                O, A, BL, BH, PV, REG, sig = setup_arrays(df, setup)
                 busy = -1
                 for i in np.flatnonzero(sig):
-                    if i <= busy or i + 1 >= len(df) or not REG[i]:
+                    if i <= busy or i + 1 >= len(df) or not setup_allowed(setup, REG[i]):
                         continue
                     o = O[i + 1]
-                    if setup == "breakout" and o > PV[i] * (1 + BO_MAX_GAP):
+                    if chased(setup, o, PV[i]):
                         continue
-                    stop = initial_stop(setup, o * (1 + SLIP_BPS / 1e4), A[i], BL[i])
+                    stop = initial_stop(setup, o * (1 + d * SLIP_BPS / 1e4), A[i], BL[i], BH[i])
                     res = simulate(setup, o, stop, A[i], df.iloc[i + 1:], x=x)
                     if not res["done"]:
                         break
                     rows.append({"entry_date": df.index[i + 1].date(), "exit_date": res["exit_date"].date(),
                                  "r": res["r"], "ret_pct": res["ret_pct"], "days": res["days"],
-                                 "excess": res["ret_pct"] - drift * res["days"] * 100})
+                                 "excess": res["ret_pct"] - d * drift * res["days"] * 100})
                     busy = i + res["days"]
             v = pd.DataFrame(rows)
             if v.empty:
@@ -506,15 +606,19 @@ def exit_variants_report(prepped):
 
 
 def bt_report(t, n_syms, src, gaps, open_end):
+    short_rule = ("shorts run in any market" if SHORT_REGIME != "bear"
+                  else "shorts only while SPY is below its 200-day")
     out = [f"# Swing backtest: {BT_YEARS} years, {n_syms} stocks ({src} list)\n",
            f"Run {dt.date.today()}. Entries at the next open, {SLIP_BPS:g} bps slippage per fill, "
-           f"no commissions. R = profit / initial risk. One position per stock per setup. "
-           f"{gaps} breakouts skipped for gapping more than {BO_MAX_GAP:.0%}; "
+           f"no commissions, no short borrow fees. R = profit / initial risk. One position per stock per setup. "
+           f"{gaps} breakouts/breakdowns skipped for gapping more than {BO_MAX_GAP:.0%}; "
            f"{open_end} trades still open at the end left out.\n",
+           f"Regime filter: longs need SPY above its 200-day; {short_rule} (SHORT_REGIME={SHORT_REGIME}).\n",
            "**Caution:** this list is today's most popular stocks, chosen partly because they went up "
-           "(survivorship bias), so treat results as optimistic. The 'vs drift' column subtracts each "
-           "stock's own average daily move over the hold, which is the fairer test: positive means the "
-           "signal beat just owning that stock.\n",
+           "(survivorship bias), so long results run optimistic and short results run pessimistic. "
+           "The 'vs drift' column subtracts each stock's own average daily move over the hold (inverted "
+           "for shorts), which is the fairer test: positive means the signal beat just holding (or just "
+           "shorting) that stock.\n",
            "Cells: n / win% / avg R / total R / profit factor.\n"]
     if t.empty:
         return "\n".join(out + ["No trades.\n"])
@@ -539,17 +643,18 @@ def bt_report(t, n_syms, src, gaps, open_end):
         x = f[f.setup == s]
         out.append(f"| {s} | {cell(stats(x[x.entry_date <= mid].r))} | {cell(stats(x[x.entry_date > mid].r))} |")
 
-    out += ["\n## Does the regime filter help?\n",
-            "| setup | SPY above 200-day | SPY below 200-day (filter skips these) | all signals |",
+    out += ["\n## Results by market regime (all signals, no filter)\n",
+            "| setup | SPY above 200-day | SPY below 200-day | all signals |",
             "|---|---|---|---|"]
     for s in SETUPS:
         x = u[u.setup == s]
         out.append(f"| {s} | {cell(stats(x[x.regime].r))} | {cell(stats(x[~x.regime].r))} | {cell(stats(x.r))} |")
 
-    out += ["\n## By year (regime filter on)\n", "| year | pullback | breakout |", "|---|---|---|"]
+    out += ["\n## By year (regime filter on)\n", "| year | " + " | ".join(SETUPS) + " |",
+            "|---|" + "---|" * len(SETUPS)]
     for y in sorted(f.year.unique()):
         x = f[f.year == y]
-        out.append(f"| {y} | {cell(stats(x[x.setup == 'pullback'].r))} | {cell(stats(x[x.setup == 'breakout'].r))} |")
+        out.append(f"| {y} | " + " | ".join(cell(stats(x[x.setup == s].r)) for s in SETUPS) + " |")
 
     out += ["\n## Exit reasons (regime filter on)\n", "| setup | reason | n | avg R |", "|---|---|---|---|"]
     for (s, rs), x in f.groupby(["setup", "reason"]):
@@ -567,6 +672,7 @@ def bt_report(t, n_syms, src, gaps, open_end):
 
 # ---------------- options idea + earnings (live pushes only) ----------------
 def bs_delta(S, K, T, sigma, r=RISK_FREE):
+    """Black-Scholes call delta."""
     if T <= 0 or sigma <= 0:
         return None
     d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
@@ -574,7 +680,10 @@ def bs_delta(S, K, T, sigma, r=RISK_FREE):
 
 
 def option_idea(sym, px, setup, hv, target_px):
-    lo, hi, tgt = OPT_DTE[setup]
+    """Calls for long setups, puts for short setups."""
+    d = SIGN[setup]
+    cp, name = ("C", "call") if d > 0 else ("P", "put")
+    lo, hi, tgt = OPT_DTE[KIND[setup]]
     try:
         t = yf.Ticker(sym)
         today = dt.datetime.now(ET).date()
@@ -586,9 +695,10 @@ def option_idea(sym, px, setup, hv, target_px):
         if not exps:
             return f"Options: no expiry {lo}-{hi} days out"
         _, exp, dte = min(exps)
-        calls = t.option_chain(exp).calls
+        chain = t.option_chain(exp)
+        legs = chain.calls if d > 0 else chain.puts
         rows = []
-        for _, row in calls.iterrows():
+        for _, row in legs.iterrows():
             bid, ask = float(row.bid or 0), float(row.ask or 0)
             if bid <= 0 or ask <= 0:
                 continue
@@ -596,22 +706,25 @@ def option_idea(sym, px, setup, hv, target_px):
             dl = bs_delta(px, float(row.strike), dte / 365, iv)
             if dl is None:
                 continue
+            if d < 0:
+                dl -= 1.0                   # put delta
             mid = (bid + ask) / 2
             rows.append({"k": float(row.strike), "d": dl, "mid": mid, "sp": (ask - bid) / mid,
                          "oi": 0 if pd.isna(row.openInterest) else int(row.openInterest), "iv": iv})
         if not rows:
             return "Options: no usable quotes"
-        k = min(rows, key=lambda x: abs(x["d"] - TARGET_DELTA))
+        k = min(rows, key=lambda x: abs(abs(x["d"]) - TARGET_DELTA))
         atm = min(rows, key=lambda x: abs(x["k"] - px))
         ratio = atm["iv"] / hv if hv > 0 else 1.0
         expd = dt.date.fromisoformat(exp).strftime("%b %d")
         if ratio <= IV_RICH:
-            line = f"Options: {expd} {k['k']:g}C (Δ{k['d']:.2f}, {dte} DTE) mid ${k['mid']:.2f} | IV/HV {ratio:.2f} → long call"
+            line = (f"Options: {expd} {k['k']:g}{cp} (Δ{k['d']:.2f}, {dte} DTE) mid ${k['mid']:.2f} | "
+                    f"IV/HV {ratio:.2f} → long {name}")
         else:
-            above = [x for x in rows if x["k"] > k["k"]]
-            short = min(above, key=lambda x: abs(x["k"] - target_px)) if above else None
-            leg = f"/{short['k']:g}C" if short else ""
-            line = (f"Options: {expd} {k['k']:g}{leg}C debit spread ({dte} DTE) | IV/HV {ratio:.2f} rich, "
+            beyond = [x for x in rows if d * (x["k"] - k["k"]) > 0]
+            short = min(beyond, key=lambda x: abs(x["k"] - target_px)) if beyond else None
+            leg = f"/{short['k']:g}{cp}" if short else ""
+            line = (f"Options: {expd} {k['k']:g}{cp}{leg} debit spread ({dte} DTE) | IV/HV {ratio:.2f} rich, "
                     f"spread cuts the IV cost")
         if k["oi"] < MIN_OI or k["sp"] > MAX_SPREAD:
             line += f"\n⚠ thin contract: OI {k['oi']}, spread {k['sp']:.0%}"
@@ -650,7 +763,7 @@ def money(p):
 
 
 def size_line(entry, stop):
-    risk = entry - stop
+    risk = abs(entry - stop)
     if risk <= 0:
         return ""
     if RISK_USD > 0:
@@ -662,7 +775,7 @@ def size_line(entry, stop):
 def entry_msg(sym, setup, row):
     c, a = float(row.Close), float(row.atr)
     if setup == "pullback":
-        stop = c - PB_STOP_ATR * a
+        stop = initial_stop(setup, c, a, float(row.base_low), float(row.base_hi))
         title = f"PULLBACK BUY {sym}"
         lines = [f"🟢 PULLBACK BUY: {sym} (2-day RSI {row.rsi2:.0f})",
                  f"Closed {money(c)} | uptrend: above 200-day, 50-day above 200-day",
@@ -672,8 +785,19 @@ def entry_msg(sym, setup, row):
                  f"or after {PB_MAX_DAYS} sessions",
                  size_line(c, stop)]
         target = c + 1.5 * a
-    else:
-        stop = initial_stop("breakout", c, a, float(row.base_low))
+    elif setup == "short_bounce":
+        stop = initial_stop(setup, c, a, float(row.base_low), float(row.base_hi))
+        title = f"SHORT BOUNCE {sym}"
+        lines = [f"🔴 SHORT THE BOUNCE: {sym} (2-day RSI {row.rsi2:.0f})",
+                 f"Closed {money(c)} | downtrend: below 200-day, 50-day below 200-day",
+                 "Plan: short at tomorrow's open (Robinhood can't short shares: use the put idea below)",
+                 f"Stop ≈ {money(stop)} ({PB_STOP_ATR:g} ATR above; exact level pushed after the fill)",
+                 f"Exit: cover at the next open after a close below the 5-day avg (now {money(row.sma5)}), "
+                 f"or after {PB_MAX_DAYS} sessions",
+                 size_line(c, stop)]
+        target = c - 1.5 * a
+    elif setup == "breakout":
+        stop = initial_stop(setup, c, a, float(row.base_low), float(row.base_hi))
         risk = c - stop
         title = f"BREAKOUT BUY {sym}"
         lines = [f"🚀 BREAKOUT BUY: {sym}",
@@ -685,6 +809,20 @@ def entry_msg(sym, setup, row):
                  f"Runner trails {TRAIL_ATR:g} ATR ({money(TRAIL_ATR * a)}) below the high",
                  size_line(c, stop)]
         target = c + BO_TP1_R * risk
+    else:  # breakdown
+        stop = initial_stop(setup, c, a, float(row.base_low), float(row.base_hi))
+        risk = stop - c
+        title = f"BREAKDOWN SHORT {sym}"
+        lines = [f"📉 BREAKDOWN SHORT: {sym}",
+                 f"Closed {money(c)} below its {BASE_LEN}-day base {money(row.base_low)} "
+                 f"(base depth {row.depth:.0%}) on {row.vx:.1f}x volume",
+                 f"Plan: short at tomorrow's open if ≥ {money(row.base_low * (1 - BO_MAX_GAP))}; skip if it gaps lower "
+                 "(Robinhood: use the put idea below)",
+                 f"Stop ≈ {money(stop)} (base high, max {BO_MAX_LOSS:.0%} loss; exact after the fill)",
+                 f"TP1 ≈ {money(c - BO_TP1_R * risk)} ({BO_TP1_R:g}R): cover half, stop to entry. "
+                 f"Runner trails {TRAIL_ATR:g} ATR ({money(TRAIL_ATR * a)}) above the low",
+                 size_line(c, stop)]
+        target = c - BO_TP1_R * risk
     return title, lines, target
 
 
@@ -777,32 +915,44 @@ def ap_cancel(order_id):
         print("cancel failed:", e)
 
 
+def ap_shortable(sym):
+    """Alpaca only lets you short easy-to-borrow stocks."""
+    try:
+        a = ap("GET", f"/v2/assets/{ap_sym(sym)}")
+        return bool(a and a.get("shortable") and a.get("easy_to_borrow"))
+    except Exception:
+        return False
+
+
 OPEN_STATUSES = ("new", "accepted", "pending_new", "accepted_for_bidding", "held", "partially_filled",
                  "pending_replace", "calculated")
 
 
 def paper_enter(tr, equity, buying_power):
-    """Queue tomorrow's entry with an attached stop. Breakout: limit buy at the max-gap price (an
-    open above it never fills, which is the chase rule), sized so a fill at the limit risks
-    PAPER_RISK_PCT. Pullback: market buy at the open, sized off today's close to risk
-    PAPER_PB_RISK_PCT. Both are capped at PAPER_MAX_POS_PCT of equity and the buying power left."""
-    if tr["setup"] == "breakout":
-        limit = round(tr["pivot"] * (1 + BO_MAX_GAP), 2)
-        px, risk_pct = limit, PAPER_RISK_PCT
+    """Queue tomorrow's entry with an attached stop. Breakouts/breakdowns: limit order at the
+    max-gap price (an open past it never fills, which is the chase rule), sized so a fill at the
+    limit risks that setup's %. Pullbacks/bounces: market order at the open, sized off today's
+    close with 2% room for a gap against the plan. Both are capped at PAPER_MAX_POS_PCT of equity
+    and the buying power left."""
+    s = tr["setup"]
+    d = SIGN[s]
+    if KIND[s] == "bo":
+        limit = round(tr["pivot"] * (1 + d * BO_MAX_GAP), 2)
+        px = limit
     else:
-        limit, px, risk_pct = None, tr["close"] * 1.02, PAPER_PB_RISK_PCT   # room for a gap up
-    stop = round(initial_stop(tr["setup"], tr["close"], tr["atr"], tr["base_low"]), 2)
-    risk_ps = px - stop
+        limit, px = None, tr["close"] * (1 + d * 0.02)
+    stop = round(initial_stop(s, tr["close"], tr["atr"], tr["base_low"], base_hi_of(tr)), 2)
+    risk_ps = d * (px - stop)
     if risk_ps <= 0:
         return None
-    qty = int(min(equity * risk_pct / 100 / risk_ps, equity * PAPER_MAX_POS_PCT / 100 / px,
+    qty = int(min(equity * PAPER_RISK[s] / 100 / risk_ps, equity * PAPER_MAX_POS_PCT / 100 / px,
                   buying_power / px))
     if qty < 1:
         return None
     kind = {"limit_price": limit} if limit else {}
-    o = ap_order(tr["sym"], qty, "buy", "limit" if limit else "market", "day", **kind, order_class="oto",
-                 stop_loss={"stop_price": f"{stop:.2f}"},
-                 client_order_id=f"sg-{tr['setup'][:2]}-{tr['sym']}-{tr['signal_date']}")
+    o = ap_order(tr["sym"], qty, "buy" if d > 0 else "sell", "limit" if limit else "market", "day",
+                 **kind, order_class="oto", stop_loss={"stop_price": f"{stop:.2f}"},
+                 client_order_id=f"sg-{ABBR[s]}-{tr['sym']}-{tr['signal_date']}")
     return {"status": "submitted", "entry_id": o["id"], "qty": qty, "limit": limit, "stop_px": stop,
             "cost": qty * px}
 
@@ -821,10 +971,27 @@ def paper_fills(ids):
     return q, v
 
 
+def paper_withdraw(tr, notes):
+    """Cancel an unfilled paper entry for a setup that has been taken out of PAPER_SETUPS.
+    An order that already filled (even partly) is left alone and managed until it exits."""
+    p, sym = tr["paper"], tr["sym"]
+    o = ap("GET", f"/v2/orders/{p['entry_id']}")
+    if o is None:
+        p["status"] = "error"; notes.append(f"{sym}: entry order not found"); return
+    if o["status"] in OPEN_STATUSES and float(o.get("filled_qty") or 0) == 0:
+        ap("DELETE", f"/v2/orders/{p['entry_id']}")       # also cancels the attached stop
+        p["status"] = "withdrawn"
+        notes.append(f"🚫 {sym}: {tr['setup']} entry cancelled ({tr['setup']} is off for paper trading)")
+    elif o["status"] in ("canceled", "expired", "rejected") and float(o.get("filled_qty") or 0) == 0:
+        p["status"] = "skipped"
+
+
 def paper_sync(tr, after, notes, paper_rows):
     """Advance one paper trade: confirm the fill, keep the GTC stop and TP1 order in line with the
     plan (replayed from the actual fill), and record the result once the position is flat."""
-    p, sym = tr["paper"], tr["sym"]
+    p, sym, s = tr["paper"], tr["sym"], tr["setup"]
+    d = SIGN[s]
+    exit_side = "sell" if d > 0 else "buy"
     if p["status"] == "submitted":
         o = ap("GET", f"/v2/orders/{p['entry_id']}", params={"nested": "true"})
         if o is None:
@@ -834,19 +1001,22 @@ def paper_sync(tr, after, notes, paper_rows):
             for leg in o.get("legs") or []:
                 ap_cancel(leg.get("id"))
             fill, qty = float(o["filled_avg_price"]), int(filled)
-            stop = round(initial_stop(tr["setup"], fill, tr["atr"], tr["base_low"]), 2)
-            so = ap_order(sym, qty, "sell", "stop", "gtc", stop_price=stop)
-            tp1 = round(fill + BO_TP1_R * (fill - stop), 2)
-            half = qty // 2 if tr["setup"] == "breakout" else 0     # pullbacks exit all at once
-            lo = ap_order(sym, half, "sell", "limit", "gtc", limit_price=tp1) if half >= 1 else None
+            stop = round(initial_stop(s, fill, tr["atr"], tr["base_low"], base_hi_of(tr)), 2)
+            so = ap_order(sym, qty, exit_side, "stop", "gtc", stop_price=stop)
+            tp1 = round(fill + BO_TP1_R * (fill - stop), 2)          # works both ways: fill - stop < 0 for shorts
+            half = qty // 2 if KIND[s] == "bo" else 0               # pullbacks/bounces exit all at once
+            lo = ap_order(sym, half, exit_side, "limit", "gtc", limit_price=tp1) if half >= 1 else None
             p.update(status="open", fill=fill, qty=qty, stop0=stop, stop_px=stop, stop_id=so["id"],
                      tp1_px=tp1, tp1_id=lo["id"] if lo else None, half_qty=half,
                      fill_date=str(after.index[0].date()))
-            notes.append(f"✅ {sym}: filled {qty} sh @ {money(fill)}, stop {money(stop)}"
+            verb = "bought" if d > 0 else "shorted"
+            notes.append(f"✅ {sym}: {verb} {qty} sh @ {money(fill)}, stop {money(stop)}"
                          + (f", TP1 {half} sh @ {money(tp1)}" if half else ""))
         elif o["status"] in ("canceled", "expired", "rejected"):
             p["status"] = "skipped"
-            why = f", likely opened above {money(p['limit'])}" if p.get("limit") else ""
+            why = ""
+            if p.get("limit"):
+                why = f", likely opened {'above' if d > 0 else 'below'} {money(p['limit'])}"
             notes.append(f"⏭ {sym}: entry not filled ({o['status']}{why})")
         return
 
@@ -856,44 +1026,49 @@ def paper_sync(tr, after, notes, paper_rows):
     if pos is None:                                         # flat: stop, TP1 + stop, or our exit
         ap_cancel(p.get("tp1_id")); ap_cancel(p.get("stop_id"))
         q, v = paper_fills([p.get("tp1_id"), p.get("stop_id"), p.get("exit_id")])
-        pnl = v - q * p["fill"] if q else None
-        risk_d = p["qty"] * (p["fill"] - p["stop0"])
+        pnl = d * (v - q * p["fill"]) if q else None
+        risk_d = p["qty"] * d * (p["fill"] - p["stop0"])
         r = pnl / risk_d if pnl is not None and risk_d > 0 else None
         p.update(status="closed", pnl=pnl, r=r)
-        paper_rows.append({"sym": sym, "setup": tr["setup"], "signal_date": tr["signal_date"], "fill_date": p["fill_date"],
+        paper_rows.append({"sym": sym, "setup": s, "signal_date": tr["signal_date"], "fill_date": p["fill_date"],
                            "close_date": str(after.index[-1].date()), "qty": p["qty"], "fill": p["fill"],
                            "stop0": p["stop0"], "exit_avg": round(v / q, 4) if q else "",
                            "pnl": round(pnl, 2) if pnl is not None else "", "r": round(r, 3) if r is not None else ""})
         notes.append(f"🏁 {sym}: closed " + (f"{r:+.2f}R (${pnl:+,.0f})" if r is not None else "(P/L unknown)"))
         return
 
-    cur_qty = int(float(pos["qty"]))
+    cur_qty = abs(int(float(pos["qty"])))
     bars = after[after.index >= pd.Timestamp(p["fill_date"])]
-    res = simulate(tr["setup"], p["fill"], p["stop0"], tr["atr"], bars, slip_bps=0)
+    res = simulate(s, p["fill"], p["stop0"], tr["atr"], bars, slip_bps=0)
     want = res["stop"] if not res["done"] else p["stop_px"]
     if p.get("tp1_id") and not p.get("tp1_done"):
         o = ap("GET", f"/v2/orders/{p['tp1_id']}")
         if o and o["status"] == "filled":
             p["tp1_done"] = True
-            want = max(want, p["fill"])
+            want = tighter(d, want, p["fill"])
             notes.append(f"🎯 {sym}: TP1 filled, {o['filled_qty']} sh @ {money(float(o['filled_avg_price']))}")
     want = round(want, 2)
     exit_now = res["done"] or res.get("pending_exit")
     if exit_now and not p.get("exit_id"):
         ap_cancel(p.get("tp1_id")); ap_cancel(p.get("stop_id"))
-        eo = ap_order(sym, cur_qty, "sell", "market", "day")
+        eo = ap_order(sym, cur_qty, exit_side, "market", "day")
         p["exit_id"] = eo["id"]
-        notes.append(f"🔔 {sym}: market sell {cur_qty} sh queued for the open ({res.get('reason') or res.get('pending_exit')})")
+        verb = "sell" if d > 0 else "buy-to-cover"
+        notes.append(f"🔔 {sym}: market {verb} {cur_qty} sh queued for the open "
+                     f"({res.get('reason') or res.get('pending_exit')})")
         return
     so = ap("GET", f"/v2/orders/{p['stop_id']}") if p.get("stop_id") else None
     so_qty = int(float(so["qty"])) if so else 0
-    if so and so["status"] in OPEN_STATUSES and (want > p["stop_px"] + 0.009 or so_qty != cur_qty):
+    moved = d * (want - p["stop_px"]) > 0.009
+    if so and so["status"] in OPEN_STATUSES and (moved or so_qty != cur_qty):
+        new_px = tighter(d, want, p["stop_px"])
         new = ap("PATCH", f"/v2/orders/{p['stop_id']}",
-                 json={"qty": str(cur_qty), "stop_price": f"{max(want, p['stop_px']):.2f}"})
+                 json={"qty": str(cur_qty), "stop_price": f"{new_px:.2f}"})
         if new:
-            if want > p["stop_px"] + 0.009:
-                notes.append(f"⬆️ {sym}: stop raised {money(p['stop_px'])} → {money(want)}")
-            p["stop_id"], p["stop_px"] = new["id"], max(want, p["stop_px"])
+            if moved:
+                verb = "raised" if d > 0 else "lowered"
+                notes.append(f"{'⬆️' if d > 0 else '⬇️'} {sym}: stop {verb} {money(p['stop_px'])} → {money(new_px)}")
+            p["stop_id"], p["stop_px"] = new["id"], new_px
 
 
 PAPER_COLS = ["sym", "setup", "signal_date", "fill_date", "close_date", "qty", "fill", "stop0", "exit_avg", "pnl", "r"]
@@ -935,11 +1110,12 @@ def run(force=False):
     if not force and last_bar != today:
         print(f"Latest bar is {last_bar}, not today (holiday?)."); save_state(state); return
 
-    equity, buying_power, notes, paper_rows = None, 0.0, [], []
+    equity, buying_power, shorting, notes, paper_rows = None, 0.0, False, [], []
     if PAPER:
         try:
             acct = ap("GET", "/v2/account")
             equity, buying_power = float(acct["equity"]), float(acct["buying_power"])
+            shorting = bool(acct.get("shorting_enabled"))
         except Exception as e:
             print("Alpaca account check failed:", e)
             notes.append(f"⚠ Alpaca unreachable ({type(e).__name__}); paper orders skipped today")
@@ -947,11 +1123,16 @@ def run(force=False):
     spy_ma = spy.Close.rolling(REGIME_SMA).mean()
     regime = bool(spy.Close.iloc[-1] > spy_ma.iloc[-1])
     if state.get("regime") is not None and state["regime"] != regime:
+        if SHORT_REGIME == "bear":
+            short_txt = "Short setups are now " + ("off." if regime else "on.")
+        else:
+            short_txt = "Short setups run either way."
         send("Market regime " + ("ON" if regime else "OFF"),
              (f"SPY closed {money(spy.Close.iloc[-1])}, "
               f"{'above' if regime else 'below'} its 200-day ({money(spy_ma.iloc[-1])}).\n")
-             + ("New swing entries are back on." if regime else
-                "No new swing entries until SPY closes back above. Open trades keep their stops."),
+             + ("New long entries are back on. " if regime else
+                "No new long entries until SPY closes back above. Open trades keep their stops. ")
+             + short_txt,
              "high", "chart_with_upwards_trend" if regime else "warning")
     state["regime"] = regime
 
@@ -969,6 +1150,13 @@ def run(force=False):
 
     # 1) manage tracked trades (model record + paper account)
     for tr in state["trades"]:
+        # a setup taken out of PAPER_SETUPS: cancel its entry orders that haven't filled yet
+        if (PAPER and equity is not None and tr.get("paper")
+                and tr["paper"]["status"] == "submitted" and tr["setup"] not in PAPER_SETUPS):
+            try:
+                paper_withdraw(tr, notes)
+            except Exception as e:
+                notes.append(f"⚠ {tr['sym']} paper cancel failed: {str(e)[:120]}")
         df = get_ind(tr["sym"])
         if df is None:
             keep.append(tr); continue
@@ -976,56 +1164,67 @@ def run(force=False):
         if after.empty:
             keep.append(tr); continue
         loud = tr.get("pushed", False)
+        s = tr["setup"]
+        d = SIGN[s]
 
         if not tr.get("model_done"):
             o = float(after.Open.iloc[0])
             if tr["status"] == "pending":
-                if tr["setup"] == "breakout" and o > tr["pivot"] * (1 + BO_MAX_GAP):
-                    alerts.append(f"{stamp},{tr['sym']},{tr['setup']},skipped-gap,{o}")
+                if chased(s, o, tr["pivot"]):
+                    alerts.append(f"{stamp},{tr['sym']},{s},skipped-gap,{o}")
                     tr["model_done"] = True
                     if loud:
+                        word = "above the base high" if d > 0 else "below the base low"
                         send(f"SKIP {tr['sym']}", f"⏭ {tr['sym']} opened {money(o)}, more than {BO_MAX_GAP:.0%} "
-                             f"above the base high {money(tr['pivot'])}. Breakout skipped (chasing).")
+                             f"{word} {money(tr['pivot'])}. {s} skipped (chasing).")
                 else:
-                    stop = initial_stop(tr["setup"], o * (1 + SLIP_BPS / 1e4), tr["atr"], tr["base_low"])
+                    fill = o * (1 + d * SLIP_BPS / 1e4)
+                    stop = initial_stop(s, fill, tr["atr"], tr["base_low"], base_hi_of(tr))
                     tr.update(status="open", entry_open=o, stop0=stop, entry_date=str(after.index[0].date()))
                     if loud:
-                        fill = o * (1 + SLIP_BPS / 1e4)
-                        send(f"FILLED {tr['sym']}", f"✅ {tr['sym']} {tr['setup']}: opened {money(o)}.\n"
-                             f"Set a GTC stop at {money(stop)}.\n"
-                             f"TP1 {money(fill + BO_TP1_R * (fill - stop))}: sell half, stop to entry\n"
-                             f"{size_line(fill, stop)}", "default", "white_check_mark")
+                        lines = [f"✅ {tr['sym']} {s}: opened {money(o)}.",
+                                 f"Set a GTC {'sell' if d > 0 else 'buy'}-stop at {money(stop)}."]
+                        if KIND[s] == "bo":
+                            lines.append(f"TP1 {money(fill + BO_TP1_R * (fill - stop))}: "
+                                         f"{'sell' if d > 0 else 'cover'} half, stop to entry")
+                        lines.append(size_line(fill, stop))
+                        send(f"FILLED {tr['sym']}", "\n".join(x for x in lines if x), "default", "white_check_mark")
             if tr["status"] == "open" and not tr.get("model_done"):
-                res = simulate(tr["setup"], tr["entry_open"], tr["stop0"], tr["atr"], after)
+                res = simulate(s, tr["entry_open"], tr["stop0"], tr["atr"], after)
                 if res["done"]:
                     tr["model_done"] = True
                     outcomes.append({"signal_date": tr["signal_date"], "entry_date": tr["entry_date"],
-                                     "exit_date": res["exit_date"].date(), "sym": tr["sym"], "setup": tr["setup"],
+                                     "exit_date": res["exit_date"].date(), "sym": tr["sym"], "setup": s,
                                      "pushed": loud, "entry": round(res["entry"], 4), "stop": round(tr["stop0"], 4),
                                      "exit": round(res["exit_px"], 4), "r": round(res["r"], 3),
                                      "ret_pct": round(res["ret_pct"], 3), "days": res["days"], "reason": res["reason"],
                                      "mfe_r": round(res["mfe"], 2), "mae_r": round(res["mae"], 2)})
-                    alerts.append(f"{stamp},{tr['sym']},{tr['setup']},closed {res['r']:+.2f}R,{res['exit_px']:.4f}")
+                    alerts.append(f"{stamp},{tr['sym']},{s},closed {res['r']:+.2f}R,{res['exit_px']:.4f}")
                     if loud:
-                        send(f"CLOSED {tr['sym']}", f"🏁 {tr['sym']} {tr['setup']}: {res['r']:+.2f}R "
+                        send(f"CLOSED {tr['sym']}", f"🏁 {tr['sym']} {s}: {res['r']:+.2f}R "
                              f"({res['ret_pct']:+.1f}%) via {res['reason']} after {res['days']} sessions.")
                 elif loud:
                     a = tr["atr"]
                     if res.get("pending_exit") and not tr.get("exit_sent"):
                         q = 0.5 if res["half"] else 1.0
-                        open_r = res["r"] + q * (float(after.Close.iloc[-1]) - res["entry"]) / res["risk"]
-                        send(f"SELL {tr['sym']}", f"🔔 SELL {tr['sym']} at tomorrow's open ({res['pending_exit']}).\n"
+                        open_r = res["r"] + q * d * (float(after.Close.iloc[-1]) - res["entry"]) / res["risk"]
+                        verb = "SELL" if d > 0 else "COVER"
+                        send(f"{verb} {tr['sym']}", f"🔔 {verb} {tr['sym']} at tomorrow's open ({res['pending_exit']}).\n"
                              f"Open P/L at today's close about {open_r:+.2f}R.", "high", "bell")
                         tr["exit_sent"] = True
                     if res["half"] and not tr.get("tp1_sent"):
-                        send(f"TP1 {tr['sym']}", f"🎯 {tr['sym']} hit TP1 {money(res['tp1'])}: sell half, "
-                             f"move the stop to {money(res['stop'])}.", "high", "dart")
+                        send(f"TP1 {tr['sym']}", f"🎯 {tr['sym']} hit TP1 {money(res['tp1'])}: "
+                             f"{'sell' if d > 0 else 'cover'} half, move the stop to {money(res['stop'])}.",
+                             "high", "dart")
                         tr["tp1_sent"] = True
                         tr["stop_sent"] = res["stop"]
                     last = tr.get("stop_sent", tr["stop0"])
-                    if res["stop"] - last >= TRAIL_PUSH_ATR * a:
-                        send(f"RAISE STOP {tr['sym']}", f"⬆️ {tr['sym']}: raise the stop to {money(res['stop'])} "
-                             f"(was {money(last)}), locks {(res['stop'] - res['entry']) / res['risk']:+.1f}R on the runner.")
+                    if d * (res["stop"] - last) >= TRAIL_PUSH_ATR * a:
+                        verb = "raise" if d > 0 else "lower"
+                        send(f"{verb.upper()} STOP {tr['sym']}",
+                             f"{'⬆️' if d > 0 else '⬇️'} {tr['sym']}: {verb} the stop to {money(res['stop'])} "
+                             f"(was {money(last)}), locks {d * (res['stop'] - res['entry']) / res['risk']:+.1f}R "
+                             f"on the runner.")
                         tr["stop_sent"] = res["stop"]
 
         if PAPER and equity is not None and paper_live(tr):
@@ -1037,47 +1236,59 @@ def run(force=False):
             keep.append(tr)
     state["trades"] = keep
 
-    # 2) new signals (regime on only)
+    # 2) new signals (longs need the regime on; shorts follow SHORT_REGIME)
     taken = {(t["sym"], t["setup"]) for t in keep}
     cands = {s: [] for s in SETUPS}
-    if regime:
-        for sym in syms:
-            df = get_ind(sym)
-            if df is None or df.index[-1].date() != last_bar:
-                continue
-            row = df.iloc[-1]
-            for s in SETUPS:
-                if row[f"sig_{s}"] and (sym, s) not in taken:
-                    cands[s].append((sym, row))
+    for sym in syms:
+        df = get_ind(sym)
+        if df is None or df.index[-1].date() != last_bar:
+            continue
+        row = df.iloc[-1]
+        for s in SETUPS:
+            if setup_allowed(s, regime) and row[f"sig_{s}"] and (sym, s) not in taken:
+                cands[s].append((sym, row))
     cands["pullback"].sort(key=lambda x: x[1].rsi2)
+    cands["short_bounce"].sort(key=lambda x: -x[1].rsi2)
     cands["breakout"].sort(key=lambda x: -x[1].vx)
+    cands["breakdown"].sort(key=lambda x: -x[1].vx)
 
     paper_open = {s: sum(1 for t in keep if t["setup"] == s and paper_live(t)) for s in SETUPS}
-    paper_cap = {"breakout": PAPER_MAX_OPEN, "pullback": PAPER_PB_MAX_OPEN}
+    paper_syms = {t["sym"] for t in keep if paper_live(t)}       # Alpaca nets positions by symbol
     for s in SETUPS:
+        d = SIGN[s]
         muted = []
         for n, (sym, row) in enumerate(cands[s]):
             push = s in PUSH_SETUPS and n < MAX_PUSH_PER_SETUP
+            pivot = float(row.base_low) if s == "breakdown" else float(row.base_hi)
             tr = {"sym": sym, "setup": s, "signal_date": stamp, "status": "pending", "pushed": push,
-                  "atr": float(row.atr), "base_low": float(row.base_low), "pivot": float(row.base_hi),
-                  "close": float(row.Close)}
+                  "atr": float(row.atr), "base_low": float(row.base_low), "base_hi": float(row.base_hi),
+                  "pivot": pivot, "close": float(row.Close)}
             keep.append(tr)
             alerts.append(f"{stamp},{sym},{s},signal{'' if push else '-muted'},{row.Close}")
             paper_txt = ""
             if PAPER and equity is not None and s in PAPER_SETUPS:
-                if paper_open[s] >= paper_cap[s]:
-                    notes.append(f"{sym}: no paper order, {paper_cap[s]} {s} positions already open")
+                if paper_open[s] >= PAPER_CAP[s]:
+                    notes.append(f"{sym}: no paper order, {PAPER_CAP[s]} {s} positions already open")
+                elif sym in paper_syms:
+                    notes.append(f"{sym}: no paper {s} order, a paper position in {sym} is already open")
+                elif d < 0 and not shorting:
+                    notes.append(f"{sym}: no paper {s} order, shorting isn't enabled on the paper account "
+                                 "(Alpaca needs $2,000+ equity)")
+                elif d < 0 and not ap_shortable(sym):
+                    notes.append(f"{sym}: no paper {s} order, not easy to borrow on Alpaca")
                 else:
                     try:
                         p = paper_enter(tr, equity, buying_power)
                         if p:
                             tr["paper"] = p
                             paper_open[s] += 1
+                            paper_syms.add(sym)
                             buying_power -= p["cost"]
                             how = f"limit {money(p['limit'])}" if p["limit"] else "at the open"
-                            paper_txt = (f"📄 Paper order queued: buy {p['qty']} sh {how}, "
+                            verb = "buy" if d > 0 else "short"
+                            paper_txt = (f"📄 Paper order queued: {verb} {p['qty']} sh {how}, "
                                          f"stop {money(p['stop_px'])}")
-                            notes.append(f"📝 {sym} {s}: {p['qty']} sh {how} queued")
+                            notes.append(f"📝 {sym} {s}: {verb} {p['qty']} sh {how} queued")
                         else:
                             notes.append(f"{sym}: no paper order, not enough risk budget or buying power for 1 share")
                     except Exception as e:
@@ -1089,12 +1300,18 @@ def run(force=False):
             title, lines, target = entry_msg(sym, s, row)
             lines.append(option_idea(sym, float(row.Close), s, hv20(data[sym].Close), target))
             ed = earnings_days(sym)
-            if ed is not None and 0 <= ed <= EARN_WARN_DAYS[s]:
+            if ed is not None and 0 <= ed <= EARN_WARN_DAYS[KIND[s]]:
                 lines.append(f"⚠ earnings in {ed} days, inside the usual hold. Consider skipping or sizing down.")
-            lines.append("Market: SPY above its 200-day ✓")
+            if d > 0:
+                lines.append("Market: SPY above its 200-day ✓")
+            else:
+                lines.append("Market: SPY below its 200-day ✓" if not regime else
+                             "Market: SPY above its 200-day (this short goes against the market trend)")
             if paper_txt:
                 lines.append(paper_txt)
-            send(title, "\n".join(x for x in lines if x), "high", "rocket" if s == "breakout" else "green_circle")
+            icon = {"breakout": "rocket", "pullback": "green_circle",
+                    "short_bounce": "red_circle", "breakdown": "chart_with_downwards_trend"}[s]
+            send(title, "\n".join(x for x in lines if x), "high", icon)
         if muted:
             send(f"More {s} signals", f"Also signaled today ({s}, tracked but not pushed): {', '.join(muted)}",
                  "low", "memo")
@@ -1116,8 +1333,8 @@ def run(force=False):
     write_paper(paper_rows, equity if PAPER else None)
     if outcomes or paper_rows or not SUMMARY_FILE.exists():
         SUMMARY_FILE.write_text(summarize(len(keep)))
-    print(f"Regime {'ON' if regime else 'OFF'} | pullback {len(cands['pullback'])} | "
-          f"breakout {len(cands['breakout'])} | tracked {len(keep)} | closed {len(outcomes)} | "
+    counts = " | ".join(f"{s} {len(cands[s])}" for s in SETUPS)
+    print(f"Regime {'ON' if regime else 'OFF'} | {counts} | tracked {len(keep)} | closed {len(outcomes)} | "
           f"paper {'on' if PAPER else 'off'}" + (f" ${equity:,.0f}" if equity is not None else ""))
 
 
