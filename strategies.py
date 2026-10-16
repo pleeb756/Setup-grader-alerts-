@@ -176,6 +176,10 @@ def main():
     # half TQQQ trend + half stock momentum, rebalanced monthly
     mix = 0.5 * runs["TQQQ, QQQ 200-day filter, 2% band"] + 0.5 * runs["Stock momentum, top 5 (popular list)"]
     curves["50% TQQQ trend + 50% stock momentum top 5"] = START_USD * (1 + mix[mix.index > start]).cumprod()
+    # smaller TQQQ doses: the trend-filtered TQQQ sleeve plus a trend-filtered QQQ sleeve, rebalanced daily
+    for k in (0.5, 0.67):
+        m = k * runs["TQQQ, QQQ 200-day filter"] + (1 - k) * runs["QQQ, 200-day filter"]
+        curves[f"{k:.0%} TQQQ trend + {1 - k:.0%} QQQ trend"] = START_USD * (1 + m[m.index > start]).cumprod()
 
     res = {k: summarize(v) for k, v in curves.items()}
     order = sorted(res, key=lambda k: -res[k]["final"])
