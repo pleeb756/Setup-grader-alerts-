@@ -46,3 +46,7 @@ date,sym,setup,event,price
 2026-10-15,NKE,short_bounce,signal-muted,37.13999938964844
 2026-10-15,O,short_bounce,signal-muted,55.54999923706055
 2026-10-15,NFLX,short_bounce,signal-muted,72.61000061035156
+2026-10-16,SCHG,pullback,signal-muted,35.209999084472656
+2026-10-16,PLTR,pullback,signal-muted,186.02999877929688
+2026-10-16,AMZN,pullback,signal-muted,250.0
+2026-10-16,GOOGL,pullback,signal-muted,340.5899963378906

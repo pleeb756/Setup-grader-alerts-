@@ -1,3 +1,6 @@
 date,symbol,side,amount,reason
 2026-10-15,TQQQ,buy,$806.56,signal on
 2026-10-15,QQQ,buy,$397.26,signal on
+2026-10-16,VEA,sell,9 sh,cleanup
+2026-10-16,TQQQ,buy,$16.54,rebalance
+2026-10-16,QQQ,buy,$7.52,rebalance
