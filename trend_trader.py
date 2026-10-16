@@ -14,7 +14,7 @@ account (live URLs are refused):
   4. Anything else in the account (old swing-grader positions and orders) is cancelled and closed,
      so the account holds only this strategy. TREND_CLEAN_OTHERS=0 turns that off.
 
-Pushes to your phone only when it trades or the signal flips. Logs orders to trend_trades.csv,
+Pushes to your phone only when it trades or the signal flips. Logs orders to trend_trades.csv, the last run's output to trend_last_run.md,
 daily equity to trend_equity.csv, and state to trend_state.json.
 
 Backtest (strategies.py, 2016-10 to 2026-10): +34%/yr, worst drop -47%. The backtest switched at the
@@ -26,6 +26,7 @@ close; live trades fill at the next open, so results will differ a little.
 import datetime as dt
 import json
 import os
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -42,6 +43,7 @@ SIGNAL, LEVERED, BASE = "QQQ", "TQQQ", "QQQ"
 STATE = Path("trend_state.json")
 TRADES = Path("trend_trades.csv")
 EQUITY = Path("trend_equity.csv")
+LAST_RUN = Path("trend_last_run.md")
 
 
 def targets(on, equity):
@@ -92,21 +94,65 @@ def main():
     acct = G.ap("GET", "/v2/account")
     equity, bp = float(acct["equity"]), float(acct["buying_power"])
 
+    def safe(label, fn):
+        """Run one Alpaca call; on failure record why and carry on with the rest."""
+        try:
+            return fn(), True
+        except Exception as e:
+            notes.append(f"⚠ {label} failed: {str(e)[:160]}")
+            return None, False
+
+    def order(sym, side, amount=None, qty=None):
+        """Market day order (fills at the next open). Tries dollars, then fractional shares, then
+        whole shares, since Alpaca can refuse some fractional orders outside market hours."""
+        price = last_px[sym]
+        tries = []
+        if amount is not None:
+            tries.append({"notional": f"{amount:.2f}"})
+            qty = amount / price
+        tries += [{"qty": f"{qty:.6f}"}, {"qty": str(int(qty))}]
+        for t in tries:
+            if t.get("qty") == "0":
+                continue
+            try:
+                G.ap("POST", "/v2/orders", json={"symbol": sym, "side": side, "type": "market",
+                                                 "time_in_force": "day", **t})
+                return t
+            except Exception as e:
+                last_err = str(e)[:160]
+        notes.append(f"⚠ {side} {sym} failed: {last_err if tries else 'nothing to send'}")
+        return None
+
+    last_px = {s: float(px[s].iloc[-1]) for s in (LEVERED, BASE)}
+
     # 1) clear anything that isn't this strategy
     positions = {p["symbol"]: p for p in (G.ap("GET", "/v2/positions") or [])}
     if CLEAN_OTHERS:
+        cancelled = []
         for o in G.ap("GET", "/v2/orders", params={"status": "open", "limit": 500}) or []:
-            G.ap("DELETE", f"/v2/orders/{o['id']}")
-            notes.append(f"🚫 cancelled open {o['side']} order for {o['symbol']}")
+            _, ok = safe(f"cancel {o['symbol']} order", lambda o=o: G.ap("DELETE", f"/v2/orders/{o['id']}"))
+            if ok:
+                cancelled.append(o["id"])
+                notes.append(f"🚫 cancelled open {o['side']} order for {o['symbol']}")
+        for _ in range(20):                                       # cancels are async: wait until done
+            still = {o["id"] for o in G.ap("GET", "/v2/orders", params={"status": "open", "limit": 500}) or []}
+            if not still & set(cancelled):
+                break
+            time.sleep(1)
         for sym in [s for s in positions if s not in (LEVERED, BASE)]:
-            G.ap("DELETE", f"/v2/positions/{sym}")
-            notes.append(f"🧹 closing {sym} ({positions[sym]['qty']} sh) at the open: not part of the trend strategy")
-            rows.append(f"{today},{sym},sell,{positions[sym]['qty']} sh,cleanup")
+            qty = abs(float(positions[sym]["qty"]))
+            _, ok = safe(f"close {sym}", lambda sym=sym: G.ap("DELETE", f"/v2/positions/{sym}"))
+            if not ok:
+                p_ = positions[sym]
+                last_px[sym] = float(p_.get("current_price") or float(p_["market_value"]) / qty)
+                ok = order(sym, "sell", qty=qty) is not None
+            if ok:
+                notes.append(f"🧹 closing {sym} ({qty:g} sh) at the open: not part of the trend strategy")
+                rows.append(f"{today},{sym},sell,{qty:g} sh,cleanup")
         positions = {s: p for s, p in positions.items() if s in (LEVERED, BASE)}
 
     # 2) rebalance toward the targets
     held = {s: float(positions[s]["market_value"]) if s in positions else 0.0 for s in (LEVERED, BASE)}
-    last_px = {s: float(px[s].iloc[-1]) for s in (LEVERED, BASE)}
     tgt = targets(on, equity)
     band = equity * BAND_PCT / 100
     need = flipped or prev is None or any(
@@ -116,16 +162,19 @@ def main():
         for s in (LEVERED, BASE):                                  # sells first
             diff = tgt[s] - held[s]
             if diff < -1:
+                why = "signal off" if not on else "rebalance"
                 if tgt[s] == 0:
-                    G.ap("DELETE", f"/v2/positions/{s}")
-                    notes.append(f"🔻 sell all {s} (~{G.money(held[s])}) at the open")
-                    rows.append(f"{today},{s},sell,all,{'signal off' if not on else 'rebalance'}")
+                    _, ok = safe(f"close {s}", lambda s=s: G.ap("DELETE", f"/v2/positions/{s}"))
+                    if not ok:
+                        ok = order(s, "sell", qty=abs(float(positions[s]["qty"]))) is not None
+                    if ok:
+                        notes.append(f"🔻 sell all {s} (~{G.money(held[s])}) at the open")
+                        rows.append(f"{today},{s},sell,all,{why}")
                 else:
-                    qty = round(-diff / last_px[s], 6)
-                    G.ap("POST", "/v2/orders", json={"symbol": s, "qty": f"{qty:.6f}", "side": "sell",
-                                                     "type": "market", "time_in_force": "day"})
-                    notes.append(f"🔻 sell {qty:.4f} {s} (~{G.money(-diff)}) at the open")
-                    rows.append(f"{today},{s},sell,{qty:.6f} sh,rebalance")
+                    sent = order(s, "sell", qty=-diff / last_px[s])
+                    if sent:
+                        notes.append(f"🔻 sell ~{G.money(-diff)} of {s} at the open")
+                        rows.append(f"{today},{s},sell,{list(sent.values())[0]} sh,{why}")
         # then buys; if buying power is short, scale every buy down by the same factor so the
         # TQQQ/QQQ mix stays on target (the rest goes in on a later evening)
         buys = {s: tgt[s] - held[s] for s in (LEVERED, BASE) if tgt[s] - held[s] > 1}
@@ -134,10 +183,11 @@ def main():
             amt = round(diff * scale, 2)
             if amt < 1:
                 continue
-            G.ap("POST", "/v2/orders", json={"symbol": s, "notional": f"{amt:.2f}", "side": "buy",
-                                             "type": "market", "time_in_force": "day"})
-            notes.append(f"🟢 buy {G.money(amt)} of {s} at the open")
-            rows.append(f"{today},{s},buy,${amt:.2f},{'signal on' if flipped or prev is None else 'rebalance'}")
+            sent = order(s, "buy", amount=amt)
+            if sent:
+                how = f"${amt:.2f}" if "notional" in sent else f"{sent['qty']} sh"
+                notes.append(f"🟢 buy {how} of {s} at the open")
+                rows.append(f"{today},{s},buy,{how},{'signal on' if flipped or prev is None else 'rebalance'}")
         if buys and scale < 1:
             notes.append(f"   (cash covers {scale:.0%} of the target today; the rest goes in once cash frees up)")
 
@@ -159,8 +209,16 @@ def main():
                "chart_with_upwards_trend" if on else "warning")
     elif notes:
         G.send("Trend trader", head + "\n" + "\n".join(notes), "default", "page_facing_up")
-    G.step_summary(f"## Trend trader\n\n{head}\n\n" + ("\n".join(f"- {n}" for n in notes) or "No trades needed.") + "\n")
+    text = f"## Trend trader, {now:%Y-%m-%d %H:%M} ET\n\n{head}\n\n" + (
+        "\n".join(f"- {n}" for n in notes) or "No trades needed.") + "\n"
+    LAST_RUN.write_text(text)
+    G.step_summary(text)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:                                         # leave the reason in the repo
+        LAST_RUN.write_text(f"## Trend trader failed {dt.datetime.now(G.ET):%Y-%m-%d %H:%M} ET\n\n"
+                            f"{type(e).__name__}: {e}\n")
+        raise

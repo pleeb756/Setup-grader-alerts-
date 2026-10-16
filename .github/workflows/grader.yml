@@ -96,7 +96,7 @@ jobs:
         run: |
           git config user.name grader-bot
           git config user.email grader-bot@users.noreply.github.com
-          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv paper_swing_trades.csv paper_swing_equity.csv strategies_report.md rescue_report.md swing_masters_report.md trend_state.json trend_trades.csv trend_equity.csv; do [ -f "$f" ] && git add "$f"; done; true
+          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv paper_swing_trades.csv paper_swing_equity.csv strategies_report.md rescue_report.md swing_masters_report.md trend_state.json trend_trades.csv trend_equity.csv trend_last_run.md; do [ -f "$f" ] && git add "$f"; done; true
           git diff --staged --quiet || git commit -m "Update swing grader"
           git pull --rebase --autostash || true
           git push || true
