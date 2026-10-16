@@ -31,26 +31,46 @@ START_USD = 2000.0
 REPORT = Path("rescue_report.md")
 
 
-def rescue(setup, res, entry, bars):
-    """Continue a losing trade from its exit bar until it reaches entry +/- RESCUE_PCT."""
-    d = G.SIGN[setup]
+def rescue(setup, res, entry, bars, atr_, ride=None):
+    """Continue a losing trade from its exit bar until it reaches entry + RESCUE_PCT.
+    ride=None: sell at +RESCUE_PCT. ride="target": once there, set the stop at +RESCUE_PCT and
+    trail it TRAIL_ATR x ATR behind the highest high. ride="entry": same, but the first stop is
+    breakeven. Long setups only (a short held against you has no ceiling)."""
     slip = G.SLIP_BPS / 1e4
-    target = entry * (1 + d * RESCUE_PCT)
+    target = entry * (1 + RESCUE_PCT)
     O, H, L, C = (bars[k].to_numpy(float) for k in ("Open", "High", "Low", "Close"))
-    fav = H if d > 0 else L
     k0 = res["days"]                       # first bar after the bar the normal exit happened on
-    worst = 0.0
+    worst, hit = 0.0, None
     for k in range(k0, len(O)):
-        worst = max(worst, d * (entry - (L[k] if d > 0 else H[k])) / entry)
-        if d * (O[k] - target) >= 0:
-            return {"done": True, "exit_px": O[k] * (1 - d * slip), "days": k + 1, "worst": worst}
-        if d * (fav[k] - target) >= 0:
-            return {"done": True, "exit_px": target, "days": k + 1, "worst": worst}
-    return {"done": False, "exit_px": C[-1], "days": len(O), "worst": worst}
+        worst = max(worst, (entry - L[k]) / entry)
+        if O[k] >= target or H[k] >= target:
+            hit = k
+            break
+    if hit is None:
+        return {"done": False, "exit_px": C[-1], "days": len(O), "worst": worst, "riding": False}
+    if ride is None:
+        px = O[hit] * (1 - slip) if O[hit] >= target else target
+        return {"done": True, "exit_px": px, "days": hit + 1, "worst": worst, "riding": False}
+    stop = target if ride == "target" else entry
+    best = max(H[hit], target)
+    stop = max(stop, best - G.TRAIL_ATR * atr_)
+    for k in range(hit + 1, len(O)):
+        if O[k] <= stop:
+            return {"done": True, "exit_px": O[k] * (1 - slip), "days": k + 1, "worst": worst, "riding": False}
+        if L[k] <= stop:
+            return {"done": True, "exit_px": stop * (1 - slip), "days": k + 1, "worst": worst, "riding": False}
+        best = max(best, H[k])
+        stop = max(stop, best - G.TRAIL_ATR * atr_)       # takes effect from the next bar
+    return {"done": True, "exit_px": C[-1], "days": len(O), "worst": worst, "riding": True}
+
+
+VERSIONS = (("sell", None), ("ride5", "target"), ("ride0", "entry"))
+LABELS = {"base": "normal (current plan)", "sell": "hold losers, sell at +5%",
+          "ride5": "hold losers, then ride: stop at +5%, trail 4 ATR",
+          "ride0": "hold losers, then ride: stop at breakeven, trail 4 ATR"}
 
 
 def run_setup(df, setup):
-    d = G.SIGN[setup]
     O, A, BL, BH, PV, REG, sig = G.setup_arrays(df, setup)
     rows, busy = [], -1
     for i in np.flatnonzero(sig):
@@ -59,28 +79,32 @@ def run_setup(df, setup):
         o = O[i + 1]
         if G.chased(setup, o, PV[i]):
             continue
-        stop = G.initial_stop(setup, o * (1 + d * G.SLIP_BPS / 1e4), A[i], BL[i], BH[i])
+        stop = G.initial_stop(setup, o * (1 + G.SLIP_BPS / 1e4), A[i], BL[i], BH[i])
         bars = df.iloc[i + 1:]
         res = G.simulate(setup, o, stop, A[i], bars)
         if not res["done"]:
-            break                           # normal plan still open at the end (both versions)
+            break                           # normal plan still open at the end (all versions)
         entry = res["entry"]
-        base_ret = res["ret_pct"]
         row = {"sym": df.attrs["sym"], "setup": setup, "entry_date": bars.index[0], "entry": entry,
-               "stop": stop, "base_ret": base_ret, "base_days": res["days"],
-               "base_exit_date": res["exit_date"], "rescued": False, "stuck": False,
-               "ret": base_ret, "days": res["days"], "exit_date": res["exit_date"], "worst": np.nan}
+               "stop": stop, "rescued": res["r"] < 0, "worst": np.nan,
+               "base_ret": res["ret_pct"], "base_days": res["days"], "base_exit": res["exit_date"]}
+        for v, mode in VERSIONS:
+            row.update({f"{v}_ret": res["ret_pct"], f"{v}_days": res["days"], f"{v}_exit": res["exit_date"],
+                        f"{v}_stuck": False, f"{v}_riding": False})
         if res["r"] < 0:
-            rr = rescue(setup, res, entry, bars)
-            half_real = (res["r"] - (0.5 if res["half"] else 1.0) * d * (res["exit_px"] - entry) / res["risk"]) \
-                if res["half"] else 0.0
             q = 0.5 if res["half"] else 1.0
-            r_new = half_real + q * d * (rr["exit_px"] - entry) / res["risk"]
-            row.update(rescued=True, stuck=not rr["done"], ret=r_new * res["risk"] / entry * 100,
-                       days=rr["days"], exit_date=bars.index[rr["days"] - 1], worst=rr["worst"] * 100)
+            half_real = res["r"] - q * (res["exit_px"] - entry) / res["risk"] if res["half"] else 0.0
+            for v, mode in VERSIONS:
+                rr = rescue(setup, res, entry, bars, A[i], mode)
+                r_new = half_real + q * (rr["exit_px"] - entry) / res["risk"]
+                row.update({f"{v}_ret": r_new * res["risk"] / entry * 100, f"{v}_days": rr["days"],
+                            f"{v}_exit": bars.index[rr["days"] - 1], f"{v}_stuck": not rr["done"],
+                            f"{v}_riding": rr["riding"]})
+                row["worst"] = rr["worst"] * 100
         rows.append(row)
-        busy = i + row["days"]
-        if row["stuck"]:
+        longest = max(row[f"{v}_days"] for v, _ in VERSIONS)
+        busy = i + longest                   # same trade list for every version
+        if longest >= len(bars):
             break
     return rows
 
@@ -144,55 +168,52 @@ def main():
             continue
         df = G.add_ind(data[sym].copy(), spy)
         df.attrs["sym"] = sym
-        for s in G.SETUPS:
+        for s in ("breakout", "pullback"):
             rows += run_setup(df, s)
         print(f"{sym}: done")
     t = pd.DataFrame(rows)
     t.to_csv("rescue_trades.csv", index=False)
 
-    out = [f"# Hold losers until +{RESCUE_PCT:.0%}: {G.BT_YEARS}-year test, {len(data) - 1} stocks ({src} list)\n",
-           f"Run {dt.date.today()}. Same signals and entries as swing_backtest.md. 'Normal' = the plan as it runs now; "
-           f"'hold losers' = every losing exit skipped until price is back to +{RESCUE_PCT:.0%} from entry. "
-           "Trades still underwater at the end are marked at the last close (counted, not dropped).\n",
-           "**Survivorship warning matters most here:** the list is today's popular stocks, so stocks that "
-           "fell and never came back (and dropped off the list) aren't in it. Real results of 'never sell at "
-           "a loss' would be worse than shown.\n",
+    out = [f"# Hold losers until +{RESCUE_PCT:.0%}, then sell or ride: {G.BT_YEARS}-year test, "
+           f"{len(data) - 1} stocks ({src} list)\n",
+           f"Run {dt.date.today()}. Long setups only (shorts held against you have no ceiling: an earlier run "
+           "lost 28-31% per trade on average). Same signals and entries as swing_backtest.md; every version uses "
+           "the same trade list. A 'losing exit' is any exit that would close below the entry. Ride versions: once "
+           f"a rescued trade is back to +{RESCUE_PCT:.0%}, the stop goes to +{RESCUE_PCT:.0%} (or breakeven) and "
+           f"then trails {G.TRAIL_ATR:g} ATR behind the highest high. Anything still underwater at the end is "
+           "marked at the last close.\n",
+           "**Survivorship warning:** stocks that fell and never came back dropped off today's popular list, so "
+           "they aren't here. Real results of holding losers would be worse than shown.\n",
            "## Per trade\n",
-           "| setup | version | trades | win % | avg % / trade | avg days held | longest hold (days) | worst open loss | still stuck at end |",
-           "|---|---|---|---|---|---|---|---|---|"]
-    for s in G.SETUPS:
+           "| setup | version | trades | win % | avg % / trade | avg days held | still stuck underwater at end |",
+           "|---|---|---|---|---|---|---|"]
+    for s in ("breakout", "pullback"):
         x = t[t.setup == s]
         if x.empty:
             continue
-        out.append(f"| {s} | normal | {len(x)} | {(x.base_ret > 0).mean():.0%} | {x.base_ret.mean():+.2f}% | "
-                   f"{x.base_days.mean():.1f} | {x.base_days.max()} | - | - |")
-        stuck = x[x.stuck]
-        out.append(f"| {s} | hold losers | {len(x)} | {(x.ret > 0).mean():.0%} | {x.ret.mean():+.2f}% | "
-                   f"{x.days.mean():.1f} | {x.days.max()} | -{x.worst.max():.0f}% | "
-                   f"{len(stuck)} (avg {stuck.ret.mean():+.0f}%) |" if len(stuck) else
-                   f"| {s} | hold losers | {len(x)} | {(x.ret > 0).mean():.0%} | {x.ret.mean():+.2f}% | "
-                   f"{x.days.mean():.1f} | {x.days.max()} | -{x.worst.max():.0f}% | 0 |")
+        out.append(f"| {s} | {LABELS['base']} | {len(x)} | {(x.base_ret > 0).mean():.0%} | "
+                   f"{x.base_ret.mean():+.2f}% | {x.base_days.mean():.1f} | - |")
+        for v, _ in VERSIONS:
+            st = x[x[f"{v}_stuck"]]
+            out.append(f"| {s} | {LABELS[v]} | {len(x)} | {(x[f'{v}_ret'] > 0).mean():.0%} | "
+                       f"{x[f'{v}_ret'].mean():+.2f}% | {x[f'{v}_days'].mean():.1f} | "
+                       f"{len(st)}" + (f" (avg {st[f'{v}_ret'].mean():+.0f}%)" if len(st) else "") + " |")
+        r = x[x.rescued]
+        out.append(f"\n{s}: {len(r)} losing trades rescued. Worst open loss while waiting: -{r.worst.max():.0f}%. "
+                   f"Rescued trades alone, avg result: sell at +5% {r.sell_ret.mean():+.1f}%, "
+                   f"ride from +5% {r.ride5_ret.mean():+.1f}%, ride from breakeven {r.ride0_ret.mean():+.1f}%.\n")
+        out += ["| setup | version | trades | win % | avg % / trade | avg days held | still stuck underwater at end |",
+                "|---|---|---|---|---|---|---|"] if s == "breakout" else []
 
-    out += ["\n## Rescued trades: how long the wait was\n",
-            "| setup | losing trades | got back to +5% within 1 month | 3 months | 1 year | never (still stuck) |",
-            "|---|---|---|---|---|---|"]
-    for s in G.SETUPS:
-        x = t[(t.setup == s) & t.rescued]
-        if x.empty:
-            continue
-        wait = x.days - x.base_days
-        ok = ~x.stuck
-        out.append(f"| {s} | {len(x)} | {((wait <= 21) & ok).mean():.0%} | {((wait <= 63) & ok).mean():.0%} | "
-                   f"{((wait <= 252) & ok).mean():.0%} | {x.stuck.mean():.0%} |")
-
-    out += ["\n## $2,000 account (1% risk sizing at the original stop, max 35% per trade, cash only)\n",
+    out += ["\n## $2,000 account (1% risk sizing at the original stop, max 35% per trade, cash only, "
+            "marked to market daily)\n",
             "| setup | version | ending $ | growth / yr | worst drop (incl. open losses) | trades taken | signals skipped (no cash) |",
             "|---|---|---|---|---|---|---|"]
     for s in ("breakout", "pullback"):
         x = t[t.setup == s]
-        for label, rc, ec in (("normal", "base_ret", "base_exit_date"), ("hold losers", "ret", "exit_date")):
-            eq, cagr, mdd, n, sk = portfolio(x, rc, ec, closes)
-            out.append(f"| {s} | {label} | ${eq:,.0f} | {cagr:+.1%} | -{mdd:.0%} | {n} | {sk} |")
+        for v in ("base", "sell", "ride5", "ride0"):
+            eq, cagr, mdd, n, sk = portfolio(x, f"{v}_ret", f"{v}_exit", closes)
+            out.append(f"| {s} | {LABELS[v]} | ${eq:,.0f} | {cagr:+.1%} | -{mdd:.0%} | {n} | {sk} |")
     text = "\n".join(out) + "\n"
     REPORT.write_text(text)
     print(text)
