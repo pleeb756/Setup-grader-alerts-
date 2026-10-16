@@ -182,7 +182,7 @@
    "pivot": 154.10899353027344,
    "close": 144.17999267578125,
    "paper": {
-    "status": "submitted",
+    "status": "withdrawn",
     "entry_id": "5b384e2e-cd8e-4f0e-9f66-64af53cc2678",
     "qty": 4,
     "limit": null,
@@ -212,7 +212,7 @@
    "pivot": 130.66000366210938,
    "close": 122.33999633789062,
    "paper": {
-    "status": "submitted",
+    "status": "withdrawn",
     "entry_id": "d4c2f184-65fa-4362-8776-838d697fbe1e",
     "qty": 4,
     "limit": null,
@@ -231,7 +231,7 @@
    "pivot": 102.99500274658203,
    "close": 94.05999755859375,
    "paper": {
-    "status": "submitted",
+    "status": "withdrawn",
     "entry_id": "55057d12-9337-4f6c-9079-d65419e68318",
     "qty": 1,
     "limit": null,
@@ -348,6 +348,54 @@
    "base_low": 527.5999755859375,
    "pivot": 658.52001953125,
    "close": 562.22998046875
+  },
+  {
+   "sym": "BND",
+   "setup": "short_bounce",
+   "signal_date": "2026-10-15",
+   "status": "pending",
+   "pushed": false,
+   "atr": 0.32576384128333125,
+   "base_low": 69.6500015258789,
+   "base_hi": 71.22628285648061,
+   "pivot": 71.22628285648061,
+   "close": 70.80999755859375
+  },
+  {
+   "sym": "NKE",
+   "setup": "short_bounce",
+   "signal_date": "2026-10-15",
+   "status": "pending",
+   "pushed": false,
+   "atr": 1.153828859580497,
+   "base_low": 31.969999313354492,
+   "base_hi": 37.040000915527344,
+   "pivot": 37.040000915527344,
+   "close": 37.13999938964844
+  },
+  {
+   "sym": "O",
+   "setup": "short_bounce",
+   "signal_date": "2026-10-15",
+   "status": "pending",
+   "pushed": false,
+   "atr": 0.910326434162254,
+   "base_low": 53.150001525878906,
+   "base_hi": 57.50492946263608,
+   "pivot": 57.50492946263608,
+   "close": 55.54999923706055
+  },
+  {
+   "sym": "NFLX",
+   "setup": "short_bounce",
+   "signal_date": "2026-10-15",
+   "status": "pending",
+   "pushed": false,
+   "atr": 1.8185089352527157,
+   "base_low": 66.54000091552734,
+   "base_hi": 76.95999908447266,
+   "pivot": 76.95999908447266,
+   "close": 72.61000061035156
   }
  ],
  "regime": true,

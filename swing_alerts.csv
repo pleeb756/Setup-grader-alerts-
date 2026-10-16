@@ -42,3 +42,7 @@ date,sym,setup,event,price
 2026-10-15,NVDA,pullback,signal-muted,217.22999572753906
 2026-10-15,VWO,pullback,signal-muted,58.790000915527344
 2026-10-15,AMD,pullback,signal-muted,562.22998046875
+2026-10-15,BND,short_bounce,signal-muted,70.80999755859375
+2026-10-15,NKE,short_bounce,signal-muted,37.13999938964844
+2026-10-15,O,short_bounce,signal-muted,55.54999923706055
+2026-10-15,NFLX,short_bounce,signal-muted,72.61000061035156
