@@ -101,6 +101,44 @@ def momentum(px, spy, top_n, use_regime=True):
     return gross - turnover * COST_BPS / 1e4
 
 
+def long_short(px, spy, qqq, top_n, hedge, borrow_pct):
+    """Momentum longs (same rule as momentum()) with a short hedge, rebalanced monthly.
+    hedge="qqq": short QQQ dollar-for-dollar against the longs (cancels the market's move).
+    hedge="weak": also short the top_n weakest by 6-month return that are below their 200-day.
+    Both legs go flat while SPY is below its 200-day. borrow_pct = yearly fee on the short side."""
+    rets = px.pct_change().fillna(0.0)
+    q_ret = qqq.pct_change().fillna(0.0)
+    mom = px / px.shift(LOOKBACK) - 1
+    ma = px.rolling(TREND).mean()
+    above, below = px > ma, px < ma
+    spy_ok = spy > spy.rolling(TREND).mean()
+    month = pd.Series(px.index.to_period("M"), index=px.index)
+    first_day = month != month.shift(1)
+    w = pd.DataFrame(0.0, index=px.index, columns=px.columns)
+    hq = pd.Series(0.0, index=px.index)                              # QQQ short weight (negative)
+    cur, cur_q = pd.Series(0.0, index=px.columns), 0.0
+    for i, d in enumerate(px.index):
+        if i > 0 and first_day.iloc[i]:
+            prev = px.index[i - 1]
+            cur, cur_q = pd.Series(0.0, index=px.columns), 0.0
+            if bool(spy_ok.loc[prev]):
+                longs = mom.loc[prev].where(above.loc[prev]).dropna().nlargest(top_n).index
+                cur[longs] = 1.0 / top_n
+                if hedge == "qqq":
+                    cur_q = -len(longs) / top_n
+                elif hedge == "weak" and len(longs):
+                    shorts = mom.loc[prev].where(below.loc[prev]).dropna()
+                    shorts = shorts[~shorts.index.isin(longs)].nsmallest(top_n).index
+                    cur[shorts] = -1.0 / top_n
+        w.iloc[i] = cur.values
+        hq.iloc[i] = cur_q
+    held, held_q = w.shift(1).fillna(0.0), hq.shift(1).fillna(0.0)
+    gross = (held * rets).sum(axis=1) + held_q * q_ret
+    short_size = held.clip(upper=0).abs().sum(axis=1) + held_q.abs()
+    turnover = w.diff().abs().sum(axis=1).fillna(0.0) + hq.diff().abs().fillna(0.0)
+    return gross - turnover * COST_BPS / 1e4 - short_size * borrow_pct / 100 / 252
+
+
 def breakout_curve(index, risk=0.01, cap=0.35):
     """Daily equity curve of the grader's breakout trades (needs swing_bt_trades.csv)."""
     if not G.BT_TRADES.exists():
@@ -168,6 +206,11 @@ def main():
     for n in TOP_N:
         runs[f"Stock momentum, top {n} (popular list)"] = momentum(stocks, spy, n)
     runs["Stock momentum, top 3, no SPY filter"] = momentum(stocks, spy, 3, use_regime=False)
+    # hedged momentum: long the strongest, short a hedge (needs a margin account with $2,000+)
+    runs["Stock momentum top 5, hedged with a QQQ short"] = long_short(stocks, spy, qqq, 5, "qqq", 0.3)
+    runs["Stock momentum: long top 5, short weakest 5"] = long_short(stocks, spy, qqq, 5, "weak", 2.0)
+    runs["Sector ETF momentum top 3, hedged with a QQQ short"] = long_short(sectors, spy, qqq, 3, "qqq", 0.3)
+    runs["Sector ETFs: long top 3, short weakest 3"] = long_short(sectors, spy, qqq, 3, "weak", 0.3)
 
     curves = {k: START_USD * (1 + v[v.index > start]).cumprod() for k, v in runs.items()}
     bo = breakout_curve(curves["SPY buy & hold"].index)
