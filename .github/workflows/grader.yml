@@ -15,6 +15,10 @@ on:
         description: "Backtest all four setups (long + short) over 10 years (no alerts)"
         type: boolean
         default: false
+      compare:
+        description: "Compare growth strategies over 10 years: trend, momentum, TQQQ, breakouts (no alerts)"
+        type: boolean
+        default: false
       report:
         description: "Print swing outcome stats (no alerts)"
         type: boolean
@@ -34,7 +38,7 @@ concurrency:
 jobs:
   grade:
     runs-on: ubuntu-24.04
-    timeout-minutes: ${{ inputs.backtest && 60 || 8 }}
+    timeout-minutes: ${{ (inputs.backtest && 60) || (inputs.compare && 20) || 8 }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -70,6 +74,7 @@ jobs:
           PAPER_MAX_POS_PCT: "35"  # cap on one position's size, % of paper equity
           FORCE_RUN: ${{ inputs.force && '1' || '0' }}
         run: |
+          if [ "${{ inputs.compare }}" = "true" ]; then python strategies.py; exit 0; fi
           python grader.py \
             ${{ inputs.test && '--test' || '' }} \
             ${{ inputs.backtest && '--backtest' || '' }} \
@@ -80,7 +85,7 @@ jobs:
         run: |
           git config user.name grader-bot
           git config user.email grader-bot@users.noreply.github.com
-          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv paper_swing_trades.csv paper_swing_equity.csv; do [ -f "$f" ] && git add "$f"; done; true
+          for f in swing_state.json swing_alerts.csv swing_outcomes.csv swing_summary.md swing_backtest.md swing_bt_trades.csv paper_swing_trades.csv paper_swing_equity.csv strategies_report.md; do [ -f "$f" ] && git add "$f"; done; true
           git diff --staged --quiet || git commit -m "Update swing grader"
           git pull --rebase --autostash || true
           git push || true
