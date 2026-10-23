@@ -1,13 +1,14 @@
 # Swing outcomes
 
-13 closed, 17 open or pending. Updated 2026-10-15.
+36 closed, 7 open or pending. Updated 2026-10-23.
 
 Wait for 30+ per row before judging. Compare with swing_backtest.md.
 
 | setup | pushed | result |
 |---|---|---|
-| pullback | False | 6 / 50% / -0.20 / -1.2 / PF 0.35 |
-| pullback | True | 7 / 0% / -0.83 / -5.8 / PF 0.00 |
+| pullback | False | 21 / 33% / -0.23 / -4.9 / PF 0.31 |
+| pullback | True | 13 / 15% / -0.59 / -7.7 / PF 0.06 |
+| short_bounce | False | 2 / 50% / +0.03 / +0.1 / PF ∞ |
 
 ## Alpaca paper account
 

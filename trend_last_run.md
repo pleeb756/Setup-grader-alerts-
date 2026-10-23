@@ -1,8 +1,7 @@
-## Trend trader, 2026-10-16 19:46 ET
+## Trend trader, 2026-10-23 19:55 ET
 
-QQQ $709.80 vs 200-day $673.66: ON (67% TQQQ / 33% QQQ). Paper equity $1,796.32.
+QQQ $704.40 vs 200-day $676.10: ON (67% TQQQ / 33% QQQ). Paper equity $1,772.44.
 
-- 🧹 closing VEA (9 sh) at the open: not part of the trend strategy
-- 🟢 buy $16.54 of TQQQ at the open
-- 🟢 buy $7.52 of QQQ at the open
--    (cash covers 4% of the target today; the rest goes in once cash frees up)
+- 🟢 buy $427.32 of TQQQ at the open
+- 🟢 buy $187.83 of QQQ at the open
+-    (cash covers 98% of the target today; the rest goes in once cash frees up)

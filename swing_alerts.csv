@@ -50,3 +50,30 @@ date,sym,setup,event,price
 2026-10-16,PLTR,pullback,signal-muted,186.02999877929688
 2026-10-16,AMZN,pullback,signal-muted,250.0
 2026-10-16,GOOGL,pullback,signal-muted,340.5899963378906
+2026-10-23,VEA,pullback,closed +0.08R,70.3448
+2026-10-23,DAL,pullback,closed -1.01R,74.6733
+2026-10-23,MU,pullback,closed -0.48R,879.2201
+2026-10-23,SPMO,pullback,closed -0.50R,140.6496
+2026-10-23,TSM,pullback,closed +0.37R,432.9234
+2026-10-23,VGT,pullback,closed -0.35R,120.2199
+2026-10-23,EMXC,pullback,closed -0.38R,92.0539
+2026-10-23,QQQ,pullback,closed -0.52R,713.2532
+2026-10-23,QQQM,pullback,closed -0.52R,293.7131
+2026-10-23,VONG,pullback,closed -0.64R,125.0275
+2026-10-23,BE,pullback,closed -0.07R,228.0359
+2026-10-23,MRVL,pullback,closed +0.29R,246.8765
+2026-10-23,CRWD,pullback,closed -0.14R,242.4787
+2026-10-23,INTC,pullback,closed -0.39R,87.8760
+2026-10-23,NVDA,pullback,closed +0.02R,217.0214
+2026-10-23,VWO,pullback,closed -1.03R,56.8915
+2026-10-23,AMD,pullback,closed -0.37R,523.8379
+2026-10-23,O,short_bounce,closed +0.06R,55.6778
+2026-10-23,NFLX,short_bounce,closed +0.00R,69.7849
+2026-10-23,SCHG,pullback,closed -0.18R,35.3623
+2026-10-23,PLTR,pullback,closed +0.70R,200.6596
+2026-10-23,AMZN,pullback,closed +0.58R,263.9479
+2026-10-23,GOOGL,pullback,closed -1.04R,320.7146
+2026-10-23,META,pullback,signal-muted,642.6199951171875
+2026-10-23,QUAL,pullback,signal-muted,222.82000732421875
+2026-10-23,SPHQ,pullback,signal-muted,83.0
+2026-10-23,AMZN,pullback,signal-muted,248.0
