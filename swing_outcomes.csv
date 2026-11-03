@@ -35,3 +35,8 @@ signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days
 2026-10-16,2026-10-19,2026-10-22,PLTR,pullback,False,187.0885,167.6954,200.6596,0.7,7.254,4,closed above 5-day average,0.8,0.05
 2026-10-16,2026-10-19,2026-10-20,AMZN,pullback,False,255.3776,240.5035,263.9479,0.576,3.356,2,closed above 5-day average,0.56,0.01
 2026-10-16,2026-10-19,2026-10-23,GOOGL,pullback,False,343.8418,321.5793,320.7146,-1.039,-6.726,5,gapped below stop,0.12,1.06
+2026-10-15,2026-10-16,2026-10-29,BND,short_bounce,False,70.6646,71.4791,71.3557,-0.848,-0.978,10,closed below 5-day average,0.13,0.94
+2026-10-15,2026-10-16,2026-10-26,NKE,short_bounce,False,37.6512,40.5357,37.4987,0.053,0.405,7,closed below 5-day average,0.32,0.27
+2026-10-23,2026-10-26,2026-10-30,QUAL,pullback,False,223.2616,218.8401,224.0479,0.178,0.352,5,closed above 5-day average,0.36,0.23
+2026-10-23,2026-10-26,2026-10-28,SPHQ,pullback,False,83.2416,81.0527,83.7881,0.25,0.657,3,closed above 5-day average,0.34,0.05
+2026-10-23,2026-10-26,2026-10-28,AMZN,pullback,False,249.5947,232.9363,252.8735,0.197,1.314,3,closed above 5-day average,0.31,0.14

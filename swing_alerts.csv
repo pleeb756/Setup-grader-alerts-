@@ -77,3 +77,26 @@ date,sym,setup,event,price
 2026-10-23,QUAL,pullback,signal-muted,222.82000732421875
 2026-10-23,SPHQ,pullback,signal-muted,83.0
 2026-10-23,AMZN,pullback,signal-muted,248.0
+2026-11-02,BND,short_bounce,closed -0.85R,71.3557
+2026-11-02,NKE,short_bounce,closed +0.05R,37.4987
+2026-11-02,QUAL,pullback,closed +0.18R,224.0479
+2026-11-02,SPHQ,pullback,closed +0.25R,83.7881
+2026-11-02,AMZN,pullback,closed +0.20R,252.8735
+2026-11-02,PLTR,pullback,signal-muted,178.33999633789062
+2026-11-02,MSFT,pullback,signal-muted,507.1199951171875
+2026-11-02,VGT,pullback,signal-muted,113.83000183105469
+2026-11-02,SHOP,pullback,signal-muted,156.22000122070312
+2026-11-02,SGOV,pullback,signal-muted,100.43000030517578
+2026-11-02,QQQM,pullback,signal-muted,280.489990234375
+2026-11-02,CRWD,pullback,signal-muted,241.80999755859375
+2026-11-02,SCHG,pullback,signal-muted,33.97999954223633
+2026-11-02,QQQ,pullback,signal-muted,681.0900268554688
+2026-11-02,AMD,pullback,signal-muted,466.8399963378906
+2026-11-02,IVV,pullback,signal-muted,755.3599853515625
+2026-11-02,VOO,pullback,signal-muted,691.3200073242188
+2026-11-02,SPY,pullback,signal-muted,752.0999755859375
+2026-11-02,VTI,pullback,signal-muted,370.0
+2026-11-02,MU,pullback,signal-muted,833.5900268554688
+2026-11-02,RIVN,short_bounce,signal-muted,13.1899995803833
+2026-11-02,NKE,short_bounce,signal-muted,39.119998931884766
+2026-11-02,O,short_bounce,signal-muted,57.58000183105469
