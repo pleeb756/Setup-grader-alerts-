@@ -100,3 +100,22 @@ date,sym,setup,event,price
 2026-11-02,RIVN,short_bounce,signal-muted,13.1899995803833
 2026-11-02,NKE,short_bounce,signal-muted,39.119998931884766
 2026-11-02,O,short_bounce,signal-muted,57.58000183105469
+2026-11-09,META,pullback,closed +0.03R,640.8294
+2026-11-09,MSFT,pullback,closed +1.42R,554.6625
+2026-11-09,VGT,pullback,closed -1.01R,107.5926
+2026-11-09,SHOP,pullback,closed +0.79R,151.0694
+2026-11-09,SGOV,pullback,closed -0.40R,100.4498
+2026-11-09,QQQM,pullback,closed -1.01R,268.2631
+2026-11-09,SCHG,pullback,closed +0.28R,34.4927
+2026-11-09,QQQ,pullback,closed -1.01R,651.4695
+2026-11-09,AMD,pullback,closed -1.00R,403.3368
+2026-11-09,IVV,pullback,closed +0.60R,768.5755
+2026-11-09,VOO,pullback,closed +0.60R,703.3482
+2026-11-09,SPY,pullback,closed +0.60R,765.0872
+2026-11-09,VTI,pullback,closed +0.60R,376.3617
+2026-11-09,MU,pullback,closed -1.00R,733.6993
+2026-11-09,NKE,short_bounce,closed -0.06R,38.8594
+2026-11-09,O,short_bounce,closed -1.01R,59.1389
+2026-11-09,CVX,pullback,signal-muted,210.77999877929688
+2026-11-09,XOM,pullback,signal-muted,164.72999572753906
+2026-11-09,RIOT,short_bounce,signal-muted,17.65999984741211
