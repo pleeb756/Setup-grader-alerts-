@@ -1,6 +1,6 @@
 {
  "universe": {
-  "date": "2026-11-12",
+  "date": "2026-11-13",
   "source": "fallback",
   "symbols": [
    "TSLA",
@@ -138,87 +138,33 @@
    "model_done": true
   },
   {
-   "sym": "PLTR",
-   "setup": "pullback",
-   "signal_date": "2026-11-02",
-   "status": "open",
-   "pushed": false,
-   "atr": 8.363339445618502,
-   "base_low": 180.80999755859375,
-   "base_hi": 212.94000244140625,
-   "pivot": 212.94000244140625,
-   "close": 178.33999633789062,
-   "entry_open": 168.17999267578125,
-   "stop0": 147.3557340580729,
-   "entry_date": "2026-11-03"
-  },
-  {
-   "sym": "CRWD",
-   "setup": "pullback",
-   "signal_date": "2026-11-02",
-   "status": "open",
-   "pushed": false,
-   "atr": 13.253399488938157,
-   "base_low": 221.36000061035156,
-   "base_hi": 286.989990234375,
-   "pivot": 286.989990234375,
-   "close": 241.80999755859375,
-   "entry_open": 244.1750030517578,
-   "stop0": 211.1635918309383,
-   "entry_date": "2026-11-03"
-  },
-  {
-   "sym": "RIVN",
-   "setup": "short_bounce",
-   "signal_date": "2026-11-02",
-   "status": "open",
-   "pushed": false,
-   "atr": 0.6171850114311677,
-   "base_low": 11.375,
-   "base_hi": 14.829999923706055,
-   "pivot": 14.829999923706055,
-   "close": 13.1899995803833,
-   "entry_open": 13.420000076293945,
-   "stop0": 14.956252604833718,
-   "entry_date": "2026-11-03"
-  },
-  {
-   "sym": "CVX",
-   "setup": "pullback",
-   "signal_date": "2026-11-09",
-   "status": "pending",
-   "pushed": false,
-   "atr": 5.31591788279355,
-   "base_low": 210.42999267578125,
-   "base_hi": 236.47999572753906,
-   "pivot": 236.47999572753906,
-   "close": 210.77999877929688
-  },
-  {
-   "sym": "XOM",
-   "setup": "pullback",
-   "signal_date": "2026-11-09",
-   "status": "pending",
-   "pushed": false,
-   "atr": 4.617779639668713,
-   "base_low": 163.50999450683594,
-   "base_hi": 188.5,
-   "pivot": 188.5,
-   "close": 164.72999572753906
-  },
-  {
    "sym": "RIOT",
    "setup": "short_bounce",
    "signal_date": "2026-11-09",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 1.5296933441559473,
    "base_low": 11.633000373840332,
    "base_hi": 17.1200008392334,
    "pivot": 17.1200008392334,
-   "close": 17.65999984741211
+   "close": 17.65999984741211,
+   "entry_open": 17.934999465942383,
+   "stop0": 21.75026532659928,
+   "entry_date": "2026-11-10"
+  },
+  {
+   "sym": "ADBE",
+   "setup": "short_bounce",
+   "signal_date": "2026-11-13",
+   "status": "pending",
+   "pushed": false,
+   "atr": 8.093957314879084,
+   "base_low": 231.82000732421875,
+   "base_hi": 272.1000061035156,
+   "pivot": 272.1000061035156,
+   "close": 243.0800018310547
   }
  ],
  "regime": true,
- "last_run": "2026-11-09"
+ "last_run": "2026-11-13"
 }

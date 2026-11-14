@@ -56,3 +56,8 @@ signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days
 2026-11-02,2026-11-03,2026-11-05,MU,pullback,False,860.36,734.0664,733.6993,-1.003,-14.722,3,stop,0.09,1.67
 2026-11-02,2026-11-03,2026-11-09,NKE,short_bounce,False,38.6906,41.3067,38.8594,-0.065,-0.436,5,closed below 5-day average,0.29,0.92
 2026-11-02,2026-11-03,2026-11-04,O,short_bounce,False,56.7916,59.1093,59.1389,-1.013,-4.133,2,stop,0.07,1.1
+2026-11-02,2026-11-03,2026-11-10,PLTR,pullback,False,168.2641,147.3557,168.1259,-0.007,-0.082,6,closed above 5-day average,0.44,0.75
+2026-11-02,2026-11-03,2026-11-12,CRWD,pullback,False,244.2971,211.1636,226.8865,-0.525,-7.127,8,closed above 5-day average,0.26,0.94
+2026-11-02,2026-11-03,2026-11-11,RIVN,short_bounce,False,13.4133,14.9563,13.8019,-0.252,-2.897,7,closed below 5-day average,0.42,0.58
+2026-11-09,2026-11-10,2026-11-12,CVX,pullback,False,208.174,194.8842,214.8925,0.506,3.227,3,closed above 5-day average,0.4,0.16
+2026-11-09,2026-11-10,2026-11-12,XOM,pullback,False,161.9409,150.3965,168.1659,0.539,3.844,3,closed above 5-day average,0.42,0.16
