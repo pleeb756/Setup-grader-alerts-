@@ -61,3 +61,4 @@ signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days
 2026-11-02,2026-11-03,2026-11-11,RIVN,short_bounce,False,13.4133,14.9563,13.8019,-0.252,-2.897,7,closed below 5-day average,0.42,0.58
 2026-11-09,2026-11-10,2026-11-12,CVX,pullback,False,208.174,194.8842,214.8925,0.506,3.227,3,closed above 5-day average,0.4,0.16
 2026-11-09,2026-11-10,2026-11-12,XOM,pullback,False,161.9409,150.3965,168.1659,0.539,3.844,3,closed above 5-day average,0.42,0.16
+2026-11-09,2026-11-10,2026-11-16,RIOT,short_bounce,False,17.926,21.7503,16.6283,0.339,7.239,5,closed below 5-day average,0.33,0.31

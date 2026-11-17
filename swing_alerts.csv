@@ -125,3 +125,9 @@ date,sym,setup,event,price
 2026-11-13,CVX,pullback,closed +0.51R,214.8925
 2026-11-13,XOM,pullback,closed +0.54R,168.1659
 2026-11-13,ADBE,short_bounce,signal-muted,243.0800018310547
+2026-11-16,RIOT,short_bounce,closed +0.34R,16.6283
+2026-11-16,MRNA,pullback,signal-muted,215.27000427246094
+2026-11-16,PLTR,pullback,signal-muted,160.38999938964844
+2026-11-16,AMZN,pullback,signal-muted,257.75
+2026-11-16,SNOW,pullback,signal-muted,280.5400085449219
+2026-11-16,T,short_bounce,signal-muted,22.360000610351562
