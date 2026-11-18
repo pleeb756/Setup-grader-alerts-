@@ -131,3 +131,12 @@ date,sym,setup,event,price
 2026-11-16,AMZN,pullback,signal-muted,257.75
 2026-11-16,SNOW,pullback,signal-muted,280.5400085449219
 2026-11-16,T,short_bounce,signal-muted,22.360000610351562
+2026-11-17,MSFT,pullback,signal-muted,506.239990234375
+2026-11-17,PFE,pullback,signal-muted,28.469999313354492
+2026-11-17,PANW,pullback,signal-muted,309.2900085449219
+2026-11-17,CRWD,pullback,signal-muted,219.5800018310547
+2026-11-17,JPM,pullback,signal-muted,329.9599914550781
+2026-11-17,DAL,pullback,signal-muted,84.30000305175781
+2026-11-17,NET,pullback,signal-muted,284.79998779296875
+2026-11-17,SHOP,pullback,signal-muted,141.89999389648438
+2026-11-17,NKE,breakdown,signal-muted,35.849998474121094
