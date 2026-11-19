@@ -1,6 +1,6 @@
 {
  "universe": {
-  "date": "2026-11-17",
+  "date": "2026-11-18",
   "source": "fallback",
   "symbols": [
    "TSLA",
@@ -138,21 +138,6 @@
    "model_done": true
   },
   {
-   "sym": "ADBE",
-   "setup": "short_bounce",
-   "signal_date": "2026-11-13",
-   "status": "open",
-   "pushed": false,
-   "atr": 8.093957314879084,
-   "base_low": 231.82000732421875,
-   "base_hi": 272.1000061035156,
-   "pivot": 272.1000061035156,
-   "close": 243.0800018310547,
-   "entry_open": 246.10000610351562,
-   "stop0": 266.21184938766163,
-   "entry_date": "2026-11-16"
-  },
-  {
    "sym": "MRNA",
    "setup": "pullback",
    "signal_date": "2026-11-16",
@@ -231,111 +216,198 @@
    "sym": "MSFT",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 15.393433316310942,
    "base_low": 504.9599914550781,
    "base_hi": 559.1500244140625,
    "pivot": 559.1500244140625,
-   "close": 506.239990234375
+   "close": 506.239990234375,
+   "entry_open": 505.5,
+   "stop0": 467.26916670922265,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "PFE",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 0.6555424229060774,
    "base_low": 28.540000915527344,
    "base_hi": 30.98755039335873,
    "pivot": 30.98755039335873,
-   "close": 28.469999313354492
+   "close": 28.469999313354492,
+   "entry_open": 28.059999465942383,
+   "stop0": 26.435173408410158,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "PANW",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 18.47412695432622,
    "base_low": 311.3599853515625,
    "base_hi": 406.8800048828125,
    "pivot": 406.8800048828125,
-   "close": 309.2900085449219
+   "close": 309.2900085449219,
+   "entry_open": 313.75,
+   "stop0": 267.7215576141844,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "CRWD",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 13.617803392874869,
    "base_low": 213.22000122070312,
    "base_hi": 272.2900085449219,
    "pivot": 272.2900085449219,
-   "close": 219.5800018310547
+   "close": 219.5800018310547,
+   "entry_open": 223.8000030517578,
+   "stop0": 189.8673945710965,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "JPM",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 7.457896116686703,
    "base_low": 330.3999938964844,
    "base_hi": 359.79998779296875,
    "pivot": 359.79998779296875,
-   "close": 329.9599914550781
+   "close": 329.9599914550781,
+   "entry_open": 327.5199890136719,
+   "stop0": 309.0390087164619,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "DAL",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 3.0435797700057807,
    "base_low": 74.13999938964844,
    "base_hi": 92.5199966430664,
    "pivot": 92.5199966430664,
-   "close": 84.30000305175781
+   "close": 84.30000305175781,
+   "entry_open": 84.37000274658203,
+   "stop0": 76.80323832294086,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "NET",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 20.90294727529198,
    "base_low": 233.6199951171875,
    "base_hi": 337.0,
    "pivot": 337.0,
-   "close": 284.79998779296875
+   "close": 284.79998779296875,
+   "entry_open": 290.04998779296875,
+   "stop0": 237.93764459863527,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "SHOP",
    "setup": "pullback",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 8.184724886711583,
    "base_low": 135.64999389648438,
    "base_hi": 178.2760009765625,
    "pivot": 178.2760009765625,
-   "close": 141.89999389648438
+   "close": 141.89999389648438,
+   "entry_open": 142.3249969482422,
+   "stop0": 121.93434722993734,
+   "entry_date": "2026-11-18"
   },
   {
    "sym": "NKE",
    "setup": "breakdown",
    "signal_date": "2026-11-17",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 1.470154715102749,
    "base_low": 36.84000015258789,
    "base_hi": 41.099998474121094,
    "pivot": 36.84000015258789,
-   "close": 35.849998474121094
+   "close": 35.849998474121094,
+   "entry_open": 35.540000915527344,
+   "stop0": 38.36400938827516,
+   "entry_date": "2026-11-18"
+  },
+  {
+   "sym": "ABBV",
+   "setup": "pullback",
+   "signal_date": "2026-11-18",
+   "status": "pending",
+   "pushed": false,
+   "atr": 6.751456957577522,
+   "base_low": 278.010009765625,
+   "base_hi": 302.92999267578125,
+   "pivot": 302.92999267578125,
+   "close": 286.010009765625
+  },
+  {
+   "sym": "JNJ",
+   "setup": "pullback",
+   "signal_date": "2026-11-18",
+   "status": "pending",
+   "pushed": false,
+   "atr": 6.713208754193876,
+   "base_low": 254.55999755859375,
+   "base_hi": 290.25,
+   "pivot": 290.25,
+   "close": 272.70001220703125
+  },
+  {
+   "sym": "LLY",
+   "setup": "pullback",
+   "signal_date": "2026-11-18",
+   "status": "pending",
+   "pushed": false,
+   "atr": 43.47827440858422,
+   "base_low": 1256.0956158656084,
+   "base_hi": 1475.25,
+   "pivot": 1475.25,
+   "close": 1382.75
+  },
+  {
+   "sym": "CVX",
+   "setup": "pullback",
+   "signal_date": "2026-11-18",
+   "status": "pending",
+   "pushed": false,
+   "atr": 5.093063295159056,
+   "base_low": 204.3133400253048,
+   "base_hi": 234.5323921577078,
+   "pivot": 234.5323921577078,
+   "close": 205.8800048828125
+  },
+  {
+   "sym": "XOM",
+   "setup": "pullback",
+   "signal_date": "2026-11-18",
+   "status": "pending",
+   "pushed": false,
+   "atr": 4.353337566155143,
+   "base_low": 159.1057319234364,
+   "base_hi": 187.31766003760222,
+   "pivot": 187.31766003760222,
+   "close": 160.5800018310547
   }
  ],
  "regime": true,
- "last_run": "2026-11-17"
+ "last_run": "2026-11-18"
 }

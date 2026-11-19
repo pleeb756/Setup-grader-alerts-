@@ -140,3 +140,9 @@ date,sym,setup,event,price
 2026-11-17,NET,pullback,signal-muted,284.79998779296875
 2026-11-17,SHOP,pullback,signal-muted,141.89999389648438
 2026-11-17,NKE,breakdown,signal-muted,35.849998474121094
+2026-11-18,ADBE,short_bounce,closed +0.59R,234.1370
+2026-11-18,ABBV,pullback,signal-muted,286.010009765625
+2026-11-18,JNJ,pullback,signal-muted,272.70001220703125
+2026-11-18,LLY,pullback,signal-muted,1382.75
+2026-11-18,CVX,pullback,signal-muted,205.8800048828125
+2026-11-18,XOM,pullback,signal-muted,160.5800018310547

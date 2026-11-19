@@ -1,5 +1,5 @@
-## Trend trader, 2026-11-17 22:04 ET
+## Trend trader, 2026-11-18 21:44 ET
 
-QQQ $656.95 vs 200-day $681.58: OFF (cash). Paper equity $1,554.16.
+QQQ $659.51 vs 200-day $681.80: OFF (cash). Paper equity $1,554.16.
 
 No trades needed.
