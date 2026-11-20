@@ -146,3 +146,5 @@ date,sym,setup,event,price
 2026-11-18,LLY,pullback,signal-muted,1382.75
 2026-11-18,CVX,pullback,signal-muted,205.8800048828125
 2026-11-18,XOM,pullback,signal-muted,160.5800018310547
+2026-11-19,AMZN,pullback,closed +0.64R,272.4237
+2026-11-19,T,short_bounce,closed +0.22R,21.9009

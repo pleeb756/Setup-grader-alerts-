@@ -1,6 +1,6 @@
 {
  "universe": {
-  "date": "2026-11-18",
+  "date": "2026-11-19",
   "source": "fallback",
   "symbols": [
    "TSLA",
@@ -168,21 +168,6 @@
    "entry_date": "2026-11-17"
   },
   {
-   "sym": "AMZN",
-   "setup": "pullback",
-   "signal_date": "2026-11-16",
-   "status": "open",
-   "pushed": false,
-   "atr": 9.146006626637675,
-   "base_low": 229.36000061035156,
-   "base_hi": 275.3399963378906,
-   "pivot": 275.3399963378906,
-   "close": 257.75,
-   "entry_open": 257.54998779296875,
-   "stop0": 234.813746220271,
-   "entry_date": "2026-11-17"
-  },
-  {
    "sym": "SNOW",
    "setup": "pullback",
    "signal_date": "2026-11-16",
@@ -195,21 +180,6 @@
    "close": 280.5400085449219,
    "entry_open": 279.29998779296875,
    "stop0": 239.6732937679208,
-   "entry_date": "2026-11-17"
-  },
-  {
-   "sym": "T",
-   "setup": "short_bounce",
-   "signal_date": "2026-11-16",
-   "status": "open",
-   "pushed": false,
-   "atr": 0.568577680100499,
-   "base_low": 20.520000457763672,
-   "base_hi": 23.68000030517578,
-   "pivot": 23.68000030517578,
-   "close": 22.360000610351562,
-   "entry_open": 22.229999542236328,
-   "stop0": 23.64032874271646,
    "entry_date": "2026-11-17"
   },
   {
@@ -363,51 +333,63 @@
    "sym": "JNJ",
    "setup": "pullback",
    "signal_date": "2026-11-18",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 6.713208754193876,
    "base_low": 254.55999755859375,
    "base_hi": 290.25,
    "pivot": 290.25,
-   "close": 272.70001220703125
+   "close": 272.70001220703125,
+   "entry_open": 269.6099853515625,
+   "stop0": 252.96176845875357,
+   "entry_date": "2026-11-19"
   },
   {
    "sym": "LLY",
    "setup": "pullback",
    "signal_date": "2026-11-18",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 43.47827440858422,
    "base_low": 1256.0956158656084,
    "base_hi": 1475.25,
    "pivot": 1475.25,
-   "close": 1382.75
+   "close": 1382.75,
+   "entry_open": 1369.3800048828125,
+   "stop0": 1261.3690088637934,
+   "entry_date": "2026-11-19"
   },
   {
    "sym": "CVX",
    "setup": "pullback",
    "signal_date": "2026-11-18",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 5.093063295159056,
    "base_low": 204.3133400253048,
    "base_hi": 234.5323921577078,
    "pivot": 234.5323921577078,
-   "close": 205.8800048828125
+   "close": 205.8800048828125,
+   "entry_open": 207.47999572753906,
+   "stop0": 194.85107748750517,
+   "entry_date": "2026-11-19"
   },
   {
    "sym": "XOM",
    "setup": "pullback",
    "signal_date": "2026-11-18",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 4.353337566155143,
    "base_low": 159.1057319234364,
    "base_hi": 187.31766003760222,
    "pivot": 187.31766003760222,
-   "close": 160.5800018310547
+   "close": 160.5800018310547,
+   "entry_open": 161.3300018310547,
+   "stop0": 150.52732291658236,
+   "entry_date": "2026-11-19"
   }
  ],
- "regime": true,
- "last_run": "2026-11-18"
+ "regime": false,
+ "last_run": "2026-11-19"
 }
