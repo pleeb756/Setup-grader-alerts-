@@ -148,3 +148,7 @@ date,sym,setup,event,price
 2026-11-18,XOM,pullback,signal-muted,160.5800018310547
 2026-11-19,AMZN,pullback,closed +0.64R,272.4237
 2026-11-19,T,short_bounce,closed +0.22R,21.9009
+2026-11-20,PANW,pullback,closed +0.90R,355.6321
+2026-11-20,CRWD,pullback,closed +0.67R,246.7666
+2026-11-20,NET,pullback,closed +0.44R,313.2733
+2026-11-20,UBER,breakdown,signal-muted,63.470001220703125

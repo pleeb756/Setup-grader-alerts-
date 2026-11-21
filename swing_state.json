@@ -1,6 +1,6 @@
 {
  "universe": {
-  "date": "2026-11-19",
+  "date": "2026-11-20",
   "source": "fallback",
   "symbols": [
    "TSLA",
@@ -213,36 +213,6 @@
    "entry_date": "2026-11-18"
   },
   {
-   "sym": "PANW",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 18.47412695432622,
-   "base_low": 311.3599853515625,
-   "base_hi": 406.8800048828125,
-   "pivot": 406.8800048828125,
-   "close": 309.2900085449219,
-   "entry_open": 313.75,
-   "stop0": 267.7215576141844,
-   "entry_date": "2026-11-18"
-  },
-  {
-   "sym": "CRWD",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 13.617803392874869,
-   "base_low": 213.22000122070312,
-   "base_hi": 272.2900085449219,
-   "pivot": 272.2900085449219,
-   "close": 219.5800018310547,
-   "entry_open": 223.8000030517578,
-   "stop0": 189.8673945710965,
-   "entry_date": "2026-11-18"
-  },
-  {
    "sym": "JPM",
    "setup": "pullback",
    "signal_date": "2026-11-17",
@@ -270,21 +240,6 @@
    "close": 84.30000305175781,
    "entry_open": 84.37000274658203,
    "stop0": 76.80323832294086,
-   "entry_date": "2026-11-18"
-  },
-  {
-   "sym": "NET",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 20.90294727529198,
-   "base_low": 233.6199951171875,
-   "base_hi": 337.0,
-   "pivot": 337.0,
-   "close": 284.79998779296875,
-   "entry_open": 290.04998779296875,
-   "stop0": 237.93764459863527,
    "entry_date": "2026-11-18"
   },
   {
@@ -321,13 +276,16 @@
    "sym": "ABBV",
    "setup": "pullback",
    "signal_date": "2026-11-18",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 6.751456957577522,
    "base_low": 278.010009765625,
    "base_hi": 302.92999267578125,
    "pivot": 302.92999267578125,
-   "close": 286.010009765625
+   "close": 286.010009765625,
+   "entry_open": 285.0,
+   "stop0": 268.26385760605615,
+   "entry_date": "2026-11-19"
   },
   {
    "sym": "JNJ",
@@ -388,8 +346,20 @@
    "entry_open": 161.3300018310547,
    "stop0": 150.52732291658236,
    "entry_date": "2026-11-19"
+  },
+  {
+   "sym": "UBER",
+   "setup": "breakdown",
+   "signal_date": "2026-11-20",
+   "status": "pending",
+   "pushed": false,
+   "atr": 2.4159338214522923,
+   "base_low": 64.04000091552734,
+   "base_hi": 72.5,
+   "pivot": 64.04000091552734,
+   "close": 63.470001220703125
   }
  ],
  "regime": false,
- "last_run": "2026-11-19"
+ "last_run": "2026-11-20"
 }

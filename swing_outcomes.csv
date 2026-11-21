@@ -65,3 +65,6 @@ signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days
 2026-11-13,2026-11-16,2026-11-18,ADBE,short_bounce,False,245.977,266.2118,234.137,0.585,4.813,3,closed below 5-day average,0.6,0.27
 2026-11-16,2026-11-17,2026-11-19,AMZN,pullback,False,257.6788,234.8137,272.4237,0.645,5.722,3,closed above 5-day average,0.46,0.16
 2026-11-16,2026-11-17,2026-11-19,T,short_bounce,False,22.2189,23.6403,21.9009,0.224,1.431,3,closed below 5-day average,0.22,0.33
+2026-11-17,2026-11-18,2026-11-19,PANW,pullback,False,313.9069,267.7216,355.6321,0.903,13.292,2,closed above 5-day average,0.62,0.05
+2026-11-17,2026-11-18,2026-11-19,CRWD,pullback,False,223.9119,189.8674,246.7666,0.671,10.207,2,closed above 5-day average,0.48,0.16
+2026-11-17,2026-11-18,2026-11-19,NET,pullback,False,290.195,237.9376,313.2733,0.442,7.953,2,closed above 5-day average,0.33,0.15
