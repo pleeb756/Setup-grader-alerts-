@@ -1,6 +1,6 @@
 {
  "universe": {
-  "date": "2026-11-20",
+  "date": "2026-11-24",
   "source": "fallback",
   "symbols": [
    "TSLA",
@@ -138,51 +138,6 @@
    "model_done": true
   },
   {
-   "sym": "MRNA",
-   "setup": "pullback",
-   "signal_date": "2026-11-16",
-   "status": "open",
-   "pushed": false,
-   "atr": 19.19643306011909,
-   "base_low": 179.52999877929688,
-   "base_hi": 280.79998779296875,
-   "pivot": 280.79998779296875,
-   "close": 215.27000427246094,
-   "entry_open": 219.85000610351562,
-   "stop0": 171.96884845626965,
-   "entry_date": "2026-11-17"
-  },
-  {
-   "sym": "PLTR",
-   "setup": "pullback",
-   "signal_date": "2026-11-16",
-   "status": "open",
-   "pushed": false,
-   "atr": 8.866840194639394,
-   "base_low": 152.60000610351562,
-   "base_hi": 202.6300048828125,
-   "pivot": 202.6300048828125,
-   "close": 160.38999938964844,
-   "entry_open": 160.14999389648438,
-   "stop0": 138.06296840683413,
-   "entry_date": "2026-11-17"
-  },
-  {
-   "sym": "SNOW",
-   "setup": "pullback",
-   "signal_date": "2026-11-16",
-   "status": "open",
-   "pushed": false,
-   "atr": 15.906537607577766,
-   "base_low": 266.3550109863281,
-   "base_hi": 343.54998779296875,
-   "pivot": 343.54998779296875,
-   "close": 280.5400085449219,
-   "entry_open": 279.29998779296875,
-   "stop0": 239.6732937679208,
-   "entry_date": "2026-11-17"
-  },
-  {
    "sym": "MSFT",
    "setup": "pullback",
    "signal_date": "2026-11-17",
@@ -228,36 +183,6 @@
    "entry_date": "2026-11-18"
   },
   {
-   "sym": "DAL",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 3.0435797700057807,
-   "base_low": 74.13999938964844,
-   "base_hi": 92.5199966430664,
-   "pivot": 92.5199966430664,
-   "close": 84.30000305175781,
-   "entry_open": 84.37000274658203,
-   "stop0": 76.80323832294086,
-   "entry_date": "2026-11-18"
-  },
-  {
-   "sym": "SHOP",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 8.184724886711583,
-   "base_low": 135.64999389648438,
-   "base_hi": 178.2760009765625,
-   "pivot": 178.2760009765625,
-   "close": 141.89999389648438,
-   "entry_open": 142.3249969482422,
-   "stop0": 121.93434722993734,
-   "entry_date": "2026-11-18"
-  },
-  {
    "sym": "NKE",
    "setup": "breakdown",
    "signal_date": "2026-11-17",
@@ -271,21 +196,6 @@
    "entry_open": 35.540000915527344,
    "stop0": 38.36400938827516,
    "entry_date": "2026-11-18"
-  },
-  {
-   "sym": "ABBV",
-   "setup": "pullback",
-   "signal_date": "2026-11-18",
-   "status": "open",
-   "pushed": false,
-   "atr": 6.751456957577522,
-   "base_low": 278.010009765625,
-   "base_hi": 302.92999267578125,
-   "pivot": 302.92999267578125,
-   "close": 286.010009765625,
-   "entry_open": 285.0,
-   "stop0": 268.26385760605615,
-   "entry_date": "2026-11-19"
   },
   {
    "sym": "JNJ",
@@ -351,15 +261,42 @@
    "sym": "UBER",
    "setup": "breakdown",
    "signal_date": "2026-11-20",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 2.4159338214522923,
    "base_low": 64.04000091552734,
    "base_hi": 72.5,
    "pivot": 64.04000091552734,
-   "close": 63.470001220703125
+   "close": 63.470001220703125,
+   "entry_open": 65.19999694824219,
+   "stop0": 70.38078870574952,
+   "entry_date": "2026-11-23"
+  },
+  {
+   "sym": "T",
+   "setup": "short_bounce",
+   "signal_date": "2026-11-24",
+   "status": "pending",
+   "pushed": false,
+   "atr": 0.5672943824108432,
+   "base_low": 20.520000457763672,
+   "base_hi": 22.75,
+   "pivot": 22.75,
+   "close": 22.8799991607666
+  },
+  {
+   "sym": "F",
+   "setup": "short_bounce",
+   "signal_date": "2026-11-24",
+   "status": "pending",
+   "pushed": false,
+   "atr": 0.3603323707811487,
+   "base_low": 11.050000190734863,
+   "base_hi": 12.705926202597665,
+   "pivot": 12.705926202597665,
+   "close": 11.949999809265137
   }
  ],
  "regime": false,
- "last_run": "2026-11-20"
+ "last_run": "2026-11-24"
 }

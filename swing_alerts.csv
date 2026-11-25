@@ -152,3 +152,11 @@ date,sym,setup,event,price
 2026-11-20,CRWD,pullback,closed +0.67R,246.7666
 2026-11-20,NET,pullback,closed +0.44R,313.2733
 2026-11-20,UBER,breakdown,signal-muted,63.470001220703125
+2026-11-24,MRNA,pullback,closed -0.14R,213.0934
+2026-11-24,PLTR,pullback,closed -0.12R,157.5512
+2026-11-24,SNOW,pullback,closed -0.20R,271.2993
+2026-11-24,DAL,pullback,closed -0.13R,83.4183
+2026-11-24,SHOP,pullback,closed -0.49R,132.2738
+2026-11-24,ABBV,pullback,closed +0.35R,291.0344
+2026-11-24,T,short_bounce,signal-muted,22.8799991607666
+2026-11-24,F,short_bounce,signal-muted,11.949999809265137
