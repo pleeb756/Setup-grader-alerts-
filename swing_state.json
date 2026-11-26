@@ -1,6 +1,6 @@
 {
  "universe": {
-  "date": "2026-11-24",
+  "date": "2026-11-25",
   "source": "fallback",
   "symbols": [
    "TSLA",
@@ -138,36 +138,6 @@
    "model_done": true
   },
   {
-   "sym": "MSFT",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 15.393433316310942,
-   "base_low": 504.9599914550781,
-   "base_hi": 559.1500244140625,
-   "pivot": 559.1500244140625,
-   "close": 506.239990234375,
-   "entry_open": 505.5,
-   "stop0": 467.26916670922265,
-   "entry_date": "2026-11-18"
-  },
-  {
-   "sym": "PFE",
-   "setup": "pullback",
-   "signal_date": "2026-11-17",
-   "status": "open",
-   "pushed": false,
-   "atr": 0.6555424229060774,
-   "base_low": 28.540000915527344,
-   "base_hi": 30.98755039335873,
-   "pivot": 30.98755039335873,
-   "close": 28.469999313354492,
-   "entry_open": 28.059999465942383,
-   "stop0": 26.435173408410158,
-   "entry_date": "2026-11-18"
-  },
-  {
    "sym": "JPM",
    "setup": "pullback",
    "signal_date": "2026-11-17",
@@ -196,51 +166,6 @@
    "entry_open": 35.540000915527344,
    "stop0": 38.36400938827516,
    "entry_date": "2026-11-18"
-  },
-  {
-   "sym": "JNJ",
-   "setup": "pullback",
-   "signal_date": "2026-11-18",
-   "status": "open",
-   "pushed": false,
-   "atr": 6.713208754193876,
-   "base_low": 254.55999755859375,
-   "base_hi": 290.25,
-   "pivot": 290.25,
-   "close": 272.70001220703125,
-   "entry_open": 269.6099853515625,
-   "stop0": 252.96176845875357,
-   "entry_date": "2026-11-19"
-  },
-  {
-   "sym": "LLY",
-   "setup": "pullback",
-   "signal_date": "2026-11-18",
-   "status": "open",
-   "pushed": false,
-   "atr": 43.47827440858422,
-   "base_low": 1256.0956158656084,
-   "base_hi": 1475.25,
-   "pivot": 1475.25,
-   "close": 1382.75,
-   "entry_open": 1369.3800048828125,
-   "stop0": 1261.3690088637934,
-   "entry_date": "2026-11-19"
-  },
-  {
-   "sym": "CVX",
-   "setup": "pullback",
-   "signal_date": "2026-11-18",
-   "status": "open",
-   "pushed": false,
-   "atr": 5.093063295159056,
-   "base_low": 204.3133400253048,
-   "base_hi": 234.5323921577078,
-   "pivot": 234.5323921577078,
-   "close": 205.8800048828125,
-   "entry_open": 207.47999572753906,
-   "stop0": 194.85107748750517,
-   "entry_date": "2026-11-19"
   },
   {
    "sym": "XOM",
@@ -276,27 +201,45 @@
    "sym": "T",
    "setup": "short_bounce",
    "signal_date": "2026-11-24",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 0.5672943824108432,
    "base_low": 20.520000457763672,
    "base_hi": 22.75,
    "pivot": 22.75,
-   "close": 22.8799991607666
+   "close": 22.8799991607666,
+   "entry_open": 23.040000915527344,
+   "stop0": 24.44671687109669,
+   "entry_date": "2026-11-25"
   },
   {
    "sym": "F",
    "setup": "short_bounce",
    "signal_date": "2026-11-24",
-   "status": "pending",
+   "status": "open",
    "pushed": false,
    "atr": 0.3603323707811487,
    "base_low": 11.050000190734863,
    "base_hi": 12.705926202597665,
    "pivot": 12.705926202597665,
-   "close": 11.949999809265137
+   "close": 11.949999809265137,
+   "entry_open": 11.90999984741211,
+   "stop0": 12.804875774441275,
+   "entry_date": "2026-11-25"
+  },
+  {
+   "sym": "PINS",
+   "setup": "short_bounce",
+   "signal_date": "2026-11-25",
+   "status": "pending",
+   "pushed": false,
+   "atr": 1.042844718133817,
+   "base_low": 16.295000076293945,
+   "base_hi": 21.600000381469727,
+   "pivot": 21.600000381469727,
+   "close": 19.709999084472656
   }
  ],
  "regime": false,
- "last_run": "2026-11-24"
+ "last_run": "2026-11-25"
 }

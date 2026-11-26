@@ -160,3 +160,9 @@ date,sym,setup,event,price
 2026-11-24,ABBV,pullback,closed +0.35R,291.0344
 2026-11-24,T,short_bounce,signal-muted,22.8799991607666
 2026-11-24,F,short_bounce,signal-muted,11.949999809265137
+2026-11-25,MSFT,pullback,closed -0.54R,484.9874
+2026-11-25,PFE,pullback,closed +0.32R,28.5957
+2026-11-25,JNJ,pullback,closed +0.50R,278.1808
+2026-11-25,LLY,pullback,closed +0.31R,1404.2975
+2026-11-25,CVX,pullback,closed +0.02R,207.8960
+2026-11-25,PINS,short_bounce,signal-muted,19.709999084472656

@@ -74,3 +74,8 @@ signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days
 2026-11-17,2026-11-18,2026-11-24,DAL,pullback,False,84.4122,76.8032,83.4183,-0.131,-1.177,5,closed above 5-day average,0.26,0.62
 2026-11-17,2026-11-18,2026-11-24,SHOP,pullback,False,142.3962,121.9343,132.2738,-0.495,-7.109,5,closed above 5-day average,0.03,0.96
 2026-11-18,2026-11-19,2026-11-24,ABBV,pullback,False,285.1425,268.2639,291.0344,0.349,2.066,4,closed above 5-day average,0.35,0.31
+2026-11-17,2026-11-18,2026-11-25,MSFT,pullback,False,505.7527,467.2692,484.9874,-0.54,-4.106,6,closed above 5-day average,0.54,0.64
+2026-11-17,2026-11-18,2026-11-25,PFE,pullback,False,28.074,26.4352,28.5957,0.318,1.858,6,closed above 5-day average,0.32,0.47
+2026-11-18,2026-11-19,2026-11-25,JNJ,pullback,False,269.7448,252.9618,278.1808,0.503,3.127,5,closed above 5-day average,0.42,0.38
+2026-11-18,2026-11-19,2026-11-25,LLY,pullback,False,1370.0647,1261.369,1404.2975,0.315,2.499,5,closed above 5-day average,0.41,0.26
+2026-11-18,2026-11-19,2026-11-25,CVX,pullback,False,207.5837,194.8511,207.896,0.025,0.15,5,closed above 5-day average,0.23,0.18
