@@ -79,3 +79,4 @@ signal_date,entry_date,exit_date,sym,setup,pushed,entry,stop,exit,r,ret_pct,days
 2026-11-18,2026-11-19,2026-11-25,JNJ,pullback,False,269.7448,252.9618,278.1808,0.503,3.127,5,closed above 5-day average,0.42,0.38
 2026-11-18,2026-11-19,2026-11-25,LLY,pullback,False,1370.0647,1261.369,1404.2975,0.315,2.499,5,closed above 5-day average,0.41,0.26
 2026-11-18,2026-11-19,2026-11-25,CVX,pullback,False,207.5837,194.8511,207.896,0.025,0.15,5,closed above 5-day average,0.23,0.18
+2026-11-17,2026-11-18,2026-11-27,JPM,pullback,False,327.6837,309.039,321.789,-0.316,-1.799,7,closed above 5-day average,0.13,0.99

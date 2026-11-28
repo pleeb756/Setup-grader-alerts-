@@ -166,3 +166,9 @@ date,sym,setup,event,price
 2026-11-25,LLY,pullback,closed +0.31R,1404.2975
 2026-11-25,CVX,pullback,closed +0.02R,207.8960
 2026-11-25,PINS,short_bounce,signal-muted,19.709999084472656
+2026-11-27,JPM,pullback,closed -0.32R,321.7890
+2026-11-27,NFLX,short_bounce,signal-muted,60.93000030517578
+2026-11-27,BA,short_bounce,signal-muted,167.24000549316406
+2026-11-27,NKE,short_bounce,signal-muted,37.31999969482422
+2026-11-27,RIVN,short_bounce,signal-muted,12.180000305175781
+2026-11-27,DKNG,short_bounce,signal-muted,17.829999923706055
